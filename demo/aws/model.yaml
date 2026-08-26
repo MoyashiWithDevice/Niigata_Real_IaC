@@ -1,0 +1,336 @@
+objects:
+  # Organization (root-authorized kind contributed by the AWS extension)
+  - id: org-01
+    kind: aws.organization
+    name: Example Org
+
+  # Accounts
+  - id: acct-prod
+    kind: aws.account
+    name: Production Account
+    attributes:
+      owner: org-01
+      status: active
+    spec:
+      account_id: "111111111111"
+      alias: example-prod
+
+  # IAM
+  - id: role-app
+    kind: aws.iam_role
+    name: App Role
+    attributes:
+      owner: acct-prod
+      status: active
+
+  - id: pol-s3-read
+    kind: aws.iam_policy
+    name: S3 Read Only Policy
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      policy_document:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action: s3:GetObject
+            Resource: "*"
+
+  # Region / AZ
+  - id: region-use1
+    kind: aws.region
+    name: US East (N. Virginia)
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      region_code: us-east-1
+
+  - id: az-1a
+    kind: aws.availability_zone
+    name: us-east-1a
+    attributes:
+      owner: region-use1
+      status: active
+    spec:
+      zone_name: us-east-1a
+
+  # Network
+  - id: vpc-main
+    kind: aws.vpc
+    name: Main VPC
+    attributes:
+      owner: region-use1
+      status: active
+    spec:
+      cidr_block: 10.0.0.0/16
+      dns_support: true
+
+  - id: subnet-public
+    kind: aws.subnet
+    name: Public Subnet
+    attributes:
+      owner: vpc-main
+      status: active
+    spec:
+      cidr_block: 10.0.1.0/24
+      map_public_ip: true
+
+  - id: subnet-private
+    kind: aws.subnet
+    name: Private Subnet
+    attributes:
+      owner: vpc-main
+      status: active
+    spec:
+      cidr_block: 10.0.11.0/24
+
+  - id: sg-web
+    kind: aws.security_group
+    name: Web SG
+    attributes:
+      owner: vpc-main
+      status: active
+    spec:
+      description: Allow HTTPS from anywhere
+      security_group_rules:
+        - id: sgr-web-https
+          spec:
+            type: ingress
+            protocol: tcp
+            from_port: 443
+            to_port: 443
+            source_cidr: 0.0.0.0/0
+
+  - id: igw-main
+    kind: aws.internet_gateway
+    name: Main IGW
+    attributes:
+      owner: vpc-main
+      status: active
+
+  - id: rt-public
+    kind: aws.route_table
+    name: Public Route Table
+    attributes:
+      owner: vpc-main
+      status: active
+    spec:
+      routes:
+        - id: route-default
+          spec:
+            destination_cidr: 0.0.0.0/0
+            gateway_id: "@igw-main"
+
+  # Compute
+  - id: ec2-web-01
+    kind: aws.ec2
+    name: Web Server 01
+    attributes:
+      owner: subnet-public
+      status: active
+    spec:
+      instance_type: t3.micro
+      subnet: "@subnet-public"
+      security_groups:
+        - "@sg-web"
+
+  - id: ec2-web-02
+    kind: aws.ec2
+    name: Web Server 02
+    attributes:
+      owner: subnet-public
+      status: active
+    spec:
+      instance_type: t3.micro
+      subnet: "@subnet-public"
+      security_groups:
+        - "@sg-web"
+
+  - id: ebs-vol-data
+    kind: aws.ebs_volume
+    name: Web Data Volume
+    attributes:
+      owner: az-1a
+      status: active
+    spec:
+      volume_type: gp3
+      size_gb: 50
+      encrypted: true
+
+  # Load balancing
+  - id: alb-main
+    kind: aws.load_balancer
+    name: Main ALB
+    attributes:
+      owner: subnet-public
+      status: active
+    spec:
+      type: application
+      scheme: internet-facing
+      listeners:
+        - id: listener-443
+          name: HTTPS Listener
+          spec:
+            protocol: HTTPS
+            port: 443
+            default_action: forward
+
+  - id: tg-web
+    kind: aws.target_group
+    name: Web Targets
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      protocol: HTTP
+      port: 80
+      target_type: instance
+      health_check_path: /healthz
+
+  # Storage
+  - id: s3-assets
+    kind: aws.s3_bucket
+    name: Assets Bucket
+    attributes:
+      owner: region-use1
+      status: active
+    spec:
+      versioning: true
+      encryption: true
+
+  - id: snap-vol-data
+    kind: aws.ebs_snapshot
+    name: Data Volume Snapshot
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      volume_id: vol-0123456789abcdef0
+      size_gb: 50
+      state: completed
+
+  # Integration
+  - id: lambda-process
+    kind: aws.lambda_function
+    name: Order Processor
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      runtime: python3.12
+      handler: app.handler
+      memory_size: 512
+      role: "@role-app"
+
+  - id: sqs-jobs
+    kind: aws.sqs_queue
+    name: Job Queue
+    attributes:
+      owner: acct-prod
+      status: active
+
+  - id: sns-events
+    kind: aws.sns_topic
+    name: Events Topic
+    attributes:
+      owner: acct-prod
+      status: active
+
+  - id: eb-hourly
+    kind: aws.eventbridge_rule
+    name: Hourly Trigger
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      schedule_expression: rate(1 hour)
+      state: ENABLED
+
+  # Monitoring
+  - id: alarm-high-cpu
+    kind: aws.cloudwatch_alarm
+    name: High CPU Alarm
+    attributes:
+      owner: acct-prod
+      status: active
+    spec:
+      metric_name: CPUUtilization
+      namespace: AWS/EC2
+      threshold: 80
+      comparison_operator: GreaterThanThreshold
+      period_seconds: 300
+
+  # Relations (AWS extension relation types)
+  - id: rel-grants-s3
+    type: aws.grants
+    participants:
+      source: pol-s3-read
+      target: role-app
+
+  - id: rel-attach-igw
+    type: aws.attaches
+    participants:
+      source: igw-main
+      target: vpc-main
+
+  - id: rel-attach-vol
+    type: aws.attaches
+    participants:
+      source: ebs-vol-data
+      target: ec2-web-01
+
+  - id: rel-backup-vol
+    type: backs_up
+    participants:
+      source: ebs-vol-data
+      target: snap-vol-data
+
+  - id: rel-serve-web
+    type: aws.serves
+    participants:
+      source: alb-main
+      target: tg-web
+
+  - id: rel-forward-443
+    type: aws.forwards
+    participants:
+      source: listener-443
+      target: tg-web
+
+  - id: rel-register-web01
+    type: aws.registers
+    participants:
+      source: tg-web
+      target: ec2-web-01
+
+  - id: rel-register-web02
+    type: aws.registers
+    participants:
+      source: tg-web
+      target: ec2-web-02
+
+  - id: rel-trigger-lambda
+    type: aws.triggers
+    participants:
+      source: eb-hourly
+      target: lambda-process
+
+  - id: rel-subscribe-jobs
+    type: aws.subscribes
+    participants:
+      source: sns-events
+      target: sqs-jobs
+
+  - id: rel-alarm-cpu
+    type: monitors
+    participants:
+      source: alarm-high-cpu
+      target: ec2-web-01
+
+  - id: rel-dep-web-s3
+    type: depends_on
+    participants:
+      source: ec2-web-01
+      target: s3-assets

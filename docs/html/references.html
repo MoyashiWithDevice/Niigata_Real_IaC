@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>References | IACForge Reference</title>
+  <meta name="description" content="IACForge参照構文（シンプル、修飾、インターフェース、パス参照）。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html" class="active" aria-current="page"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>References</span></div>
+
+      <h1>References</h1>
+
+      <h2 id="simple-reference">シンプル参照</h2>
+<pre class="language-yaml"><code>source: srv-proxmox-01
+target: vm-web-01</code></pre>
+
+      <h2 id="qualified-reference">修飾参照（フルパス）</h2>
+<pre class="language-yaml"><code>source: /region-ap-northeast-1/rack-a01/srv-proxmox-01
+target: vm-web-01</code></pre>
+
+      <h2 id="interface-reference">インターフェース参照</h2>
+      <p>インターフェースはパス表記で参照します（<code>entity/interface</code>）：</p>
+<pre class="language-yaml"><code>participants:
+  - srv-proxmox-01/eno1
+  - sw-core-01/port1</code></pre>
+
+      <h2 id="path-reference">ネストされたエンティティへのパス参照</h2>
+      <p>ネストされたエンティティは親子関係のパスで参照できます：</p>
+<pre class="language-yaml"><code># パス表記: parent/child
+participants:
+  source: srv-proxmox-01/net-private/eth1
+  target: sw-core-01/port1</code></pre>
+      <p>パスの各セグメントはエンティティIDに対応します：</p>
+      <ul>
+        <li><code>srv-proxmox-01</code> &ndash; 親サーバー</li>
+        <li><code>net-private</code> &ndash; ネットワーク（サーバーの子）</li>
+        <li><code>eth1</code> &ndash; インターフェース（ネットワークの子）</li>
+      </ul>
+
+      <h2 id="reference-rules">参照ルール</h2>
+      <ul>
+        <li>Referencesは既存のObjectsを指す必要があります</li>
+        <li>Unknown referenceは検証エラーとなります</li>
+        <li>Interface referenceはパス表記を使用します</li>
+        <li>パス参照は所有権チェーンを検証します（親→子の関係が正しいこと）</li>
+      </ul>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>References &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

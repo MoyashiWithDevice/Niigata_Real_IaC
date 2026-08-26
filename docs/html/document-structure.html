@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Structure | IACForge Reference</title>
+  <meta name="description" content="IACForge YAMLドキュメントの基本構造。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html" class="active" aria-current="page"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>Document Structure</span></div>
+
+      <h1>Document Structure</h1>
+      <p>YAML documentは単一の<strong>Graph</strong>を表現します。</p>
+
+      <h2 id="basic-structure">基本構造</h2>
+<pre class="language-yaml"><code>objects:
+  # すべてのEntityとRelationをここに記述</code></pre>
+
+      <h2 id="comments">コメント</h2>
+      <p>YAMLのコメントはパース時に破棄され、round-trip変換（parse → serialize）では保持されません。コメントに意味を持たせないでください。</p>
+<pre class="language-yaml"><code># Region情報
+objects:
+  - id: region-ap-northeast-1
+    kind: region
+    name: Tokyo Datacenter 1
+    attributes:
+      # プライマリロケーション
+      status: active</code></pre>
+
+      <h2 id="ordering">記述順序</h2>
+      <ul>
+        <li>Objectの順序には意味はありません</li>
+        <li>Implementationは可能な限り順序を保持すべきです</li>
+      </ul>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>Document Structure &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

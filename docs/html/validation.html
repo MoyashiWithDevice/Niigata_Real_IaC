@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Validation | IACForge Reference</title>
+  <meta name="description" content="IACForge検証ルール、命名規則、Graph制約。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html" class="active" aria-current="page"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>Validation</span></div>
+
+      <h1>Validation</h1>
+
+      <h2 id="required-fields">必須フィールド</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Object</th><th>Required Fields</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Entity</td><td><code>id</code>, <code>kind</code>, <code>name</code></td></tr>
+          <tr><td>Relation</td><td><code>id</code>, <code>type</code>, <code>participants</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="identifier-rules">識別子ルール</h2>
+      <ul>
+        <li>IDはそのスコープ内でユニークである必要があります</li>
+        <li>IDは記述的で安定していることが望ましいです</li>
+        <li>IDは命名規則（kebab-case推奨）に従うことが望ましいです</li>
+        <li>IDにスラッシュ（<code>/</code>）を含めることはできません</li>
+      </ul>
+
+      <h2 id="naming-conventions">命名規則</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>対象</th><th>パターン</th><th>例</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ID</td><td>kebab-case (推奨)</td><td><code>srv-proxmox-01</code></td></tr>
+          <tr><td>Kind</td><td>小文字・単数形</td><td><code>server</code>, <code>vm</code></td></tr>
+          <tr><td>Relation Type</td><td>snake_case</td><td><code>connects</code>, <code>depends_on</code></td></tr>
+          <tr><td>Property</td><td>snake_case</td><td><code>cpu</code>, <code>memory</code>, <code>storage</code></td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="graph-constraints">Graph制約</h2>
+
+      <h3 id="ownership-constraints">Ownership制約</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Constraint</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>single_owner</td><td>Root以外のEntityは正確に1つのownerを持つ</td></tr>
+          <tr><td>tree_structure</td><td>Ownershipは正確に1つのツリーを形成</td></tr>
+          <tr><td>no_cycles</td><td>Ownershipはサイクルを含まない</td></tr>
+          <tr><td>owner_exists</td><td>Owner識別子は既存のEntityを参照する</td></tr>
+        </tbody>
+      </table>
+      <blockquote><strong>拡張ルート権限:</strong> 拡張によってルート権限を持つKindが許可されます。AWS拡張では <code>aws.organization</code> がルート権限を持つため、複数アカウントを単一組織ツリーとして表現できます（オンプレの <code>region</code> がルートの場合と共存可能）。</blockquote>
+
+      <h3 id="reference-constraints">Reference制約</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Constraint</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>valid_reference</td><td>Referencesは既存のObjectsを指す</td></tr>
+          <tr><td>unique_id</td><td>Object識別子はユニークである</td></tr>
+          <tr><td>relation_exists</td><td>Relationsは既存のObjectsを参照する</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="nesting-constraints">Nesting制約</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Constraint</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>no-slash-in-id</td><td>IDにスラッシュを含めることはできません</td></tr>
+          <tr><td>valid-nesting-parent</td><td>親子関係がスキーマのネスト定義と一致すること</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="cardinality-constraints">Cardinality制約</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Type</th><th>Cardinality</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>connects</td><td>N:N</td><td>多対多接続</td></tr>
+          <tr><td>hosts</td><td>1:N</td><td>1ホスト、複数ゲスト</td></tr>
+          <tr><td>depends_on</td><td>N:N</td><td>多対多依存関係</td></tr>
+          <tr><td>belongs_to</td><td>N:N</td><td>複数メンバー、複数グループ</td></tr>
+          <tr><td>applies_to</td><td>N:N</td><td>1 ACL、複数ターゲット</td></tr>
+          <tr><td>listens_on</td><td>N:1</td><td>複数ポート、1インターフェース</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="network-integrity-rules">ネットワーク整合性ルール</h2>
+      <p>InterfaceのIPアドレスとNetworkの整合性を保証する検証ルールです。</p>
+      <div class="callout warning">
+        <span class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></span>
+        <div>
+          <div class="callout-title">Warning</div>
+          <p>導入時点ではすべて <strong>warning</strong> です。ドキュメント・モデル更新後、<code>ip-requires-network</code> と <code>ip-in-cidr</code> は <strong>error</strong> へ昇格予定です。</p>
+        </div>
+      </div>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Rule ID</th><th>Severity</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>valid-ip-format</td><td>warning</td><td>interfaceの<code>ip_address</code>は有効なIPアドレスまたはCIDR表記であること</td></tr>
+          <tr><td>ip-requires-network</td><td>warning</td><td>IPアドレスを持つinterfaceは<code>network</code>プロパティまたは<code>belongs_to</code> relationでnetworkを参照すること</td></tr>
+          <tr><td>network-reference-kind</td><td>warning</td><td>interfaceの<code>network</code>参照はkind=networkのentityを指すこと</td></tr>
+          <tr><td>ip-in-cidr</td><td>warning</td><td>interfaceのIPは参照networkの<code>cidr</code>内にあること</td></tr>
+          <tr><td>network-cidr-required</td><td>warning</td><td>IPを持つmemberがいるnetworkは<code>cidr</code>を定義すること</td></tr>
+          <tr><td>gateway-in-cidr</td><td>warning</td><td>networkの<code>gateway</code>は<code>cidr</code>内にあること</td></tr>
+          <tr><td>ip-unique-in-network</td><td>warning</td><td>同一network内でIPが重複しないこと</td></tr>
+        </tbody>
+      </table>
+
+      <h3 id="network-integrity-example">例: IPを持つinterfaceはnetworkを参照する</h3>
+<pre class="language-yaml"><code>- id: mgmt-network
+  kind: network
+  name: Management Network
+  spec:
+    cidr: 10.0.0.0/24
+    gateway: 10.0.0.1
+
+- id: eno1
+  kind: interface
+  name: eno1
+  attributes:
+    owner: srv-proxmox-01
+  spec:
+    network: "@mgmt-network"
+    ip_address:
+      - 10.0.0.10</code></pre>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>Validation &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

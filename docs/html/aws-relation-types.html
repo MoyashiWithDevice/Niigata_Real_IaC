@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Relation Types | IACForge Reference</title>
+  <meta name="description" content="AWS拡張（iacforge.aws）が定義するRelation TypeとAugmented Core Relations。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html" class="active" aria-current="page"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>AWS Relation Types</span></div>
+
+<h1>AWS Relation Types</h1>
+<hr>
+<p>AWS拡張（<code>iacforge.aws</code>）が定義するリレーションタイプのリファレンスです。</p>
+<ul>
+  <li>新規定義のリレーションはすべて <code>aws.</code> プレフィックスを持ち、directed（有向）です</li>
+  <li>コアのリレーションタイプ（<code>belongs_to</code> 等）へのAWS Kind参加者追加は「Augmented Core Relations」を参照</li>
+  <li>正式な仕様は <a href="../../spec/concrete/22-aws-extension.md">spec/concrete/22-aws-extension.md</a> を参照</li>
+</ul>
+<h2>Relation Types一覧</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Type</th><th>Direction</th><th>Cardinality</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>aws.associates</td><td>directed</td><td>1:N</td><td>Network resource to VPC/subnet association</td></tr>
+          <tr><td>aws.attaches</td><td>directed</td><td>1:N</td><td>Resource attachment</td></tr>
+          <tr><td>aws.launches</td><td>directed</td><td>1:N</td><td>Auto Scaling/launch template launches EC2</td></tr>
+          <tr><td>aws.routes</td><td>directed</td><td>1:N</td><td>Route table owns route entries</td></tr>
+          <tr><td>aws.serves</td><td>directed</td><td>1:N</td><td>Load balancer serves target group</td></tr>
+          <tr><td>aws.forwards</td><td>directed</td><td>1:N</td><td>Listener forwards to target group</td></tr>
+          <tr><td>aws.triggers</td><td>directed</td><td>1:N</td><td>Rule/alarm triggers target</td></tr>
+          <tr><td>aws.subscribes</td><td>directed</td><td>1:N</td><td>SNS subscription</td></tr>
+          <tr><td>aws.invokes</td><td>directed</td><td>1:N</td><td>API Gateway invokes Lambda</td></tr>
+          <tr><td>aws.grants</td><td>directed</td><td>1:N</td><td>IAM policy grants permissions</td></tr>
+          <tr><td>aws.assumes</td><td>directed</td><td>1:N</td><td>IAM role assumption</td></tr>
+        </tbody>
+      </table>
+
+<hr>
+<h2>AWS Relation Types</h2>
+<h3>aws.associates</h3>
+<p>ネットワークリソースとVPC/サブネットの関連付け。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.security_group, aws.route_table, aws.network_acl, aws.elastic_ip</td></tr>
+          <tr><td>Target</td><td>aws.vpc, aws.subnet</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-assoc-sg-vpc
+  type: aws.associates
+  participants:
+    source: sg-web
+    target: vpc-01
+  attributes:
+    status: active</code></pre>
+<hr>
+<h3>aws.attaches</h3>
+<p>リソースのアタッチメント。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.ebs_volume, aws.internet_gateway, aws.elastic_ip, aws.efs, aws.vpc_peering_connection</td></tr>
+          <tr><td>Target</td><td>aws.ec2, aws.vpc, aws.transit_gateway</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-attach-igw
+  type: aws.attaches
+  participants:
+    source: igw-01
+    target: vpc-01
+
+- id: rel-attach-ebs
+  type: aws.attaches
+  participants:
+    source: ebs-data-01
+    target: ec2-web-01</code></pre>
+<hr>
+<h3>aws.launches</h3>
+<p>Auto Scalingグループ/起動テンプレートによるEC2起動。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.auto_scaling_group, aws.launch_template</td></tr>
+          <tr><td>Target</td><td>aws.ec2</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-launch-asg
+  type: aws.launches
+  participants:
+    source: asg-web
+    target: ec2-web-01</code></pre>
+<hr>
+<h3>aws.routes</h3>
+<p>ルートテーブルによるルートエントリの所有。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.route_table</td></tr>
+          <tr><td>Target</td><td>aws.route</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-route-main
+  type: aws.routes
+  participants:
+    source: rt-main
+    target: route-public</code></pre>
+<hr>
+<h3>aws.serves</h3>
+<p>ロードバランサーからターゲットグループへのトラフィック配信。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.load_balancer</td></tr>
+          <tr><td>Target</td><td>aws.target_group</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-serve-alb
+  type: aws.serves
+  participants:
+    source: alb-web
+    target: tg-web</code></pre>
+<hr>
+<h3>aws.forwards</h3>
+<p>リスナーからターゲットグループへの転送。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.listener</td></tr>
+          <tr><td>Target</td><td>aws.target_group</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-forward-443
+  type: aws.forwards
+  participants:
+    source: alb-web-443
+    target: tg-web</code></pre>
+<hr>
+<h3>aws.triggers</h3>
+<p>EventBridgeルール/CloudWatchアラームによるターゲット起動。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.eventbridge_rule, aws.cloudwatch_alarm</td></tr>
+          <tr><td>Target</td><td>aws.lambda_function, aws.sns_topic, aws.sqs_queue</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-trigger-lambda
+  type: aws.triggers
+  participants:
+    source: eb-daily
+    target: lambda-processor</code></pre>
+<hr>
+<h3>aws.subscribes</h3>
+<p>SNSトピックへのサブスクリプション。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.sns_topic</td></tr>
+          <tr><td>Target</td><td>aws.sqs_queue, aws.lambda_function, aws.sns_topic</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-subscribe-sqs
+  type: aws.subscribes
+  participants:
+    source: sns-events
+    target: sqs-jobs</code></pre>
+<hr>
+<h3>aws.invokes</h3>
+<p>API GatewayによるLambda関数の呼び出し。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.api_gateway</td></tr>
+          <tr><td>Target</td><td>aws.lambda_function</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-invoke-lambda
+  type: aws.invokes
+  participants:
+    source: api-orders
+    target: lambda-processor</code></pre>
+<hr>
+<h3>aws.grants</h3>
+<p>IAMポリシーからIAMプリンシパルへの権限付与。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.iam_policy</td></tr>
+          <tr><td>Target</td><td>aws.iam_user, aws.iam_group, aws.iam_role</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-grant-policy
+  type: aws.grants
+  participants:
+    source: iam-policy-s3-read
+    target: iam-role-lambda</code></pre>
+<hr>
+<h3>aws.assumes</h3>
+<p>IAMプリンシパルによるロール引き受け。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Value</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Direction</td><td>directed</td></tr>
+          <tr><td>Source</td><td>aws.iam_role, aws.iam_user</td></tr>
+          <tr><td>Target</td><td>aws.iam_role</td></tr>
+          <tr><td>Cardinality</td><td>1:N</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code>- id: rel-assume-role
+  type: aws.assumes
+  participants:
+    source: iam-user-deploy
+    target: iam-role-lambda</code></pre>
+<hr>
+<h2>Augmented Core Relations</h2>
+<p>AWS拡張はコアのリレーションタイプの参加者Kindを追加します（方向・意味は不変）。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Relation Type</th><th>Added Source Kinds</th><th>Added Target Kinds</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>belongs_to</td><td>All <code>aws.*</code> kinds</td><td>All <code>aws.*</code> kinds</td></tr>
+          <tr><td>depends_on</td><td>aws.ec2, aws.lambda_function, aws.rds, aws.load_balancer, aws.api_gateway, aws.auto_scaling_group, aws.sqs_queue</td><td>aws.ec2, aws.rds, aws.dynamodb_table, aws.s3_bucket, aws.sqs_queue, aws.lambda_function, aws.elasticache, aws.efs, aws.api_gateway, aws.cloudwatch_log_group</td></tr>
+          <tr><td>hosts</td><td>aws.ec2, aws.lambda_function</td><td>aws.ec2, aws.lambda_function</td></tr>
+          <tr><td>monitors</td><td>aws.cloudwatch_alarm</td><td>aws.ec2, aws.rds, aws.load_balancer, aws.lambda_function, aws.dynamodb_table, aws.s3_bucket, aws.elasticache, aws.efs, aws.sqs_queue, aws.api_gateway</td></tr>
+          <tr><td>backs_up</td><td>aws.rds, aws.ebs_volume, aws.dynamodb_table, aws.efs, aws.s3_bucket</td><td>aws.ebs_snapshot, aws.s3_bucket, aws.efs</td></tr>
+          <tr><td>mounted_on</td><td>aws.ebs_volume, aws.efs</td><td>aws.ec2</td></tr>
+        </tbody>
+      </table>
+
+<pre class="language-yaml"><code># belongs_to (aws kind participants)
+- id: rel-belongsto-ec2-subnet
+  type: belongs_to
+  participants:
+    source: ec2-web-01
+    target: subnet-public-01
+
+# monitors
+- id: rel-monitor-cpu
+  type: monitors
+  participants:
+    source: cw-cpu-alarm
+    target: ec2-web-01
+
+# backs_up
+- id: rel-backup-ebs
+  type: backs_up
+  participants:
+    source: ebs-data-01
+    target: snap-data-01</code></pre>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>AWS Relation Types &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

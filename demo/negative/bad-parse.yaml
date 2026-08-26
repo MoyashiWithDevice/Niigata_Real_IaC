@@ -1,0 +1,17 @@
+objects:
+  # Parse error demo: dangling relation reference
+  - id: region-tokyo
+    kind: region
+    name: Tokyo Datacenter 1
+
+  - id: srv-01
+    kind: server
+    name: Server 01
+    attributes:
+      owner: region-tokyo
+
+  - id: rel-dangling
+    type: depends_on
+    participants:
+      source: srv-01
+      target: app-ghost

@@ -1,0 +1,46 @@
+objects:
+  # Intentionally broken model for validation demo
+  - id: region-tokyo
+    kind: region
+    name: Tokyo Datacenter 1
+
+  - id: rack-a01
+    kind: rack
+    name: Rack A01
+    attributes:
+      owner: region-tokyo
+
+  # ERROR: invalid enum value for "platform"
+  - id: srv-broken-01
+    kind: server
+    name: Broken Server
+    attributes:
+      owner: rack-a01
+    spec:
+      platform: windows
+      cpu:
+        - cores: 4
+          architecture: x86_64
+
+  # ERROR: unknown entity kind
+  - id: db-legacy-01
+    kind: mainframe
+    name: Legacy Mainframe
+    attributes:
+      owner: rack-a01
+
+  # WARNING: owner exists, but this model still has schema violations below
+  - id: net-orphan
+    kind: network
+    name: Orphan Network
+    attributes:
+      owner: region-tokyo
+    spec:
+      cidr: 10.99.0.0/24
+
+  # WARNING: dependency from a "server" (not an allowed source kind)
+  - id: rel-broken-dep
+    type: depends_on
+    participants:
+      source: srv-broken-01
+      target: net-orphan

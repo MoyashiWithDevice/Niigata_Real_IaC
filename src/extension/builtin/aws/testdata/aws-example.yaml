@@ -1,0 +1,144 @@
+objects:
+  # Organization / Account
+  - id: org-01
+    kind: aws.organization
+    name: Example Org
+    attributes:
+      status: active
+
+  - id: acct-01
+    kind: aws.account
+    name: Example Account
+    attributes:
+      owner: org-01
+      status: active
+    spec:
+      account_id: "123456789012"
+      alias: example-acct
+
+  # Region / AZ
+  - id: region-01
+    kind: aws.region
+    name: us-east-1
+    attributes:
+      owner: acct-01
+      status: active
+    spec:
+      region_code: us-east-1
+
+  - id: az-01
+    kind: aws.availability_zone
+    name: us-east-1a
+    attributes:
+      owner: region-01
+      status: active
+    spec:
+      zone_name: us-east-1a
+
+  # Network
+  - id: vpc-01
+    kind: aws.vpc
+    name: Main VPC
+    attributes:
+      owner: region-01
+      status: active
+    spec:
+      cidr_block: 10.0.0.0/16
+
+  - id: subnet-01
+    kind: aws.subnet
+    name: Public Subnet
+    attributes:
+      owner: vpc-01
+      status: active
+    spec:
+      cidr_block: 10.0.1.0/24
+
+  - id: sg-01
+    kind: aws.security_group
+    name: Web SG
+    attributes:
+      owner: vpc-01
+      status: active
+    spec:
+      description: Web server security group
+
+  # Compute
+  - id: ec2-01
+    kind: aws.ec2
+    name: Web Server
+    attributes:
+      owner: subnet-01
+      status: active
+    spec:
+      instance_type: t3.micro
+      subnet: "@subnet-01"
+      security_groups:
+        - "@sg-01"
+
+  - id: rds-01
+    kind: aws.rds
+    name: Database
+    attributes:
+      owner: subnet-01
+      status: active
+    spec:
+      instance_class: db.t3.micro
+      engine: postgres
+
+  - id: lambda-01
+    kind: aws.lambda_function
+    name: Processor
+    attributes:
+      owner: acct-01
+      status: active
+    spec:
+      runtime: python3.12
+
+  # Storage / Integration
+  - id: s3-01
+    kind: aws.s3_bucket
+    name: Assets Bucket
+    attributes:
+      owner: az-01
+      status: active
+
+  - id: sqs-01
+    kind: aws.sqs_queue
+    name: Job Queue
+    attributes:
+      owner: acct-01
+      status: active
+
+  - id: sns-01
+    kind: aws.sns_topic
+    name: Events Topic
+    attributes:
+      owner: acct-01
+      status: active
+
+  - id: cw-01
+    kind: aws.cloudwatch_alarm
+    name: CPU Alarm
+    attributes:
+      owner: acct-01
+      status: active
+
+  # Relations
+  - id: rel-ec2-subnet
+    type: belongs_to
+    participants:
+      source: ec2-01
+      target: subnet-01
+
+  - id: rel-cw-ec2
+    type: monitors
+    participants:
+      source: cw-01
+      target: ec2-01
+
+  - id: rel-sns-sqs
+    type: aws.subscribes
+    participants:
+      source: sns-01
+      target: sqs-01

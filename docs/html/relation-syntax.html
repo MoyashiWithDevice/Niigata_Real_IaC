@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relation Syntax | IACForge Reference</title>
+  <meta name="description" content="IACForge Relation共通構文、participantフォーマット。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html" class="active" aria-current="page"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>Relation Syntax</span></div>
+
+      <h1>Relation Syntax</h1>
+
+      <h2 id="required-properties">必須プロパティ</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>id</td><td><span class="type-badge">string</span></td><td>ユニーク識別子</td></tr>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td>Relation type</td></tr>
+          <tr><td>participants</td><td><span class="type-badge">list[string] or map</span></td><td>Entity参照</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="common-properties">任意の共通プロパティ（<code>attributes:</code> 以下）</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>description</td><td><span class="type-badge">string</span></td><td>-</td><td>ドキュメント</td></tr>
+          <tr><td>status</td><td><span class="type-badge">enum</span></td><td>-</td><td>ライフサイクル状態</td></tr>
+          <tr><td>tags</td><td><span class="type-badge">list[string]</span></td><td>-</td><td>ラベル</td></tr>
+          <tr><td>labels</td><td><span class="type-badge">map[string]</span></td><td>-</td><td>メタデータ</td></tr>
+          <tr><td>extensions</td><td><span class="type-badge">map[string]</span></td><td>-</td><td>拡張データ</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="participant-formats">Participantフォーマット</h2>
+
+      <h3 id="list-format">リスト形式（対称関係）</h3>
+      <p><code>connects</code>のような対称関係の場合：</p>
+<pre class="language-yaml"><code>participants:
+  - srv-proxmox-01/eno1
+  - sw-core-01/port1</code></pre>
+
+      <h3 id="map-format">マップ形式（有向関係）</h3>
+      <p><code>hosts</code>、<code>depends_on</code>のような有向関係の場合：</p>
+<pre class="language-yaml"><code>participants:
+  source: srv-proxmox-01
+  target: vm-web-01</code></pre>
+
+      <h2 id="full-relation">全プロパティを指定したRelation</h2>
+<pre class="language-yaml"><code>- id: rel-hosts-server-vm
+  type: hosts
+  participants:
+    source: srv-proxmox-01
+    target: vm-web-01
+  attributes:
+    description: "Server hosts VM"
+    status: active
+    tags:
+      - hosting
+    labels:
+      source_type: server
+      target_type: vm
+    extensions:
+      custom_key: custom_value
+  spec: {}</code></pre>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>Relation Syntax &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

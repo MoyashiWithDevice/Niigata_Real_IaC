@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reference | IACForge</title>
+  <meta name="description" content="IACForgeのYAMLファイル作成のための完全版リファレンス。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html" class="active">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html" class="active" aria-current="page"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>Reference</span></div>
+
+      <section class="hero">
+        <span class="hero-badge">IACForge &middot; YAML Reference</span>
+        <h1>Reference</h1>
+        <p>IACForgeは、インフラストラクチャをモデルとして定義し、様々な表現を生成するためのフレームワークです。「インフラは知識」という哲学に基づき、モデルを唯一の信頼できる情報源とします。</p>
+        <p>このリファレンスは、YAMLファイル作成のための完全版リファレンスです。</p>
+      </section>
+
+      <h2 id="sections">リファレンス・セクション</h2>
+      <p>ドキュメント構成を左サイドバー、または下記のカードから参照できます。</p>
+
+      <div class="card-grid">
+        <a class="card" href="document-structure.html">
+          <div class="card-kicker">Basics</div>
+          <div class="card-title">Document Structure</div>
+          <p class="card-desc">YAMLドキュメントの基本構造、コメントの保持、記述順序。</p>
+        </a>
+        <a class="card" href="entity-syntax.html">
+          <div class="card-kicker">Syntax</div>
+          <div class="card-title">Entity Syntax</div>
+          <p class="card-desc">必須プロパティ、共通プロパティ、ステータス値、ネスト定義。</p>
+        </a>
+        <a class="card" href="entity-kinds.html">
+          <div class="card-kicker">Kinds</div>
+          <div class="card-title">Entity Kinds</div>
+          <p class="card-desc">全22種類のEntity定義。region, server, vm, network, storageなど。</p>
+        </a>
+        <a class="card" href="relation-syntax.html">
+          <div class="card-kicker">Syntax</div>
+          <div class="card-title">Relation Syntax</div>
+          <p class="card-desc">必須プロパティ、participantフォーマット（リスト・マップ形式）。</p>
+        </a>
+        <a class="card" href="relation-types.html">
+          <div class="card-kicker">Types</div>
+          <div class="card-title">Relation Types</div>
+          <p class="card-desc">connects, hosts, depends_onなど全11種類のRelation定義。</p>
+        </a>
+        <a class="card" href="references.html">
+          <div class="card-kicker">Modeling</div>
+          <div class="card-title">References</div>
+          <p class="card-desc">シンプル・修飾・インターフェース・パス参照と参照ルール。</p>
+        </a>
+        <a class="card" href="validation.html">
+          <div class="card-kicker">Quality</div>
+          <div class="card-title">Validation</div>
+          <p class="card-desc">検証ルール、命名規則、Graph制約（Ownership / Reference / Nesting / Cardinality）。</p>
+        </a>
+        <a class="card" href="example.html">
+          <div class="card-kicker">Sample</div>
+          <div class="card-title">Complete Example</div>
+          <p class="card-desc">サイトからサーバー、VM、ACL、リレーションまでを含む完全なインフラモデル。</p>
+        </a>
+        <a class="card" href="aws-entity-kinds.html">
+          <div class="card-kicker">AWS</div>
+          <div class="card-title">AWS Entity Kinds</div>
+          <p class="card-desc">AWS拡張の全47種類のEntity定義。aws.vpc, aws.ec2, aws.s3_bucketなど。</p>
+        </a>
+        <a class="card" href="aws-relation-types.html">
+          <div class="card-kicker">AWS</div>
+          <div class="card-title">AWS Relation Types</div>
+          <p class="card-desc">aws.subscribes, aws.grantsなどAWSリレーションとAugmented Core Relations。</p>
+        </a>
+      </div>
+
+      <h2 id="common-rules">共通ルール</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>ルール</th><th>詳細</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>必須フィールド</td>
+            <td><a href="validation.html#required-fields">Validation &ndash; 必須フィールド</a></td>
+          </tr>
+          <tr>
+            <td>ネストルール</td>
+            <td><a href="entity-syntax.html#nested-entity-definition">Entity Syntax &ndash; ネスト定義</a></td>
+          </tr>
+          <tr>
+            <td>ステータス値</td>
+            <td><a href="entity-syntax.html#status-values">Entity Syntax &ndash; ステータス値</a></td>
+          </tr>
+          <tr>
+            <td>命名規則</td>
+            <td><a href="validation.html#naming-conventions">Validation &ndash; 命名規則</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="quick-start">クイックスタート</h2>
+      <p>CLIを使用してモデルの検証・情報取得・レンダリングができます。</p>
+<pre class="language-bash"><code>iacforge validate model.yaml
+iacforge info model.yaml
+iacforge render --format markdown model.yaml
+iacforge query --kind server model.yaml</code></pre>
+
+      <h2 id="concepts">コアコンセプト</h2>
+      <ul>
+        <li><strong>Entity</strong> &ndash; インフラ内のすべてのオブジェクトを表す基本的な単位。</li>
+        <li><strong>Relation</strong> &ndash; Entity間のピア・ツー・ピアの関係。</li>
+        <li><strong>Graph</strong> &ndash; EntityとRelationのコレクション。</li>
+        <li><strong>Ownership</strong> &ndash; Entity間の階層関係（ツリー構造）。</li>
+        <li><strong>Artifact</strong> &ndash; Rendererの生成出力。</li>
+      </ul>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>Reference &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

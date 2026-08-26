@@ -1,0 +1,263 @@
+objects:
+  # Region
+  - id: region-tokyo
+    kind: region
+    name: Tokyo Datacenter 1
+    attributes:
+      status: active
+      labels:
+        region_code: ap-northeast-1
+
+  # Racks
+  - id: rack-a01
+    kind: rack
+    name: Rack A01
+    attributes:
+      owner: region-tokyo
+      status: active
+    spec:
+      height_units: 42
+
+  - id: rack-a02
+    kind: rack
+    name: Rack A02
+    attributes:
+      owner: region-tokyo
+      status: standby
+    spec:
+      height_units: 42
+
+  # Servers (with nested interfaces)
+  - id: srv-proxmox-01
+    kind: server
+    name: Proxmox Node 01
+    attributes:
+      owner: rack-a01
+      status: active
+      tags:
+        - compute
+        - virtualization
+    spec:
+      platform: proxmox
+      cpu:
+        - cores: 16
+          architecture: x86_64
+      memory:
+        - size_gb: 64
+          speed: 3200
+          type: ddr4
+      storage:
+        - size_gb: 500
+          type: ssd
+      interfaces:
+        - id: if-srv01-eth0
+          name: eth0
+          spec:
+            type: ethernet
+            speed_mbps: 10000
+
+  - id: srv-proxmox-02
+    kind: server
+    name: Proxmox Node 02
+    attributes:
+      owner: rack-a01
+      status: active
+      tags:
+        - compute
+        - virtualization
+    spec:
+      platform: proxmox
+      cpu:
+        - cores: 16
+          architecture: x86_64
+      memory:
+        - size_gb: 64
+          speed: 3200
+          type: ddr4
+      storage:
+        - size_gb: 500
+          type: ssd
+      interfaces:
+        - id: if-srv02-eth0
+          name: eth0
+          spec:
+            type: ethernet
+            speed_mbps: 10000
+
+  # Backup server (DR site)
+  - id: srv-backup-01
+    kind: server
+    name: Backup Server 01
+    attributes:
+      owner: rack-a02
+      status: active
+    spec:
+      platform: baremetal
+      cpu:
+        - cores: 8
+          architecture: x86_64
+      storage:
+        - size_gb: 4000
+          type: hdd
+
+  # Production network
+  - id: net-prod
+    kind: network
+    name: Production Network
+    attributes:
+      owner: region-tokyo
+      status: active
+    spec:
+      cidr: 10.10.0.0/16
+      gateway: 10.10.0.1
+      network_type: vm
+      vlan_id: 100
+
+  # VMs
+  - id: vm-web-01
+    kind: vm
+    name: Web VM 01
+    attributes:
+      owner: srv-proxmox-01
+      status: active
+    spec:
+      os: ubuntu
+      os_version: "24.04"
+      cpu:
+        - cores: 4
+          architecture: x86_64
+      memory:
+        - size_gb: 8
+
+  - id: vm-web-02
+    kind: vm
+    name: Web VM 02
+    attributes:
+      owner: srv-proxmox-02
+      status: active
+    spec:
+      os: ubuntu
+      os_version: "24.04"
+      cpu:
+        - cores: 4
+          architecture: x86_64
+      memory:
+        - size_gb: 8
+
+  - id: vm-db-01
+    kind: vm
+    name: DB VM 01
+    attributes:
+      owner: srv-proxmox-01
+      status: active
+    spec:
+      os: ubuntu
+      os_version: "24.04"
+      cpu:
+        - cores: 8
+          architecture: x86_64
+      memory:
+        - size_gb: 32
+
+  # DR replica VM on the backup server
+  - id: vm-db-02
+    kind: vm
+    name: DB VM 02 (DR)
+    attributes:
+      owner: srv-backup-01
+      status: standby
+    spec:
+      os: ubuntu
+      os_version: "24.04"
+      cpu:
+        - cores: 8
+          architecture: x86_64
+      memory:
+        - size_gb: 32
+
+  # Applications (with a nested open port)
+  - id: app-web
+    kind: application
+    name: Web Frontend
+    attributes:
+      owner: vm-web-01
+      status: active
+    spec:
+      version: "2.4.1"
+      port: 443
+      protocol: https
+
+  - id: app-api
+    kind: application
+    name: API Backend
+    attributes:
+      owner: vm-db-01
+      status: active
+    spec:
+      version: "3.1.0"
+      port: 8080
+      protocol: http
+      open_ports:
+        - id: op-api-5432
+          name: postgres
+          spec:
+            port: 5432
+            protocol: tcp
+            state: listening
+
+  - id: app-db
+    kind: application
+    name: PostgreSQL
+    attributes:
+      owner: vm-db-01
+      status: active
+    spec:
+      version: "16.3"
+      port: 5432
+      protocol: tcp
+
+  # Relations
+  - id: rel-cluster-link
+    type: connects
+    participants:
+      source: if-srv01-eth0
+      target: if-srv02-eth0
+    properties:
+      connection_type: physical
+      bandwidth_mbps: 10000
+
+  - id: rel-web-dep-api
+    type: depends_on
+    participants:
+      source: app-web
+      target: app-api
+    properties:
+      dependency_type: runtime
+      critical: true
+
+  - id: rel-web-dep-db
+    type: depends_on
+    participants:
+      source: app-api
+      target: app-db
+    properties:
+      dependency_type: runtime
+      critical: true
+
+  - id: rel-db-replication
+    type: replicates_to
+    participants:
+      source: vm-db-01
+      target: vm-db-02
+    properties:
+      replication_type: asynchronous
+      lag_seconds: 5
+
+  - id: rel-mon-web01
+    type: monitors
+    participants:
+      source: srv-proxmox-02
+      target: srv-proxmox-01
+    properties:
+      monitor_type: agent
+      interval_seconds: 60

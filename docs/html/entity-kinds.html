@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entity Kinds | IACForge Reference</title>
+  <meta name="description" content="IACForge全Entity種類の定義とプロパティ。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html" class="active" aria-current="page"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>Entity Kinds</span></div>
+
+      <h1>Entity Kinds</h1>
+
+      <h2 id="entity-kinds-list">Entity Kinds一覧</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Kind</th><th>Category</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="#region">region</a></td><td>Physical</td><td>Physical location</td></tr>
+          <tr><td><a href="#rack">rack</a></td><td>Physical</td><td>Physical rack enclosure</td></tr>
+          <tr><td><a href="#server">server</a></td><td>Physical</td><td>Physical or virtual compute host</td></tr>
+          <tr><td><a href="#interface">interface</a></td><td>Network</td><td>Network interface</td></tr>
+          <tr><td><a href="#cable">cable</a></td><td>Physical</td><td>Physical cable</td></tr>
+          <tr><td><a href="#power_distribution">power_distribution</a></td><td>Physical</td><td>PDU or power feed</td></tr>
+          <tr><td><a href="#network">network</a></td><td>Network</td><td>Logical network</td></tr>
+          <tr><td><a href="#vlan">vlan</a></td><td>Network</td><td>Virtual LAN</td></tr>
+          <tr><td><a href="#switch">switch</a></td><td>Network</td><td>Network switch</td></tr>
+          <tr><td><a href="#router">router</a></td><td>Network</td><td>Network router</td></tr>
+          <tr><td><a href="#firewall">firewall</a></td><td>Network</td><td>Network firewall</td></tr>
+          <tr><td><a href="#acl">acl</a></td><td>Network</td><td>Access Control List</td></tr>
+          <tr><td><a href="#acl_rule">acl_rule</a></td><td>Network</td><td>Individual ACL rule</td></tr>
+          <tr><td><a href="#vm">vm</a></td><td>Compute</td><td>Virtual machine</td></tr>
+          <tr><td><a href="#container">container</a></td><td>Compute</td><td>Containerized workload</td></tr>
+          <tr><td><a href="#application">application</a></td><td>Compute</td><td>Software application</td></tr>
+          <tr><td><a href="#open_port">open_port</a></td><td>Compute</td><td>Listening network port</td></tr>
+          <tr><td><a href="#storage-kind">storage</a></td><td>Storage</td><td>Storage system</td></tr>
+          <tr><td><a href="#volume">volume</a></td><td>Storage</td><td>Logical storage volume</td></tr>
+          <tr><td><a href="#cluster">cluster</a></td><td>Logical</td><td>Logical compute grouping</td></tr>
+          <tr><td><a href="#availability_zone">availability_zone</a></td><td>Logical</td><td>Logical availability zone</td></tr>
+        </tbody>
+      </table>
+
+      <blockquote><strong>AWS拡張:</strong> AWSのEntity Kind（<code>aws.vpc</code>, <code>aws.ec2</code>, <code>aws.s3_bucket</code> 等、47種）は <a href="aws-entity-kinds.html">AWS Entity Kinds</a> を参照してください。</blockquote>
+
+      <h2 id="shared-property-types">Shared Property Types</h2>
+      <p>複数のKindで共通して使用されるプロパティオブジェクトの定義です。</p>
+
+      <h3 id="cpu">cpu</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cores</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Number of CPU cores</td></tr>
+          <tr><td>architecture</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>CPU architecture (x86_64, arm64)</td></tr>
+        </tbody>
+      </table>
+<pre class="language-yaml"><code>cpu:
+  - cores: 16
+    architecture: x86_64</code></pre>
+      <p><strong>使用先:</strong> <a href="#server">server</a>, <a href="#vm">vm</a></p>
+
+      <h3 id="memory">memory</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>size_gb</td><td><span class="type-badge">number</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Memory module size in GB</td></tr>
+          <tr><td>speed</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Memory speed in MHz</td></tr>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Memory type (ddr4, ddr5, lpddr4, lpddr5)</td></tr>
+        </tbody>
+      </table>
+<pre class="language-yaml"><code>memory:
+  - size_gb: 64
+    speed: 3200
+    type: ddr4</code></pre>
+      <p><strong>使用先:</strong> <a href="#server">server</a>, <a href="#vm">vm</a></p>
+
+      <h3 id="storage">storage</h3>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>size_gb</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Storage size in GB</td></tr>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Storage type (ssd, hdd, nvme)</td></tr>
+        </tbody>
+      </table>
+<pre class="language-yaml"><code>storage:
+  - size_gb: 500
+    type: ssd</code></pre>
+      <p><strong>使用先:</strong> <a href="#server">server</a>, <a href="#vm">vm</a></p>
+
+      <h2 id="shared-hardware-info">Shared Hardware Info</h2>
+      <p>ハードウェア系Kindで共通して使用されるプロパティです。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>manufacturer</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Hardware manufacturer</td></tr>
+          <tr><td>model</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Hardware model</td></tr>
+          <tr><td>serial_number</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Serial number</td></tr>
+        </tbody>
+      </table>
+      <p><strong>使用先:</strong> <a href="#server">server</a>, <a href="#switch">switch</a>, <a href="#router">router</a>, <a href="#firewall">firewall</a>, <a href="#storage-kind">storage</a></p>
+
+      <h2 id="physical-infrastructure">Physical Infrastructure</h2>
+
+      <h3 id="region">region</h3>
+      <p>A geographic region where infrastructure is deployed.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>address</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Physical address</td></tr>
+          <tr><td>latitude</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Geographic latitude</td></tr>
+          <tr><td>longitude</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Geographic longitude</td></tr>
+          <tr><td>timezone</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Timezone identifier</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> Root (no owner specified)</p>
+<pre class="language-yaml"><code>- id: region-ap-northeast-1
+  kind: region
+  name: Tokyo Datacenter 1
+  attributes:
+    status: active
+    tags:
+      - production
+    labels:
+      region: asia-pacific
+      tier: primary</code></pre>
+
+      <h3 id="rack">rack</h3>
+      <p>A physical rack enclosure within a region.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>height_units</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>42</td><td>Rack height in rack units (U)</td></tr>
+          <tr><td>power_capacity_watts</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Total power capacity in watts</td></tr>
+          <tr><td>max_load_kg</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Maximum weight capacity in kg</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> region</p>
+<pre class="language-yaml"><code>- id: rack-a01
+  kind: rack
+  name: Rack A01
+  attributes:
+    owner: region-ap-northeast-1
+    status: active
+    labels:
+      row: A
+      zone: dc-1
+  spec:
+    height_units: 42</code></pre>
+
+      <h3 id="server">server</h3>
+      <p>A physical or virtual compute host.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>manufacturer</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>model</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>serial_number</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>cpu</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#cpu">→ cpu</a></td></tr>
+          <tr><td>memory</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#memory">→ memory</a></td></tr>
+          <tr><td>storage</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#storage">→ storage</a></td></tr>
+          <tr><td>platform</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Virtualization platform (proxmox, vmware, kubernetes)</td></tr>
+          <tr><td>bios_version</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>BIOS/UEFI version</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> rack</p>
+      <div class="callout note">
+        <span class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+        <div>
+          <div class="callout-title">Note</div>
+          <p>IP addresses are not direct properties of server. Use interface entities to assign IP addresses.</p>
+        </div>
+      </div>
+<pre class="language-yaml"><code>- id: srv-proxmox-01
+  kind: server
+  name: Proxmox Node 01
+  attributes:
+    owner: rack-a01
+    status: active
+  spec:
+    platform: proxmox
+    cpu:
+      - cores: 16
+        architecture: x86_64
+      - cores: 16
+        architecture: x86_64
+    memory:
+      - size_gb: 64
+        speed: 3200
+        type: ddr4
+      - size_gb: 64
+        speed: 3200
+        type: ddr4
+    storage:
+      - size_gb: 500
+        type: ssd
+      - size_gb: 500
+        type: ssd</code></pre>
+
+      <h3 id="interface">interface</h3>
+      <p>A network interface on a device.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>ethernet</td><td>Interface type (ethernet, fiber, wireless, virtual, bond, vlan, bridge, loopback)</td></tr>
+          <tr><td>mode</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>none</td><td>Interface mode (access, trunk, hybrid, none)</td></tr>
+          <tr><td>speed_mbps</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Interface speed in Mbps</td></tr>
+          <tr><td>mac_address</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>MAC address</td></tr>
+          <tr><td>ip_address</td><td><span class="type-badge">list[string]</span></td><td><span class="req-no">no</span></td><td>-</td><td>IP addresses if configured</td></tr>
+          <tr><td>network</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Reference to the network this interface belongs to (e.g., <code>@mgmt-network</code>)</td></tr>
+          <tr><td>vlan_id</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>VLAN identifier (1-4094) for a VLAN sub-interface</td></tr>
+          <tr><td>mtu</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>1500</td><td>Maximum transmission unit</td></tr>
+          <tr><td>interfaces</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td>Nested child interfaces (VRRP, LACP/bond, VLAN sub-interface, etc.)</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> server, switch, router, vm, container, network</p>
+      <p><strong>Nestable Children:</strong> vlans (vlan), cables (cable), interfaces (interface)</p>
+      <div class="callout note">
+        <span class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+        <div>
+          <div class="callout-title">Note</div>
+          <p>An interface that carries IP addresses SHOULD reference a network, either via the <code>network</code> property or a <code>belongs_to</code> relation to a <code>network</code> entity. IP addresses are validated against the referenced network&rsquo;s <code>cidr</code>.</p>
+        </div>
+      </div>
+<pre class="language-yaml"><code>- id: eno1
+  kind: interface
+  name: eno1
+  attributes:
+    owner: srv-proxmox-01
+  spec:
+    type: ethernet
+    speed_mbps: 10000
+    mac_address: "aa:bb:cc:dd:ee:f0"
+    network: "@mgmt-network"
+    ip_address:
+      - 10.0.1.10
+    vlans:
+      - id: eno1-vlan100
+        spec:
+          vlan_id: 100
+    cables:
+      - id: cable-eno1-sw01
+        spec:
+          cable_type: cat6a
+          length_meters: 2.0</code></pre>
+
+      <h4 id="interface-hierarchy">Interface Hierarchy</h4>
+      <p>An interface can nest child interfaces via the <code>interfaces</code> key. This is useful for modeling bonded/LAG interfaces, VRRP virtual interfaces, and other hierarchical network configurations.</p>
+
+      <h4 id="vrrp-example">VRRP Virtual Interface Example</h4>
+<pre class="language-yaml"><code>- id: eth0-vrrp
+  kind: interface
+  name: VRRP Virtual Interface
+  attributes:
+    owner: rt-core-01
+  spec:
+    type: virtual
+    ip_address:
+      - 10.0.0.1
+    interfaces:
+      - id: eth0
+        kind: interface
+        name: eth0 - Primary
+        attributes:
+          owner: eth0-vrrp
+        spec:
+          type: ethernet
+          ip_address:
+            - 10.0.0.2
+      - id: eth1
+        kind: interface
+        name: eth1 - Secondary
+        attributes:
+          owner: eth0-vrrp
+        spec:
+          type: ethernet
+          ip_address:
+            - 10.0.0.3</code></pre>
+
+      <h4 id="lacp-example">LACP/Bond Interface Example</h4>
+<pre class="language-yaml"><code>- id: bond0
+  kind: interface
+  name: LAG Bundle
+  attributes:
+    owner: srv-proxmox-01
+  spec:
+    type: bond
+    interfaces:
+      - id: eth0
+        kind: interface
+        name: eth0 - Member
+        attributes:
+          owner: bond0
+        spec:
+          type: ethernet
+          ip_address:
+            - 192.168.1.1
+      - id: eth1
+        kind: interface
+        name: eth1 - Member
+        attributes:
+          owner: bond0
+        spec:
+          type: ethernet
+          ip_address:
+            - 192.168.1.2</code></pre>
+
+      <h4 id="trunk-port-example">Trunk Port Carrying Multiple VLANs</h4>
+<pre class="language-yaml"><code>- id: trunk-port1
+  kind: interface
+  name: Trunk Port to Access Switch
+  attributes:
+    owner: sw-core-01
+  spec:
+    type: ethernet
+    mode: trunk
+    vlans:
+      - id: trunk-port1-vlan10
+        kind: vlan
+        name: VLAN 10 - Management
+        spec:
+          vlan_id: 10
+          tagged: false
+          associated_network: "@mgmt-network"
+      - id: trunk-port1-vlan100
+        kind: vlan
+        name: VLAN 100 - Production
+        spec:
+          vlan_id: 100
+          tagged: true
+          associated_network: "@prod-network"
+      - id: trunk-port1-vlan200
+        kind: vlan
+        name: VLAN 200 - Storage
+        spec:
+          vlan_id: 200
+          tagged: true
+          associated_network: "@storage-network"</code></pre>
+
+      <h4 id="vlan-subinterface-example">VLAN Sub-interface Example (<code>vmbr.20</code> style)</h4>
+<pre class="language-yaml"><code>- id: vmbr0
+  kind: interface
+  name: Linux Bridge vmbr0
+  attributes:
+    owner: srv-proxmox-01
+  spec:
+    type: bridge
+    interfaces:
+      - id: vmbr0.20
+        kind: interface
+        name: VLAN 20 on vmbr0
+        spec:
+          type: vlan
+          vlan_id: 20
+          ip_address:
+            - 10.0.20.1/24
+      - id: vmbr0.100
+        kind: interface
+        name: VLAN 100 on vmbr0
+        spec:
+          type: vlan
+          vlan_id: 100
+          ip_address:
+            - 10.0.100.1/24</code></pre>
+
+      <h4 id="loopback-example">Loopback Interface Example</h4>
+<pre class="language-yaml"><code>- id: lo0
+  kind: interface
+  name: Loopback 0
+  attributes:
+    owner: rt-core-01
+  spec:
+    type: loopback
+    ip_address:
+      - 10.255.255.1/32</code></pre>
+
+      <h3 id="cable">cable</h3>
+      <p>A physical cable connecting two or more interfaces.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cable_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>copper</td><td>Cable type (copper, fiber, dac, cat6a)</td></tr>
+          <tr><td>length_meters</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Cable length in meters</td></tr>
+          <tr><td>connector_a</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Connector type at end A</td></tr>
+          <tr><td>connector_b</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Connector type at end B</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> Optional (typically no owner)</p>
+<pre class="language-yaml"><code>- id: cable-001
+  kind: cable
+  name: Patch Cable SRV01-SW01
+  spec:
+    cable_type: cat6a
+    length_meters: 3.0</code></pre>
+
+      <h3 id="power_distribution">power_distribution</h3>
+      <p>A power distribution unit (PDU) or power feed.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>capacity_amps</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Total amperage capacity</td></tr>
+          <tr><td>voltage</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>240</td><td>Operating voltage</td></tr>
+          <tr><td>phases</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>1</td><td>Number of phases</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> rack</p>
+<pre class="language-yaml"><code>- id: pdu-rack-01
+  kind: power_distribution
+  name: PDU Rack A01
+  attributes:
+    owner: rack-a01
+  spec:
+    capacity_amps: 30
+    voltage: 240
+    phases: 3</code></pre>
+
+      <h2 id="network-section">Network</h2>
+
+      <h3 id="network">network</h3>
+      <p>A logical network or broadcast domain.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cidr</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Network CIDR notation</td></tr>
+          <tr><td>gateway</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Default gateway address</td></tr>
+          <tr><td>dns_servers</td><td><span class="type-badge">list[string]</span></td><td><span class="req-no">no</span></td><td>-</td><td>DNS server addresses</td></tr>
+          <tr><td>vlan_id</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Associated VLAN ID</td></tr>
+          <tr><td>network_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Network type (management, storage, vm, public)</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> Optional (typically region or cluster)</p>
+<pre class="language-yaml"><code>- id: mgmt-network-01
+  kind: network
+  name: Management Network
+  spec:
+    cidr: 10.0.0.0/24
+    gateway: 10.0.0.1
+    network_type: management
+    dns_servers:
+      - 8.8.8.8
+      - 8.8.4.4</code></pre>
+
+      <h3 id="vlan">vlan</h3>
+      <p>A virtual LAN configuration.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>vlan_id</td><td><span class="type-badge">integer</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>VLAN identifier (1-4094)</td></tr>
+          <tr><td>tagged</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Whether this VLAN carries tagged traffic on a trunk port</td></tr>
+          <tr><td>associated_network</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Reference to parent network</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> network, region</p>
+<pre class="language-yaml"><code>- id: vlan-100
+  kind: vlan
+  name: Production VLAN
+  attributes:
+    owner: mgmt-network-01
+  spec:
+    vlan_id: 100
+    tagged: true
+    associated_network: mgmt-network-01</code></pre>
+
+      <h3 id="switch">switch</h3>
+      <p>A network switch.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>manufacturer</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>model</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>serial_number</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>port_count</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Total port count</td></tr>
+          <tr><td>managed</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>true</td><td>Whether switch is managed</td></tr>
+          <tr><td>stackable</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Whether switch supports stacking</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> rack</p>
+      <p><strong>Nestable Children:</strong> <code>ports</code> (interface), <code>interfaces</code> (interface)</p>
+      <p>各ポートは <code>interface</code> エンティティとして <code>ports</code> キー配下に定義し、<code>sw-core-01/port1</code> のようにパス記法で参照します。</p>
+<pre class="language-yaml"><code>- id: sw-core-01
+  kind: switch
+  name: Core Switch 01
+  attributes:
+    owner: rack-a01
+    status: active
+  spec:
+    manufacturer: cisco
+    model: Catalyst 9300
+    port_count: 48
+    managed: true
+    ports:
+      - id: port1
+        name: Port 1 (Uplink)
+        spec:
+          type: ethernet
+          speed_mbps: 10000
+          mode: trunk
+      - id: port2
+        name: Port 2
+        spec:
+          type: ethernet
+          speed_mbps: 1000
+          mode: access</code></pre>
+
+      <h3 id="router">router</h3>
+      <p>A network router.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>manufacturer</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>model</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>serial_number</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> rack</p>
+      <p><strong>Nestable Children:</strong> <code>ports</code> (interface), <code>interfaces</code> (interface)</p>
+      <p>各ポートは <code>interface</code> エンティティとして <code>ports</code> キー配下に定義し、<code>rt-core-01/ge0/0</code> のようにパス記法で参照します。</p>
+<pre class="language-yaml"><code>- id: rt-core-01
+  kind: router
+  name: Core Router 01
+  attributes:
+    owner: rack-a01
+  spec:
+    manufacturer: mikrotik
+    model: CCR1036
+    ports:
+      - id: ge0/0
+        name: GigabitEthernet0/0
+        spec:
+          type: ethernet
+          speed_mbps: 1000</code></pre>
+
+      <h3 id="firewall">firewall</h3>
+      <p>A network firewall.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>manufacturer</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>model</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>serial_number</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>throughput_gbps</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Maximum throughput in Gbps</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> rack</p>
+<pre class="language-yaml"><code>- id: fw-core-01
+  kind: firewall
+  name: Core Firewall 01
+  attributes:
+    owner: rack-a01
+  spec:
+    manufacturer: paloalto
+    model: PA-3260
+    throughput_gbps: 10.0</code></pre>
+
+      <h3 id="acl">acl</h3>
+      <p>An Access Control List containing ordered rules for filtering network traffic.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>default_action</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>deny</td><td>Default action when no rule matches (allow, deny)</td></tr>
+          <tr><td>direction</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Traffic direction (inbound, outbound, both)</td></tr>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>any</td><td>Protocol filter (tcp, udp, icmp, any)</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> firewall, interface, server, vm, container</p>
+<pre class="language-yaml"><code>- id: acl-web-ingress
+  kind: acl
+  name: Web Server Ingress ACL
+  attributes:
+    owner: vm-web-01
+    status: active
+    labels:
+      environment: production
+  spec:
+    direction: inbound
+    default_action: deny</code></pre>
+
+      <h3 id="acl_rule">acl_rule</h3>
+      <p>A single rule within an Access Control List.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>action</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Rule action (allow, deny)</td></tr>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>any</td><td>Protocol (tcp, udp, icmp, any)</td></tr>
+          <tr><td>source_address</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>any</td><td>Source IP address or CIDR</td></tr>
+          <tr><td>source_port</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>any</td><td>Source port or range (e.g., "80", "1024-65535")</td></tr>
+          <tr><td>destination_address</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>any</td><td>Destination IP address or CIDR</td></tr>
+          <tr><td>destination_port</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>any</td><td>Destination port or range (e.g., "443", "8080-8090")</td></tr>
+          <tr><td>enabled</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>true</td><td>Whether this rule is active</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> acl</p>
+<pre class="language-yaml"><code>- id: acl-rule-allow-https
+  kind: acl_rule
+  name: Allow HTTPS
+  attributes:
+    owner: acl-web-ingress
+  spec:
+    action: allow
+    protocol: tcp
+    source_address: 0.0.0.0/0
+    destination_port: "443"
+    enabled: true
+
+- id: acl-rule-allow-ssh
+  kind: acl_rule
+  name: Allow SSH from Management
+  attributes:
+    owner: acl-web-ingress
+  spec:
+    action: allow
+    protocol: tcp
+    source_address: 10.0.0.0/24
+    destination_port: "22"
+    enabled: true</code></pre>
+
+      <h2 id="compute-section">Compute</h2>
+
+      <h3 id="vm">vm</h3>
+      <p>A virtual machine.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cpu</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#cpu">→ cpu</a></td></tr>
+          <tr><td>memory</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#memory">→ memory</a></td></tr>
+          <tr><td>storage</td><td><span class="type-badge">list[object]</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#storage">→ storage</a></td></tr>
+          <tr><td>os</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Operating system</td></tr>
+          <tr><td>os_version</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Operating system version</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> server</p>
+      <div class="callout note">
+        <span class="callout-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg></span>
+        <div>
+          <div class="callout-title">Note</div>
+          <p>IP addresses are not direct properties of vm. Use interface entities to assign IP addresses.</p>
+        </div>
+      </div>
+<pre class="language-yaml"><code>- id: vm-web-01
+  kind: vm
+  name: Web Server 01
+  attributes:
+    owner: srv-proxmox-01
+    status: active
+  spec:
+    cpu:
+      - cores: 4
+        architecture: x86_64
+    memory:
+      - size_gb: 8
+        speed: 3200
+        type: ddr4
+    storage:
+      - size_gb: 100
+        type: ssd
+    os: ubuntu
+    os_version: "22.04"</code></pre>
+
+      <h3 id="container">container</h3>
+      <p>A containerized workload.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>image</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Container image</td></tr>
+          <tr><td>image_tag</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>latest</td><td>Image tag</td></tr>
+          <tr><td>cpu_limit</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>CPU limit (e.g., "2.0")</td></tr>
+          <tr><td>memory_limit</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Memory limit (e.g., "512Mi")</td></tr>
+          <tr><td>ports</td><td><span class="type-badge">list[integer]</span></td><td><span class="req-no">no</span></td><td>-</td><td>Exposed ports</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> vm, server</p>
+<pre class="language-yaml"><code>- id: ctr-nginx-01
+  kind: container
+  name: Nginx Container
+  attributes:
+    owner: vm-web-01
+  spec:
+    image: nginx
+    image_tag: "1.24"
+    cpu_limit: "1.0"
+    memory_limit: "256Mi"
+    ports:
+      - 80
+      - 443</code></pre>
+
+      <h3 id="application">application</h3>
+      <p>A software application or service.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>version</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Application version</td></tr>
+          <tr><td>port</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Primary listening port</td></tr>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Network protocol (http, https, tcp, udp)</td></tr>
+          <tr><td>url</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Application URL if applicable</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> vm, container</p>
+<pre class="language-yaml"><code>- id: app-web-server
+  kind: application
+  name: Nginx Web Server
+  attributes:
+    owner: vm-web-01
+    status: active
+  spec:
+    version: "1.24.0"
+    port: 443
+    protocol: https</code></pre>
+
+      <h3 id="open_port">open_port</h3>
+      <p>A listening or open network port on a host, VM, container, or application.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>port</td><td><span class="type-badge">integer</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Port number (1-65535)</td></tr>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Transport protocol (tcp, udp)</td></tr>
+          <tr><td>state</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>listening</td><td>Port state (listening, established, closed)</td></tr>
+          <tr><td>address</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>0.0.0.0</td><td>Listening IP address</td></tr>
+          <tr><td>process</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Process or service name using this port</td></tr>
+          <tr><td>pid</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Process ID if known</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> server, vm, container, application</p>
+<pre class="language-yaml"><code>- id: port-443-nginx
+  kind: open_port
+  name: Nginx HTTPS
+  attributes:
+    owner: app-web-server
+  spec:
+    port: 443
+    protocol: tcp
+    state: listening
+    address: 0.0.0.0
+    process: nginx
+
+- id: port-5432-postgres
+  kind: open_port
+  name: PostgreSQL
+  attributes:
+    owner: vm-web-01
+  spec:
+    port: 5432
+    protocol: tcp
+    state: listening
+    address: 10.0.2.10
+    process: postgres</code></pre>
+
+      <h2 id="storage-section">Storage</h2>
+
+      <h3 id="storage-kind">storage</h3>
+      <p>A storage system or array.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>manufacturer</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>model</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td><a href="#shared-hardware-info">→ Shared Hardware Info</a></td></tr>
+          <tr><td>total_capacity_gb</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Total raw capacity in GB</td></tr>
+          <tr><td>usable_capacity_gb</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Usable capacity after redundancy</td></tr>
+          <tr><td>raid_level</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>RAID level if applicable</td></tr>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Storage protocol (nfs, iscsi, fc, local)</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> rack</p>
+<pre class="language-yaml"><code>- id: storage-nas-01
+  kind: storage
+  name: NAS Storage 01
+  attributes:
+    owner: rack-a01
+  spec:
+    manufacturer: synology
+    model: DS1621+
+    total_capacity_gb: 48000
+    usable_capacity_gb: 32000
+    raid_level: raid6
+    protocol: nfs</code></pre>
+
+      <h3 id="volume">volume</h3>
+      <p>A logical storage volume.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>capacity_gb</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Volume capacity in GB</td></tr>
+          <tr><td>filesystem</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Filesystem type if mounted</td></tr>
+          <tr><td>mount_point</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Mount point if applicable</td></tr>
+          <tr><td>thin_provisioned</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Whether volume is thin provisioned</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> storage, server</p>
+<pre class="language-yaml"><code>- id: vol-web-data
+  kind: volume
+  name: Web Data Volume
+  attributes:
+    owner: storage-nas-01
+  spec:
+    capacity_gb: 500
+    filesystem: ext4
+    mount_point: /data
+    thin_provisioned: false</code></pre>
+
+      <h2 id="logical-section">Logical</h2>
+
+      <h3 id="cluster">cluster</h3>
+      <p>A logical grouping of compute resources.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cluster_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Cluster type (compute, storage, hyperconverged)</td></tr>
+          <tr><td>ha_enabled</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Whether HA is enabled</td></tr>
+          <tr><td>drs_enabled</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Whether DRS is enabled</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> region</p>
+      <p><strong>Nestable children:</strong> <code>vms</code> (vm), <code>servers</code> (server)</p>
+      <p>Nested nodes receive the cluster as their <code>owner</code> and an auto-generated <code>belongs_to</code> relation (member → cluster) is created.</p>
+<pre class="language-yaml"><code>- id: cluster-prod-01
+  kind: cluster
+  name: Production Cluster 01
+  attributes:
+    status: active
+  spec:
+    cluster_type: hyperconverged
+    ha_enabled: true
+    drs_enabled: true
+    vms:
+      - id: vm-k8s-node-01
+        name: K8s Node 01
+        spec:
+          cpu:
+            - cores: 4
+          memory:
+            - size_gb: 16
+      - id: vm-k8s-node-02
+        name: K8s Node 02
+        spec:
+          cpu:
+            - cores: 4
+          memory:
+            - size_gb: 16
+    servers:
+      - id: srv-k8s-node-01
+        name: K8s Bare-metal Node 01</code></pre>
+
+      <h3 id="availability_zone">availability_zone</h3>
+      <p>A logical availability zone within a region.</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>state</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>available</td><td>Availability zone state (available, impaired, unavailable)</td></tr>
+        </tbody>
+      </table>
+      <p><strong>Ownership:</strong> region</p>
+<pre class="language-yaml"><code>- id: az-tokyo-a
+  kind: availability_zone
+  name: Tokyo Zone A
+  attributes:
+    owner: region-ap-northeast-1
+  spec:
+    state: available</code></pre>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>Entity Kinds &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>

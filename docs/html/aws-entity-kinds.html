@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AWS Entity Kinds | IACForge Reference</title>
+  <meta name="description" content="AWS拡張（iacforge.aws）が定義する全47種類のEntity Kind定義とプロパティ。">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <button class="menu-toggle" aria-label="Open navigation"></button>
+  <div class="topbar-brand">
+    <a href="index.html"><span class="topbar-logo">I</span>IACForge<span class="topbar-version">v0.1.0</span></a>
+  </div>
+  <nav class="topbar-nav">
+    <a href="index.html">Reference</a>
+    <a href="example.html">Example</a>
+  </nav>
+  <div class="topbar-search">
+    <input type="search" id="search-input" placeholder="Search docs" autocomplete="off" aria-label="Search documentation">
+    <span class="search-icon"></span>
+    <div class="search-dropdown" id="search-dropdown"></div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar" id="sidebar">
+    <nav aria-label="Documentation navigation">
+      <div class="sidebar-section" data-section="overview">
+        <div class="sidebar-section-title">Overview</div>
+        <div class="sidebar-links">
+          <a href="index.html"><span class="link-icon"></span>Home</a>
+        </div>
+      </div>
+      <div class="sidebar-section" data-section="yaml">
+        <div class="sidebar-section-title">YAML Reference</div>
+        <div class="sidebar-links">
+          <a href="document-structure.html"><span class="link-icon"></span>Document Structure</a>
+          <a href="entity-syntax.html"><span class="link-icon"></span>Entity Syntax</a>
+          <a href="entity-kinds.html"><span class="link-icon"></span>Entity Kinds</a>
+          <a href="aws-entity-kinds.html" class="active" aria-current="page"><span class="link-icon"></span>AWS Entity Kinds</a>
+          <a href="relation-syntax.html"><span class="link-icon"></span>Relation Syntax</a>
+          <a href="relation-types.html"><span class="link-icon"></span>Relation Types</a>
+          <a href="aws-relation-types.html"><span class="link-icon"></span>AWS Relation Types</a>
+          <a href="references.html"><span class="link-icon"></span>References</a>
+          <a href="validation.html"><span class="link-icon"></span>Validation</a>
+          <a href="example.html"><span class="link-icon"></span>Complete Example</a>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-wrap">
+
+      <div class="breadcrumb"><a href="index.html">Home</a><span class="sep">/</span><span>YAML Reference</span><span class="sep">/</span><span>AWS Entity Kinds</span></div>
+
+<h1>AWS Entity Kinds</h1>
+<hr>
+<p>AWS拡張（<code>iacforge.aws</code>）が定義するエンティティKindのリファレンスです。</p>
+<ul>
+  <li>すべてのKindは <code>aws.</code> プレフィックスを持ちます</li>
+  <li><code>aws.organization</code> はルート権限Kind（単一ルート所有権ツリーの例外）</li>
+  <li>IDはケバブケースの短名、ARNは <code>labels.arn</code> に格納します</li>
+  <li>正式な仕様は <a href="../../spec/concrete/22-aws-extension.md">spec/concrete/22-aws-extension.md</a> を参照</li>
+</ul>
+<h2>Kind一覧</h2>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Kind</th><th>Category</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>aws.organization</td><td>Organization</td><td>AWS organization</td></tr>
+          <tr><td>aws.account</td><td>Organization</td><td>AWS account</td></tr>
+          <tr><td>aws.iam_user</td><td>IAM</td><td>IAM user</td></tr>
+          <tr><td>aws.iam_group</td><td>IAM</td><td>IAM group</td></tr>
+          <tr><td>aws.iam_role</td><td>IAM</td><td>IAM role</td></tr>
+          <tr><td>aws.iam_policy</td><td>IAM</td><td>IAM policy document</td></tr>
+          <tr><td>aws.iam_instance_profile</td><td>IAM</td><td>IAM instance profile</td></tr>
+          <tr><td>aws.region</td><td>Network</td><td>AWS region</td></tr>
+          <tr><td>aws.availability_zone</td><td>Network</td><td>Availability zone</td></tr>
+          <tr><td>aws.vpc</td><td>Network</td><td>Virtual Private Cloud</td></tr>
+          <tr><td>aws.subnet</td><td>Network</td><td>Subnet</td></tr>
+          <tr><td>aws.route_table</td><td>Network</td><td>Route table</td></tr>
+          <tr><td>aws.route</td><td>Network</td><td>Route entry</td></tr>
+          <tr><td>aws.internet_gateway</td><td>Network</td><td>Internet gateway</td></tr>
+          <tr><td>aws.nat_gateway</td><td>Network</td><td>NAT gateway</td></tr>
+          <tr><td>aws.security_group</td><td>Network</td><td>Security group</td></tr>
+          <tr><td>aws.security_group_rule</td><td>Network</td><td>Security group rule</td></tr>
+          <tr><td>aws.elastic_ip</td><td>Network</td><td>Elastic IP</td></tr>
+          <tr><td>aws.network_acl</td><td>Network</td><td>Network ACL</td></tr>
+          <tr><td>aws.vpc_peering_connection</td><td>Network</td><td>VPC peering connection</td></tr>
+          <tr><td>aws.transit_gateway</td><td>Network</td><td>Transit gateway</td></tr>
+          <tr><td>aws.ec2</td><td>Compute</td><td>EC2 instance</td></tr>
+          <tr><td>aws.ami</td><td>Compute</td><td>Amazon Machine Image</td></tr>
+          <tr><td>aws.key_pair</td><td>Compute</td><td>Key pair</td></tr>
+          <tr><td>aws.launch_template</td><td>Compute</td><td>Launch template</td></tr>
+          <tr><td>aws.auto_scaling_group</td><td>Compute</td><td>Auto Scaling group</td></tr>
+          <tr><td>aws.ebs_volume</td><td>Compute</td><td>EBS volume</td></tr>
+          <tr><td>aws.ebs_snapshot</td><td>Compute</td><td>EBS snapshot</td></tr>
+          <tr><td>aws.lambda_function</td><td>Compute</td><td>Lambda function</td></tr>
+          <tr><td>aws.s3_bucket</td><td>Storage</td><td>S3 bucket</td></tr>
+          <tr><td>aws.efs</td><td>Storage</td><td>Elastic File System</td></tr>
+          <tr><td>aws.rds</td><td>Database</td><td>RDS instance</td></tr>
+          <tr><td>aws.dynamodb_table</td><td>Database</td><td>DynamoDB table</td></tr>
+          <tr><td>aws.elasticache</td><td>Database</td><td>ElastiCache cluster</td></tr>
+          <tr><td>aws.load_balancer</td><td>Load Balancer</td><td>Elastic Load Balancer</td></tr>
+          <tr><td>aws.target_group</td><td>Load Balancer</td><td>Target group</td></tr>
+          <tr><td>aws.listener</td><td>Load Balancer</td><td>Load balancer listener</td></tr>
+          <tr><td>aws.sqs_queue</td><td>Integration</td><td>SQS queue</td></tr>
+          <tr><td>aws.sns_topic</td><td>Integration</td><td>SNS topic</td></tr>
+          <tr><td>aws.api_gateway</td><td>Integration</td><td>API Gateway</td></tr>
+          <tr><td>aws.cloudfront_distribution</td><td>Integration</td><td>CloudFront distribution</td></tr>
+          <tr><td>aws.eventbridge_rule</td><td>Integration</td><td>EventBridge rule</td></tr>
+          <tr><td>aws.cloudwatch_alarm</td><td>Monitoring</td><td>CloudWatch alarm</td></tr>
+          <tr><td>aws.cloudwatch_log_group</td><td>Monitoring</td><td>CloudWatch log group</td></tr>
+          <tr><td>aws.cloudwatch_dashboard</td><td>Monitoring</td><td>CloudWatch dashboard</td></tr>
+          <tr><td>aws.route53_zone</td><td>DNS</td><td>Route 53 hosted zone</td></tr>
+          <tr><td>aws.route53_record</td><td>DNS</td><td>Route 53 DNS record</td></tr>
+        </tbody>
+      </table>
+
+<hr>
+<h2>Ownership Tree</h2>
+<pre class="language-text"><code>aws.organization
+└── aws.account
+    ├── aws.region
+    │   ├── aws.availability_zone
+    │   │   ├── aws.s3_bucket
+    │   │   ├── aws.elasticache
+    │   │   └── aws.ebs_volume
+    │   └── aws.vpc
+    │       ├── aws.subnet
+    │       │   ├── aws.ec2
+    │       │   ├── aws.rds
+    │       │   ├── aws.load_balancer
+    │       │   └── aws.nat_gateway
+    │       ├── aws.security_group
+    │       │   └── aws.security_group_rule
+    │       ├── aws.route_table
+    │       │   └── aws.route
+    │       ├── aws.internet_gateway
+    │       └── aws.network_acl
+    ├── aws.iam_user / aws.iam_group / aws.iam_role / aws.iam_policy / aws.iam_instance_profile
+    ├── aws.lambda_function / aws.sqs_queue / aws.sns_topic / aws.dynamodb_table / aws.api_gateway
+    ├── aws.route53_zone (→ aws.route53_record)
+    ├── aws.cloudfront_distribution / aws.eventbridge_rule
+    ├── aws.cloudwatch_alarm / aws.cloudwatch_log_group / aws.cloudwatch_dashboard
+    ├── aws.ami / aws.key_pair / aws.launch_template / aws.auto_scaling_group
+    ├── aws.ebs_snapshot / aws.elastic_ip / aws.target_group / aws.efs
+    ├── aws.vpc_peering_connection / aws.transit_gateway
+    └── aws.load_balancer (→ aws.listener)</code></pre>
+<hr>
+<h2>Organization / Account</h2>
+<h3>aws.organization</h3>
+<p>AWS organization。ルート権限Kind（ownerを指定しない）。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>org_root</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Root organizational unit ID</td></tr>
+          <tr><td>org_units</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Organizational units</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> Root (no owner specified)</p>
+<p><strong>Nestable Children:</strong> <code>accounts</code> (aws.account)</p>
+<pre class="language-yaml"><code>- id: org-01
+  kind: aws.organization
+  name: Example Org
+  attributes:
+    status: active
+  spec:
+    org_units:
+      - &quot;ou-1&quot;</code></pre>
+<hr>
+<h3>aws.account</h3>
+<p>AWSアカウント。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>account_id</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>AWS account ID (12 digits)</td></tr>
+          <tr><td>alias</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Account alias</td></tr>
+          <tr><td>email</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Account root email address</td></tr>
+          <tr><td>org_path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Organizational unit path</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.organization</p>
+<p><strong>Nestable Children:</strong> <code>regions</code>, <code>iam_users</code>, <code>iam_groups</code>, <code>iam_roles</code>, <code>iam_policies</code>, <code>iam_instance_profiles</code>, <code>lambda_functions</code>, <code>sqs_queues</code>, <code>sns_topics</code>, <code>dynamodb_tables</code>, <code>api_gateways</code>, <code>route53_zones</code>, <code>cloudfront_distributions</code>, <code>eventbridge_rules</code>, <code>cloudwatch_alarms</code>, <code>cloudwatch_log_groups</code>, <code>cloudwatch_dashboards</code>, <code>amis</code>, <code>key_pairs</code>, <code>launch_templates</code>, <code>auto_scaling_groups</code>, <code>efs_filesystems</code>, <code>ebs_snapshots</code>, <code>elastic_ips</code>, <code>target_groups</code>, <code>vpc_peering_connections</code>, <code>transit_gateways</code></p>
+<pre class="language-yaml"><code>- id: acct-01
+  kind: aws.account
+  name: Example Account
+  attributes:
+    owner: org-01
+    status: active
+    labels:
+      arn: arn:aws:organizations::123456789012:account/o-1234/123456789012
+  spec:
+    account_id: &quot;123456789012&quot;
+    alias: example-acct</code></pre>
+<hr>
+<h2>IAM</h2>
+<h3>aws.iam_user</h3>
+<p>IAMユーザー。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>arn</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Amazon Resource Name</td></tr>
+          <tr><td>path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Path in the IAM hierarchy</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: iam-user-deploy
+  kind: aws.iam_user
+  name: Deploy User
+  attributes:
+    owner: acct-01
+  spec:
+    path: /service/</code></pre>
+<hr>
+<h3>aws.iam_group</h3>
+<p>IAMグループ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>arn</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Amazon Resource Name</td></tr>
+          <tr><td>path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Path in the IAM hierarchy</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: iam-group-admins
+  kind: aws.iam_group
+  name: Admins
+  attributes:
+    owner: acct-01</code></pre>
+<hr>
+<h3>aws.iam_role</h3>
+<p>IAMロール。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>arn</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Amazon Resource Name</td></tr>
+          <tr><td>path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Path in the IAM hierarchy</td></tr>
+          <tr><td>assume_role_policy</td><td><span class="type-badge">map</span></td><td><span class="req-no">no</span></td><td>-</td><td>Trust policy document</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: iam-role-lambda
+  kind: aws.iam_role
+  name: Lambda Execution Role
+  attributes:
+    owner: acct-01
+  spec:
+    assume_role_policy:
+      Effect: Allow
+      Principal:
+        Service: lambda.amazonaws.com</code></pre>
+<hr>
+<h3>aws.iam_policy</h3>
+<p>IAMポリシードキュメント。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>arn</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Amazon Resource Name</td></tr>
+          <tr><td>path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Path in the IAM hierarchy</td></tr>
+          <tr><td>policy_document</td><td><span class="type-badge">map</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Policy statement document</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: iam-policy-s3-read
+  kind: aws.iam_policy
+  name: S3 Read
+  attributes:
+    owner: acct-01
+  spec:
+    policy_document:
+      Version: &quot;2012-10-17&quot;
+      Statement:
+        - Effect: Allow
+          Action: s3:GetObject
+          Resource: &quot;*&quot;</code></pre>
+<hr>
+<h3>aws.iam_instance_profile</h3>
+<p>IAMインスタンスプロファイル。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>arn</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Amazon Resource Name</td></tr>
+          <tr><td>path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Path in the IAM hierarchy</td></tr>
+          <tr><td>roles</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Roles contained in the profile</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: iam-profile-web
+  kind: aws.iam_instance_profile
+  name: Web Instance Profile
+  attributes:
+    owner: acct-01
+  spec:
+    roles:
+      - iam-role-web</code></pre>
+<hr>
+<h2>Network</h2>
+<h3>aws.region</h3>
+<p>AWSリージョン。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>region_code</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Region code (e.g. us-east-1)</td></tr>
+          <tr><td>partition</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Partition (aws, aws-cn, aws-us-gov, aws-iso, aws-iso-b)</td></tr>
+          <tr><td>opt_in_status</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Opt-in status (opted-in, not-opted-in, opt-in-not-required)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<p><strong>Nestable Children:</strong> <code>availability_zones</code> (aws.availability_zone), <code>vpcs</code> (aws.vpc)</p>
+<pre class="language-yaml"><code>- id: region-us-east-1
+  kind: aws.region
+  name: us-east-1
+  attributes:
+    owner: acct-01
+  spec:
+    region_code: us-east-1
+    partition: aws</code></pre>
+<hr>
+<h3>aws.availability_zone</h3>
+<p>アベイラビリティゾーン。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>zone_name</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>AZ name (e.g. us-east-1a)</td></tr>
+          <tr><td>zone_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>AZ ID (e.g. use1-az1)</td></tr>
+          <tr><td>group_name</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Local zone group name</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.region</p>
+<p><strong>Nestable Children:</strong> <code>s3_buckets</code> (aws.s3_bucket), <code>elasticache_clusters</code> (aws.elasticache), <code>ebs_volumes</code> (aws.ebs_volume)</p>
+<pre class="language-yaml"><code>- id: az-us-east-1a
+  kind: aws.availability_zone
+  name: us-east-1a
+  attributes:
+    owner: region-us-east-1
+  spec:
+    zone_name: us-east-1a
+    zone_id: use1-az1</code></pre>
+<hr>
+<h3>aws.vpc</h3>
+<p>Virtual Private Cloud。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cidr_block</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>IPv4 CIDR block</td></tr>
+          <tr><td>tenancy</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Tenancy (default, dedicated, host)</td></tr>
+          <tr><td>dns_support</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>true</td><td>DNS resolution support</td></tr>
+          <tr><td>flow_logs</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>VPC flow logs</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.region</p>
+<p><strong>Nestable Children:</strong> <code>subnets</code> (aws.subnet), <code>security_groups</code> (aws.security_group), <code>route_tables</code> (aws.route_table), <code>internet_gateways</code> (aws.internet_gateway), <code>network_acls</code> (aws.network_acl)</p>
+<pre class="language-yaml"><code>- id: vpc-01
+  kind: aws.vpc
+  name: Main VPC
+  attributes:
+    owner: region-us-east-1
+    status: active
+  spec:
+    cidr_block: 10.0.0.0/16
+    dns_support: true</code></pre>
+<hr>
+<h3>aws.subnet</h3>
+<p>サブネット。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>cidr_block</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>IPv4 CIDR block</td></tr>
+          <tr><td>map_public_ip</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Public IP by default</td></tr>
+          <tr><td>default_for_az</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Default subnet for the AZ</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.vpc</p>
+<p><strong>Nestable Children:</strong> <code>ec2_instances</code> (aws.ec2), <code>rds_instances</code> (aws.rds), <code>load_balancers</code> (aws.load_balancer), <code>nat_gateways</code> (aws.nat_gateway)</p>
+<pre class="language-yaml"><code>- id: subnet-public-01
+  kind: aws.subnet
+  name: Public Subnet 01
+  attributes:
+    owner: vpc-01
+  spec:
+    cidr_block: 10.0.1.0/24
+    map_public_ip: true</code></pre>
+<hr>
+<h3>aws.route_table</h3>
+<p>ルートテーブル。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>(none)</td><td><span class="type-badge">-</span></td><td><span class="req-no">no</span></td><td>-</td><td>Uses only common properties</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.vpc</p>
+<p><strong>Nestable Children:</strong> <code>routes</code> (aws.route)</p>
+<pre class="language-yaml"><code>- id: rt-main
+  kind: aws.route_table
+  name: Main Route Table
+  attributes:
+    owner: vpc-01
+  spec:
+    routes:
+      - id: route-public
+        spec:
+          destination_cidr: 0.0.0.0/0
+          gateway_id: igw-01</code></pre>
+<hr>
+<h3>aws.route</h3>
+<p>ルートエントリ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>destination_cidr</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Destination IPv4 CIDR</td></tr>
+          <tr><td>gateway_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Internet/VPGW ID</td></tr>
+          <tr><td>nat_gateway_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>NAT gateway ID</td></tr>
+          <tr><td>transit_gateway_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Transit gateway ID</td></tr>
+          <tr><td>vpc_peering_connection_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Peering connection ID</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.route_table</p>
+<pre class="language-yaml"><code>- id: route-public
+  kind: aws.route
+  name: Default Route
+  attributes:
+    owner: rt-main
+  spec:
+    destination_cidr: 0.0.0.0/0
+    gateway_id: igw-01</code></pre>
+<hr>
+<h3>aws.internet_gateway</h3>
+<p>インターネットゲートウェイ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>(none)</td><td><span class="type-badge">-</span></td><td><span class="req-no">no</span></td><td>-</td><td>Uses only common properties</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.vpc</p>
+<pre class="language-yaml"><code>- id: igw-01
+  kind: aws.internet_gateway
+  name: Internet GW
+  attributes:
+    owner: vpc-01</code></pre>
+<hr>
+<h3>aws.nat_gateway</h3>
+<p>NATゲートウェイ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>connectivity_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Connectivity type (public, private)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.subnet</p>
+<pre class="language-yaml"><code>- id: nat-01
+  kind: aws.nat_gateway
+  name: NAT GW 01
+  attributes:
+    owner: subnet-public-01
+  spec:
+    connectivity_type: public</code></pre>
+<hr>
+<h3>aws.security_group</h3>
+<p>セキュリティグループ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>description</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Description</td></tr>
+          <tr><td>vpc_id</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Reference to the VPC</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.vpc</p>
+<p><strong>Nestable Children:</strong> <code>security_group_rules</code> (aws.security_group_rule)</p>
+<pre class="language-yaml"><code>- id: sg-web
+  kind: aws.security_group
+  name: Web SG
+  attributes:
+    owner: vpc-01
+  spec:
+    description: Web server security group
+    vpc_id: &quot;@vpc-01&quot;</code></pre>
+<hr>
+<h3>aws.security_group_rule</h3>
+<p>セキュリティグループルール。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Direction (ingress, egress)</td></tr>
+          <tr><td>from_port</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Start port (0-65535)</td></tr>
+          <tr><td>to_port</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>End port (0-65535)</td></tr>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Protocol (tcp, udp, icmp, icmpv6, -1)</td></tr>
+          <tr><td>source_security_group</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Source SG reference</td></tr>
+          <tr><td>source_cidr</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Source IPv4 CIDR</td></tr>
+          <tr><td>destination_cidr</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Destination IPv4 CIDR</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.security_group</p>
+<pre class="language-yaml"><code>- id: sg-web-https
+  kind: aws.security_group_rule
+  name: Allow HTTPS
+  attributes:
+    owner: sg-web
+  spec:
+    type: ingress
+    protocol: tcp
+    from_port: 443
+    to_port: 443
+    source_cidr: 0.0.0.0/0</code></pre>
+<hr>
+<h3>aws.elastic_ip</h3>
+<p>Elastic IPアドレス。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>domain</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Domain (vpc, standard)</td></tr>
+          <tr><td>public_ip</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Public IPv4 address</td></tr>
+          <tr><td>association</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Associated entity reference</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: eip-01
+  kind: aws.elastic_ip
+  name: Web EIP
+  attributes:
+    owner: acct-01
+  spec:
+    domain: vpc</code></pre>
+<hr>
+<h3>aws.network_acl</h3>
+<p>ネットワークACL。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>default_action</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Default action (allow, deny)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.vpc</p>
+<pre class="language-yaml"><code>- id: nacl-public
+  kind: aws.network_acl
+  name: Public NACL
+  attributes:
+    owner: vpc-01
+  spec:
+    default_action: deny</code></pre>
+<hr>
+<h3>aws.vpc_peering_connection</h3>
+<p>VPCピアリング接続。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>auto_accept</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Auto accept</td></tr>
+          <tr><td>peer_vpc_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Peer VPC ID</td></tr>
+          <tr><td>peer_region</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Peer region</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: peering-01
+  kind: aws.vpc_peering_connection
+  name: Peering VPC-01/VPC-02
+  attributes:
+    owner: acct-01
+  spec:
+    peer_vpc_id: vpc-02</code></pre>
+<hr>
+<h3>aws.transit_gateway</h3>
+<p>トランジットゲートウェイ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>amazon_side_asn</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Private ASN</td></tr>
+          <tr><td>dns_support</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>DNS support (enable, disable)</td></tr>
+          <tr><td>vpn_ecmp_support</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>VPN ECMP support (enable, disable)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: tgw-01
+  kind: aws.transit_gateway
+  name: Transit GW
+  attributes:
+    owner: acct-01
+  spec:
+    amazon_side_asn: 64512</code></pre>
+<hr>
+<h2>Compute</h2>
+<h3>aws.ec2</h3>
+<p>EC2インスタンス。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>instance_type</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Instance type (e.g. t3.micro)</td></tr>
+          <tr><td>ami</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>AMI reference</td></tr>
+          <tr><td>key_pair</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Key pair reference</td></tr>
+          <tr><td>subnet</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Subnet reference</td></tr>
+          <tr><td>security_groups</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Security group references</td></tr>
+          <tr><td>user_data</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>User data script</td></tr>
+          <tr><td>iam_instance_profile</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Instance profile reference</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.subnet</p>
+<pre class="language-yaml"><code>- id: ec2-web-01
+  kind: aws.ec2
+  name: Web Server 01
+  attributes:
+    owner: subnet-public-01
+    status: active
+  spec:
+    instance_type: t3.micro
+    ami: &quot;@ami-ubuntu-2404&quot;
+    subnet: &quot;@subnet-public-01&quot;
+    security_groups:
+      - &quot;@sg-web&quot;</code></pre>
+<hr>
+<h3>aws.ami</h3>
+<p>Amazon Machine Image。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>image_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>AMI ID</td></tr>
+          <tr><td>architecture</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Architecture (x86_64, arm64)</td></tr>
+          <tr><td>virtualization_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Virtualization (hvm, paravirtual)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: ami-ubuntu-2404
+  kind: aws.ami
+  name: Ubuntu 24.04
+  attributes:
+    owner: acct-01
+  spec:
+    image_id: ami-0123456789abcdef0
+    architecture: x86_64</code></pre>
+<hr>
+<h3>aws.key_pair</h3>
+<p>キーペア。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>key_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Key type (rsa, ed25519)</td></tr>
+          <tr><td>fingerprint</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>SHA-1 fingerprint</td></tr>
+          <tr><td>public_key</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Public key material</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: kp-web
+  kind: aws.key_pair
+  name: Web Key Pair
+  attributes:
+    owner: acct-01
+  spec:
+    key_type: rsa</code></pre>
+<hr>
+<h3>aws.launch_template</h3>
+<p>起動テンプレート。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>image_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>AMI image ID</td></tr>
+          <tr><td>instance_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Instance type</td></tr>
+          <tr><td>key_name</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Key pair name</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: lt-web
+  kind: aws.launch_template
+  name: Web LT
+  attributes:
+    owner: acct-01
+  spec:
+    image_id: ami-0123456789abcdef0
+    instance_type: t3.micro</code></pre>
+<hr>
+<h3>aws.auto_scaling_group</h3>
+<p>Auto Scalingグループ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>min_size</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Minimum instances (0-5000)</td></tr>
+          <tr><td>max_size</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Maximum instances (0-5000)</td></tr>
+          <tr><td>desired_capacity</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Desired instances (0-5000)</td></tr>
+          <tr><td>launch_template</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>Launch template reference</td></tr>
+          <tr><td>vpc_zone_identifier</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Subnet references</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: asg-web
+  kind: aws.auto_scaling_group
+  name: Web ASG
+  attributes:
+    owner: acct-01
+  spec:
+    min_size: 1
+    max_size: 4
+    desired_capacity: 2
+    launch_template: &quot;@lt-web&quot;
+    vpc_zone_identifier:
+      - &quot;@subnet-public-01&quot;</code></pre>
+<hr>
+<h3>aws.ebs_volume</h3>
+<p>EBSボリューム。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>volume_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Volume type (gp2, gp3, io1, io2, st1, sc1, standard)</td></tr>
+          <tr><td>size_gb</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Size in GiB</td></tr>
+          <tr><td>iops</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Provisioned IOPS</td></tr>
+          <tr><td>encrypted</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>-</td><td>Encrypted</td></tr>
+          <tr><td>kms_key_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>KMS key ID</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.availability_zone</p>
+<pre class="language-yaml"><code>- id: ebs-data-01
+  kind: aws.ebs_volume
+  name: Data Volume
+  attributes:
+    owner: az-us-east-1a
+  spec:
+    volume_type: gp3
+    size_gb: 100
+    encrypted: true</code></pre>
+<hr>
+<h3>aws.ebs_snapshot</h3>
+<p>EBSスナップショット。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>volume_id</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Source volume ID</td></tr>
+          <tr><td>size_gb</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Size in GiB</td></tr>
+          <tr><td>encrypted</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>-</td><td>Encrypted</td></tr>
+          <tr><td>state</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>State (pending, completed, error)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: snap-data-01
+  kind: aws.ebs_snapshot
+  name: Data Snapshot
+  attributes:
+    owner: acct-01
+  spec:
+    volume_id: ebs-data-01
+    state: completed</code></pre>
+<hr>
+<h3>aws.lambda_function</h3>
+<p>Lambda関数。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>runtime</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Runtime (e.g. python3.12)</td></tr>
+          <tr><td>handler</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Function handler</td></tr>
+          <tr><td>role</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>IAM role reference</td></tr>
+          <tr><td>memory_size</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Memory in MB (128-10240)</td></tr>
+          <tr><td>vpc_config</td><td><span class="type-badge">map</span></td><td><span class="req-no">no</span></td><td>-</td><td>VPC configuration</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: lambda-processor
+  kind: aws.lambda_function
+  name: Processor
+  attributes:
+    owner: acct-01
+  spec:
+    runtime: python3.12
+    handler: index.handler
+    role: &quot;@iam-role-lambda&quot;
+    memory_size: 512</code></pre>
+<hr>
+<h2>Storage / Database</h2>
+<h3>aws.s3_bucket</h3>
+<p>S3バケット。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>versioning</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Bucket versioning</td></tr>
+          <tr><td>encryption</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Server-side encryption</td></tr>
+          <tr><td>lifecycle_rules</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Lifecycle rules</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.availability_zone</p>
+<pre class="language-yaml"><code>- id: s3-assets
+  kind: aws.s3_bucket
+  name: Assets Bucket
+  attributes:
+    owner: az-us-east-1a
+    labels:
+      arn: arn:aws:s3:::assets-bucket
+  spec:
+    versioning: true
+    encryption: true</code></pre>
+<hr>
+<h3>aws.efs</h3>
+<p>Elastic File System。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>encrypted</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Encrypted</td></tr>
+          <tr><td>performance_mode</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Performance mode (generalPurpose, maxIO)</td></tr>
+          <tr><td>throughput_mode</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Throughput mode (bursting, provisioned, elastic)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: efs-data
+  kind: aws.efs
+  name: Data EFS
+  attributes:
+    owner: acct-01
+  spec:
+    performance_mode: generalPurpose</code></pre>
+<hr>
+<h3>aws.rds</h3>
+<p>RDSインスタンス。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>engine</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Engine (aurora, mysql, postgres, ...)</td></tr>
+          <tr><td>engine_version</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Engine version</td></tr>
+          <tr><td>instance_class</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Instance class (e.g. db.t3.micro)</td></tr>
+          <tr><td>multi_az</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Multi-AZ</td></tr>
+          <tr><td>storage_gb</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Storage in GiB</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.subnet</p>
+<pre class="language-yaml"><code>- id: rds-main
+  kind: aws.rds
+  name: Main Database
+  attributes:
+    owner: subnet-private-01
+  spec:
+    engine: postgres
+    instance_class: db.t3.micro
+    multi_az: true</code></pre>
+<hr>
+<h3>aws.dynamodb_table</h3>
+<p>DynamoDBテーブル。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>billing_mode</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Billing mode (PROVISIONED, ON_DEMAND)</td></tr>
+          <tr><td>table_class</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Table class (STANDARD, STANDARD_INFREQUENT_ACCESS)</td></tr>
+          <tr><td>stream_enabled</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>DynamoDB Streams</td></tr>
+          <tr><td>partition_key</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Partition key name</td></tr>
+          <tr><td>sort_key</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Sort key name</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: dynamo-sessions
+  kind: aws.dynamodb_table
+  name: Sessions
+  attributes:
+    owner: acct-01
+  spec:
+    billing_mode: ON_DEMAND
+    partition_key: session_id</code></pre>
+<hr>
+<h3>aws.elasticache</h3>
+<p>ElastiCacheクラスター。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>engine</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Engine (redis, memcached)</td></tr>
+          <tr><td>node_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Node type</td></tr>
+          <tr><td>num_cache_nodes</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Number of nodes</td></tr>
+          <tr><td>cluster_mode</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Cluster mode</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.availability_zone</p>
+<pre class="language-yaml"><code>- id: redis-cache
+  kind: aws.elasticache
+  name: Redis Cache
+  attributes:
+    owner: az-us-east-1a
+  spec:
+    engine: redis
+    node_type: cache.t3.micro</code></pre>
+<hr>
+<h2>Load Balancer</h2>
+<h3>aws.load_balancer</h3>
+<p>Elastic Load Balancer。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Type (application, network, gateway, classic)</td></tr>
+          <tr><td>scheme</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Scheme (internet-facing, internal)</td></tr>
+          <tr><td>dns_name</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>DNS name</td></tr>
+          <tr><td>subnets</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Subnet references</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.subnet</p>
+<p><strong>Nestable Children:</strong> <code>listeners</code> (aws.listener)</p>
+<pre class="language-yaml"><code>- id: alb-web
+  kind: aws.load_balancer
+  name: Web ALB
+  attributes:
+    owner: subnet-public-01
+  spec:
+    type: application
+    scheme: internet-facing
+    subnets:
+      - &quot;@subnet-public-01&quot;</code></pre>
+<hr>
+<h3>aws.target_group</h3>
+<p>ターゲットグループ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Protocol (HTTP, HTTPS, TCP, ...)</td></tr>
+          <tr><td>port</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Traffic port (1-65535)</td></tr>
+          <tr><td>target_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Target type (instance, ip, lambda, alb)</td></tr>
+          <tr><td>health_check_path</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Health check path</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: tg-web
+  kind: aws.target_group
+  name: Web TG
+  attributes:
+    owner: acct-01
+  spec:
+    protocol: HTTP
+    port: 80
+    target_type: instance</code></pre>
+<hr>
+<h3>aws.listener</h3>
+<p>ロードバランサーリスナー。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>protocol</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Protocol (HTTP, HTTPS, TCP, TLS)</td></tr>
+          <tr><td>port</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Listener port (1-65535)</td></tr>
+          <tr><td>default_action</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Default action (forward, redirect)</td></tr>
+          <tr><td>certificate_arn</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>SSL/TLS certificate ARN</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.load_balancer</p>
+<pre class="language-yaml"><code>- id: alb-web-443
+  kind: aws.listener
+  name: HTTPS Listener
+  attributes:
+    owner: alb-web
+  spec:
+    protocol: HTTPS
+    port: 443
+    default_action: forward</code></pre>
+<hr>
+<h2>Integration</h2>
+<h3>aws.sqs_queue</h3>
+<p>SQSキュー。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>fifo</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>FIFO queue</td></tr>
+          <tr><td>visibility_timeout</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Visibility timeout (s)</td></tr>
+          <tr><td>delay_seconds</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Delay (s)</td></tr>
+          <tr><td>message_retention_seconds</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Message retention (s)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: sqs-jobs
+  kind: aws.sqs_queue
+  name: Jobs Queue
+  attributes:
+    owner: acct-01
+  spec:
+    visibility_timeout: 30</code></pre>
+<hr>
+<h3>aws.sns_topic</h3>
+<p>SNSトピック。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>fifo</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>FIFO topic</td></tr>
+          <tr><td>display_name</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Display name</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: sns-events
+  kind: aws.sns_topic
+  name: Events Topic
+  attributes:
+    owner: acct-01</code></pre>
+<hr>
+<h3>aws.api_gateway</h3>
+<p>API Gateway。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>endpoint_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Endpoint type (REGIONAL, EDGE, PRIVATE)</td></tr>
+          <tr><td>protocol_type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Protocol (REST, HTTP, WEBSOCKET)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: api-orders
+  kind: aws.api_gateway
+  name: Orders API
+  attributes:
+    owner: acct-01
+  spec:
+    protocol_type: REST</code></pre>
+<hr>
+<h3>aws.cloudfront_distribution</h3>
+<p>CloudFrontディストリビューション。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>origin</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Origin domain name</td></tr>
+          <tr><td>enabled</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>true</td><td>Distribution enabled</td></tr>
+          <tr><td>price_class</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Price class</td></tr>
+          <tr><td>domain_name</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>CloudFront domain name</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: cf-web
+  kind: aws.cloudfront_distribution
+  name: Web CDN
+  attributes:
+    owner: acct-01
+  spec:
+    origin: d123.cloudfront.net</code></pre>
+<hr>
+<h3>aws.eventbridge_rule</h3>
+<p>EventBridgeルール。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>event_pattern</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Event pattern JSON</td></tr>
+          <tr><td>schedule_expression</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Cron/rate expression</td></tr>
+          <tr><td>state</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>State (ENABLED, DISABLED)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: eb-daily
+  kind: aws.eventbridge_rule
+  name: Daily Job
+  attributes:
+    owner: acct-01
+  spec:
+    schedule_expression: &quot;cron(0 2 * * ? *)&quot;</code></pre>
+<hr>
+<h2>Monitoring</h2>
+<h3>aws.cloudwatch_alarm</h3>
+<p>CloudWatchアラーム。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>metric_name</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Metric name</td></tr>
+          <tr><td>namespace</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Metric namespace</td></tr>
+          <tr><td>threshold</td><td><span class="type-badge">number</span></td><td><span class="req-no">no</span></td><td>-</td><td>Threshold</td></tr>
+          <tr><td>comparison_operator</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Comparison operator</td></tr>
+          <tr><td>period_seconds</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Evaluation period (s)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: cw-cpu-alarm
+  kind: aws.cloudwatch_alarm
+  name: CPU Alarm
+  attributes:
+    owner: acct-01
+  spec:
+    metric_name: CPUUtilization
+    namespace: AWS/EC2
+    threshold: 80
+    period_seconds: 60</code></pre>
+<hr>
+<h3>aws.cloudwatch_log_group</h3>
+<p>CloudWatchロググループ。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>retention_days</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>Retention days (1-3653)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: cw-log-app
+  kind: aws.cloudwatch_log_group
+  name: /aws/app
+  attributes:
+    owner: acct-01
+  spec:
+    retention_days: 30</code></pre>
+<hr>
+<h3>aws.cloudwatch_dashboard</h3>
+<p>CloudWatchダッシュボード。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>body</td><td><span class="type-badge">map</span></td><td><span class="req-no">no</span></td><td>-</td><td>Widget configuration</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<pre class="language-yaml"><code>- id: cw-dashboard-overview
+  kind: aws.cloudwatch_dashboard
+  name: Overview
+  attributes:
+    owner: acct-01</code></pre>
+<hr>
+<h2>DNS</h2>
+<h3>aws.route53_zone</h3>
+<p>Route 53ホストゾーン。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>private</td><td><span class="type-badge">boolean</span></td><td><span class="req-no">no</span></td><td>false</td><td>Private zone</td></tr>
+          <tr><td>comment</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Zone comment</td></tr>
+          <tr><td>vpc_id</td><td><span class="type-badge">reference</span></td><td><span class="req-no">no</span></td><td>-</td><td>VPC reference (private zone)</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.account</p>
+<p><strong>Nestable Children:</strong> <code>records</code> (aws.route53_record)</p>
+<pre class="language-yaml"><code>- id: zone-example
+  kind: aws.route53_zone
+  name: example.com
+  attributes:
+    owner: acct-01
+  spec:
+    private: false</code></pre>
+<hr>
+<h3>aws.route53_record</h3>
+<p>Route 53 DNSレコード。</p>
+      <table class="ref-table">
+        <thead>
+          <tr><th>Property</th><th>Type</th><th>Required</th><th>Default</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>record_name</td><td><span class="type-badge">string</span></td><td><span class="req-yes">yes</span></td><td>-</td><td>Record name</td></tr>
+          <tr><td>type</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Record type (A, AAAA, CNAME, MX, NS, PTR, SOA, SRV, TXT)</td></tr>
+          <tr><td>ttl</td><td><span class="type-badge">integer</span></td><td><span class="req-no">no</span></td><td>-</td><td>TTL (s)</td></tr>
+          <tr><td>alias_target</td><td><span class="type-badge">string</span></td><td><span class="req-no">no</span></td><td>-</td><td>Alias target</td></tr>
+          <tr><td>records</td><td><span class="type-badge">list</span></td><td><span class="req-no">no</span></td><td>-</td><td>Resource records</td></tr>
+        </tbody>
+      </table>
+
+<p><strong>Ownership:</strong> aws.route53_zone</p>
+<pre class="language-yaml"><code>- id: record-www
+  kind: aws.route53_record
+  name: www.example.com
+  attributes:
+    owner: zone-example
+  spec:
+    type: A
+    ttl: 300
+    records:
+      - 10.0.1.10</code></pre>
+
+    </div>
+    <footer class="footer">
+      <span>&copy; 2026 IACForge. Infrastructure as knowledge.</span>
+      <span>AWS Entity Kinds &mdash; v0.1.0</span>
+    </footer>
+  </main>
+
+  <aside class="toc-column">
+    <div class="toc-title">On this page</div>
+    <nav id="page-toc" aria-label="On this page"></nav>
+  </aside>
+
+</div>
+
+<script src="assets/search-index.js"></script>
+<script src="assets/main.js"></script>
+</body>
+</html>
