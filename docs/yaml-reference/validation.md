@@ -24,10 +24,10 @@
 
 | 対象 | パターン | 例 |
 |------|----------|-----|
-| ID | kebab-case (推奨) | `srv-proxmox-01` |
-| Kind | 小文字・単数形 | `server`, `vm` |
-| Relation Type | snake_case | `connects`, `depends_on` |
-| Property | snake_case | `cpu`, `memory`, `storage` |
+| ID | kebab-case (推奨) | `sado-island` |
+| Kind | 小文字・単数形 | `area`, `species` |
+| Relation Type | snake_case | `located_in`, `depends_on` |
+| Property | snake_case | `soil_type`, `survey_date` |
 
 ---
 
@@ -42,7 +42,7 @@
 | no_cycles | Ownershipはサイクルを含まない |
 | owner_exists | Owner識別子は既存のEntityを参照する |
 
-> **拡張ルート権限:** 拡張によってルート権限を持つKindが許可されます。AWS拡張では `aws.organization` がルート権限を持つため、複数アカウントを単一組織ツリーとして表現できます（オンプレの `region` がルートの場合と共存可能）。
+> **拡張ルート権限:** 拡張によってルート権限を持つKindが許可されます。拡張が登録したKind（例: 組織を表す拡張Kind）には `AddAllowedRootKind` でルート権限を付与でき、複数ルートの共存が可能になります。
 
 ### Reference制約
 
@@ -57,54 +57,128 @@
 | Constraint | Description |
 |------------|-------------|
 | no-slash-in-id | IDにスラッシュを含めることはできません |
-| valid-nesting-parent | 親子関係がスキーマのネスト定義と一致すること |
+| valid-nesting-parent | 親子関係がスキーマのネスト定義と一致すること（例: population の親は species） |
 
 ### Cardinality制約
 
-| Type | Cardinality | Description |
-|------|-------------|-------------|
-| connects | N:N | 多対多接続 |
-| hosts | 1:N | 1ホスト、複数ゲスト |
-| depends_on | N:N | 多対多依存関係 |
-| belongs_to | N:N | 複数メンバー、複数グループ |
-| applies_to | N:N | 1 ACL、複数ターゲット |
-| listens_on | N:1 | 複数ポート、1インターフェース |
+すべてのコアRelation Typeは参加者数2（source/target）で検証されます。詳細は [Relation Types](relation-types.md) を参照してください。
 
 ---
 
-## ネットワーク整合性ルール
+## 検証ルール一覧
 
-InterfaceのIPアドレスとNetworkの整合性を保証する検証ルールです。
+検証エンジンが実行するコアルールの一覧です。
 
-> 導入時点ではすべて **warning** です。ドキュメント・モデル更新後、`ip-requires-network` と `ip-in-cidr` は **error** へ昇格予定です。
+### Graph整合性
 
 | Rule ID | Severity | Description |
 |---------|----------|-------------|
-| valid-ip-format | warning | interfaceの`ip_address`は有効なIPアドレスまたはCIDR表記であること |
-| ip-requires-network | warning | IPアドレスを持つinterfaceは`network`プロパティまたは`belongs_to` relationでnetworkを参照すること |
-| network-reference-kind | warning | interfaceの`network`参照はkind=networkのentityを指すこと |
-| ip-in-cidr | warning | interfaceのIPは参照networkの`cidr`内にあること |
-| network-cidr-required | warning | IPを持つmemberがいるnetworkは`cidr`を定義すること |
-| gateway-in-cidr | warning | networkの`gateway`は`cidr`内にあること |
-| ip-unique-in-network | warning | 同一network内でIPが重複しないこと |
+| unique-id | error | Entity/RelationのIDが重複していないこと |
+| valid-reference | error | Relationのparticipantsが存在するオブジェクトを参照すること |
+| valid-owner | error | Entityのownerが存在するEntityを指すこと |
+| single-owner | error | ルートは1つのみ（ルート権限を持つKindを除く） |
+| valid-property | warning | spec/propertiesがスキーマ定義（型・enum・required・min/max）に適合すること。未定義プロパティも報告される |
 
-### 例: IPを持つinterfaceはnetworkを参照する
+### Entity
+
+| Rule ID | Severity | Description |
+|---------|----------|-------------|
+| required-kind | error | Entityにkindがあること |
+| required-name | error | Entityにnameがあること |
+| valid-kind | error | kindがスキーマに定義されていること |
+| valid-status | warning | statusが有効な値であること |
+| no-slash-in-id | error | IDにスラッシュを含めないこと |
+| valid-nesting-parent | warning | 親子ネストがスキーマのネスト定義と一致すること |
+
+### Relation
+
+| Rule ID | Severity | Description |
+|---------|----------|-------------|
+| required-type | error | Relationにtypeがあること |
+| required-participants | error | Relationが最低2つのparticipantを持つこと |
+| valid-type | error | typeがスキーマに定義されていること |
+| valid-direction | error | 有向Relationがsource/targetを持つこと |
+| valid-cardinality | error | 参加者数がスキーマ定義のmin/max内であること |
+| valid-participant-kind | warning | participantのkindがそのRelation Typeで許可されていること |
+
+### Ownership
+
+| Rule ID | Severity | Description |
+|---------|----------|-------------|
+| ownership-tree | error | 所有権が単一の接続された木を形成すること |
+| no-ownership-cycle | error | 所有権チェーンにサイクルがないこと |
+| root-entity | error | グラフにルートEntityが存在し、複数ないこと |
+
+### Reference
+
+| Rule ID | Severity | Description |
+|---------|----------|-------------|
+| dangling-reference | error | owner / participants / `@`プロパティ参照が既存オブジェクトを指すこと |
+| invalid-path | error | パス参照が正しい所有権チェーンと一致すること |
+
+### Profile
+
+プロファイルで必須Kind/Relationを宣言した場合に評価されます。
+
+| Rule ID | Severity | Description |
+|---------|----------|-------------|
+| profile-required-kind | error | プロファイルが要求するkindのEntityが少なくとも1つあること |
+| profile-required-relation | error | プロファイルが要求するtypeのRelationが少なくとも1つあること |
+
+---
+
+## Niigataドメインルール
+
+新潟の自然・観光資源モデル向けのドメイン固有ルールです。
+
+| Rule ID | Severity | Description |
+|---------|----------|-------------|
+| population-requires-species | error | population Entityは必ず species をownerとすること |
+| positive-count | warning | population のcountは0以上であること |
+| valid-niigata-coordinates | warning | area の座標が新潟県の概算範囲（緯度36.6–38.7、経度137.9–139.9、佐渡島を含む）内にあること |
+
+### 例: population は species を親に持つ
 
 ```yaml
-- id: mgmt-network
-  kind: network
-  name: Management Network
-  spec:
-    cidr: 10.0.0.0/24
-    gateway: 10.0.0.1
-
-- id: eno1
-  kind: interface
-  name: eno1
+# OK: species 配下にネスト
+- id: species-toki
+  kind: species
+  name: Crested Ibis (Toki)
   attributes:
-    owner: srv-proxmox-01
+    owner: sado-island
   spec:
-    network: "@mgmt-network"
-    ip_address:
-      - 10.0.0.10
+    scientific_name: Nipponia nippon
+    category: bird
+    red_list_status: endangered
+    populations:
+      - id: toki-census-2025
+        name: Toki Census 2025
+        spec:
+          count: 731
+          survey_date: "2025-03-15"
+          survey_method: visual_count
+```
+
+```yaml
+# NG: area 直下の population → population-requires-species (error)
+- id: orphan-count
+  kind: population
+  name: Orphan Count
+  attributes:
+    owner: sado-island   # 親がspeciesではない
+  spec:
+    count: -5            # negative-count → positive-count (warning)
+```
+
+### 例: 新潟県外の座標
+
+```yaml
+# 東京の座標を指定すると警告が出る
+- id: tokyo-bay
+  kind: area
+  name: Tokyo Bay
+  spec:
+    area_type: district
+    latitude: 35.65      # 新潟範囲(36.6-38.7)外 → valid-niigata-coordinates (warning)
+    longitude: 139.75
 ```

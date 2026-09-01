@@ -5,10 +5,10 @@ import (
 	"os"
 	"sync"
 
-	"IACForge/src/core"
-	"IACForge/src/extension"
-	"IACForge/src/schema"
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/extension"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 // SessionManager manages per-session Graph instances.
@@ -52,9 +52,9 @@ func (m *SessionManager) GetOrCreate(sessionID string) *SessionData {
 	setup, err := extension.NewSetup(extension.DefaultExtensionDir())
 	if err != nil {
 		// Keep the server running with built-in extensions only when the
-		// plugin extension directory is unavailable (e.g. IACFORGE_EXTENSIONS
+		// plugin extension directory is unavailable (e.g. NIIGATA_EXTENSIONS
 		// points to a missing directory).
-		fmt.Fprintf(os.Stderr, "IACForge MCP: extension setup failed (%v); continuing with core setup only\n", err)
+		fmt.Fprintf(os.Stderr, "Niigata MCP: extension setup failed (%v); continuing with core setup only\n", err)
 		setup, err = extension.NewCoreSetup()
 		if err != nil {
 			panic(fmt.Sprintf("failed to initialize core extension setup: %v", err))

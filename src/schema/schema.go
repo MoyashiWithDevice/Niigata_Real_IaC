@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"sort"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // PropertyType represents a property type in the schema.
@@ -63,6 +63,10 @@ type ParticipantConstraints struct {
 
 // NestingDefinition defines a nestable child relationship for an entity kind.
 type NestingDefinition struct {
+	// ParentKind qualifies a global nesting definition (registered via
+	// AddNestingDef). Per-kind defs resolve their parent implicitly and
+	// leave this field empty.
+	ParentKind         core.EntityKind            `yaml:"parent_kind,omitempty"`
 	NestKey            string                     `yaml:"nest_key"`
 	ChildKind          core.EntityKind            `yaml:"child_kind"`
 	ChildKeys          map[string]core.EntityKind `yaml:"child_keys,omitempty"`
@@ -148,28 +152,45 @@ func (s *Schema) GetRelationTypeDef(relType core.RelationType) (*RelationTypeDef
 	return def, ok
 }
 
+// AddNestingDef registers a global nesting definition for the given parent kind.
+// Global defs apply in addition to per-kind NestingDefs, which allows extensions
+// to make their contributed kinds nestable under core kinds (e.g. area) without
+// modifying the core kind definitions themselves.
+func (s *Schema) AddNestingDef(parentKind core.EntityKind, def NestingDefinition) {
+	def.ParentKind = parentKind
+	s.NestingDefs = append(s.NestingDefs, def)
+}
+
 // GetNestingDefs returns the nesting definitions for the given entity kind.
-// Global nesting defs are merged with per-kind nesting defs.
+// Per-kind nesting defs are merged with global nesting defs qualified for the
+// kind via ParentKind (see AddNestingDef).
 // Per-kind defs take precedence over global defs when NestKey conflicts.
 func (s *Schema) GetNestingDefs(kind core.EntityKind) []NestingDefinition {
-	def, ok := s.EntityKinds[kind]
-	if !ok {
-		return s.NestingDefs
+	global := make([]NestingDefinition, 0, len(s.NestingDefs))
+	for _, nd := range s.NestingDefs {
+		if nd.ParentKind == "" || nd.ParentKind == kind {
+			global = append(global, nd)
+		}
 	}
 
-	if len(s.NestingDefs) == 0 {
+	def, ok := s.EntityKinds[kind]
+	if !ok {
+		return global
+	}
+
+	if len(global) == 0 {
 		return def.NestingDefs
 	}
 	if len(def.NestingDefs) == 0 {
-		return s.NestingDefs
+		return global
 	}
 
 	// Build merged list: per-kind overrides global by NestKey.
 	// Per-kind defs are returned first so they take precedence for
 	// consumers that select the first match (e.g., serializer nest key).
-	result := make([]NestingDefinition, 0, len(s.NestingDefs)+len(def.NestingDefs))
+	result := make([]NestingDefinition, 0, len(global)+len(def.NestingDefs))
 	result = append(result, def.NestingDefs...)
-	for _, nd := range s.NestingDefs {
+	for _, nd := range global {
 		overridden := false
 		for _, pnd := range def.NestingDefs {
 			if pnd.NestKey == nd.NestKey {

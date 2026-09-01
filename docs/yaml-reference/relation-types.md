@@ -8,115 +8,123 @@
 
 | Type | Direction | Cardinality | Description |
 |------|-----------|-------------|-------------|
-| connects | symmetric | N:N | Physical/logical connection |
-| hosts | directed | 1:N | Execution hosting |
-| depends_on | directed | N:N | Dependency |
-| belongs_to | directed | N:N | Logical membership |
-| replicates_to | directed | 1:N | Data replication |
-| backs_up | directed | 1:N | Backup relationship |
-| monitors | directed | 1:N | Monitoring |
-| managed_by | directed | N:1 | Management |
-| mounted_on | directed | N:1 | Storage mounting |
-| applies_to | directed | N:N | ACL application |
-| listens_on | directed | N:1 | Port listening |
-
-> **AWS拡張:** AWSのRelation Type（`aws.subscribes`, `aws.grants` 等）とコアタイプへのAWS参加者追加は [AWS Relation Types](aws-relation-types.md) を参照してください。
+| located_in | directed | 2 participants | Entityがareaまたはterrain内に位置する |
+| inhabits | directed | 2 participants | 種が生息地に住む |
+| near | symmetric | 2 participants | 2つの資源が地理的に近い |
+| depends_on | directed | 2 participants | 方向性のある依存関係 |
+| belongs_to | directed | 2 participants | 論理的な所属・帰属 |
+| flows_into | directed | 2 participants | 河川などの流れの行き先 |
 
 ---
 
 ## Core Relation Types
 
-### connects
+### located_in
 
-Represents a physical or logical connection between Entities.
+Entityがareaまたはterrainの中に位置することを表します。
 
 | Property | Value |
 |----------|-------|
-| Direction | symmetric |
-| Participants | Two or more Entities |
-| Cardinality | N:N |
+| Direction | directed |
+| Source | nature/tourism資源, species, population |
+| Target | area, terrain |
 
 **Additional Properties:**
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| connection_type | string | no | - | Type of connection (physical, logical, virtual) |
-| bandwidth_mbps | integer | no | - | Connection bandwidth in Mbps |
+| distance_km | number | no | - | ターゲットからの距離（km） |
 
 ```yaml
-- id: rel-connects-srv-sw
-  type: connects
+- id: rel-forest-locatedin
+  type: located_in
   participants:
-    - srv-proxmox-01/eno1
-    - sw-core-01/port1
-  attributes:
-    status: active
-  spec:
-    connection_type: physical
-    bandwidth_mbps: 10000
+    source: forest-osado-beech
+    target: mt-kinpoku
 ```
 
 ---
 
-### hosts
+### inhabits
 
-Represents an execution or hosting relationship.
+種（species / population）が生息地に住むことを表します。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Hosting Entity |
-| Target | Hosted Entity |
-| Cardinality | 1:N |
+| Source | species, population |
+| Target | ground, terrain, water_body, forest, area |
+
+**Additional Properties:**
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| habitat_note | string | no | - | 生息地利用に関するメモ |
 
 ```yaml
-- id: rel-hosts-server-vm
-  type: hosts
+- id: rel-toki-inhabits
+  type: inhabits
   participants:
-    source: srv-proxmox-01
-    target: vm-web-01
-  attributes:
-    status: active
+    source: species-toki
+    target: forest-osado-beech
+  spec:
+    habitat_note: Roosts in tall trees; feeds in restored rice paddies
+```
 
-- id: rel-hosts-vm-app
-  type: hosts
+---
+
+### near
+
+2つの資源が地理的に近いことを表します。対称関係のため、participantsはリスト形式で指定します。
+
+| Property | Value |
+|----------|-------|
+| Direction | symmetric |
+| Participants | tourism_spot, hot_spring, cultural_asset, event, ground, terrain, water_body, forest, area のうち2つ |
+
+**Additional Properties:**
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| walking_minutes | integer | no | - | 徒歩での移動時間（分） |
+
+```yaml
+- id: rel-shukunegi-near-coast
+  type: near
   participants:
-    source: vm-web-01
-    target: app-web-server
-  attributes:
-    status: active
+    - spot-shukunegi
+    - coast-otoline
+  spec:
+    walking_minutes: 25
 ```
 
 ---
 
 ### depends_on
 
-Represents a directional dependency between Entities.
+方向性のある依存関係を表します。例えば温泉が源泉の地盤に依存する、イベントが景観に依存する、などです。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Dependent Entity |
-| Target | Dependency Entity |
-| Cardinality | N:N |
+| Source | hot_spring, tourism_spot, cultural_asset, event |
+| Target | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event |
 
 **Additional Properties:**
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| dependency_type | string | no | - | Type of dependency (runtime, build, network, storage) |
-| critical | boolean | no | false | Whether failure causes cascading failure |
+| dependency_type | string | no | - | 依存の性質 (enum: `source`, `landscape`, `access`, `ecosystem`, `event`) |
+| critical | boolean | no | false | ターゲットを失うとソースの価値が失われるか |
 
 ```yaml
-- id: rel-depends-app-db
+- id: rel-onsen-depends-ground
   type: depends_on
   participants:
-    source: app-web-server
-    target: app-database
-  attributes:
-    status: active
+    source: onsen-ogi
+    target: ground-osado-hill
   spec:
-    dependency_type: runtime
+    dependency_type: source
     critical: true
 ```
 
@@ -124,234 +132,38 @@ Represents a directional dependency between Entities.
 
 ### belongs_to
 
-Represents logical membership or association.
+論理的な所属・関連を表します。ネスト定義からは自動生成されます（子 → 親）。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Member Entity |
-| Target | Group Entity |
-| Cardinality | N:N |
+| Source | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event, species, population |
+| Target | area および nature/tourism資源Kind |
 
 ```yaml
-- id: rel-belongsto-vm-cluster
+- id: rel-goldmine-belongs
   type: belongs_to
   participants:
-    source: vm-web-01
-    target: cluster-prod-01
-  attributes:
-    status: active
-
-- id: rel-belongsto-intf-network
-  type: belongs_to
-  participants:
-    source: vm-web-01/eth0
-    target: mgmt-network-01
-  attributes:
-    status: active
+    source: asset-sado-goldmine
+    target: sado-island
 ```
 
 ---
 
-## Extended Relation Types
+### flows_into
 
-### replicates_to
-
-Represents data replication between Entities.
+河川などの水の流れの行き先を表します。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Primary Entity |
-| Target | Replica Entity |
-| Cardinality | 1:N |
-
-**Additional Properties:**
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| replication_type | string | no | synchronous | Replication type (synchronous, asynchronous) |
-| lag_seconds | number | no | - | Replication lag in seconds |
+| Source | water_body |
+| Target | water_body |
 
 ```yaml
-- id: rel-replicates-db
-  type: replicates_to
+- id: rel-flows-kamo
+  type: flows_into
   participants:
-    source: app-database-primary
-    target: app-database-replica
-  spec:
-    replication_type: asynchronous
-    lag_seconds: 0.5
-```
-
----
-
-### backs_up
-
-Represents a backup relationship.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Source Entity |
-| Target | Backup Entity |
-| Cardinality | 1:N |
-
-**Additional Properties:**
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| backup_type | string | no | - | Backup type (full, incremental, differential) |
-| schedule | string | no | - | Backup schedule (cron expression) |
-| retention_days | integer | no | - | Backup retention in days |
-
-```yaml
-- id: rel-backup-vm
-  type: backs_up
-  participants:
-    source: vm-web-01
-    target: vol-web-backup
-  spec:
-    backup_type: incremental
-    schedule: "0 2 * * *"
-    retention_days: 30
-```
-
----
-
-### monitors
-
-Represents a monitoring relationship.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Monitoring Entity |
-| Target | Monitored Entity |
-| Cardinality | 1:N |
-
-**Additional Properties:**
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| monitor_type | string | no | - | Monitor type (agent, agentless, snmp, api) |
-| interval_seconds | integer | no | 60 | Monitoring interval in seconds |
-
-```yaml
-- id: rel-monitor-prometheus
-  type: monitors
-  participants:
-    source: app-prometheus
-    target: srv-proxmox-01
-  spec:
-    monitor_type: snmp
-    interval_seconds: 30
-```
-
----
-
-### managed_by
-
-Represents a management relationship.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Managed Entity |
-| Target | Management Entity |
-| Cardinality | N:1 |
-
-**Additional Properties:**
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| management_type | string | no | - | Management type (configuration, orchestration, monitoring) |
-
-```yaml
-- id: rel-managed-vm
-  type: managed_by
-  participants:
-    source: vm-web-01
-    target: app-ansible
-  spec:
-    management_type: configuration
-```
-
----
-
-### mounted_on
-
-Represents a mounting relationship (storage).
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Volume Entity |
-| Target | Compute Entity |
-| Cardinality | N:1 |
-
-**Additional Properties:**
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| mount_point | string | no | - | Mount point path |
-| filesystem | string | no | - | Filesystem type |
-| options | string | no | - | Mount options |
-
-```yaml
-- id: rel-mounted-data
-  type: mounted_on
-  participants:
-    source: vol-web-data
-    target: vm-web-01
-  spec:
-    mount_point: /data
-    filesystem: ext4
-    options: "rw,noatime"
-```
-
----
-
-### applies_to
-
-Represents that an ACL is applied to a network target.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | ACL Entity |
-| Target | Network Target Entity |
-| Cardinality | N:N |
-
-```yaml
-- id: rel-applies-web-acl
-  type: applies_to
-  participants:
-    source: acl-web-ingress
-    target: vm-web-01/eth0
-  attributes:
-    status: active
-```
-
----
-
-### listens_on
-
-Represents that an open port is listening on a network interface or address.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Open Port Entity |
-| Target | Interface or Host Entity |
-| Cardinality | N:1 |
-
-```yaml
-- id: rel-listens-nginx
-  type: listens_on
-  participants:
-    source: port-443-nginx
-    target: vm-web-01/eth0
-  attributes:
-    status: active
+    source: river-kamo-inlet
+    target: lake-kamo
 ```

@@ -24,7 +24,7 @@ The fully-qualified path uniquely identifies an Entity within a model.
 
 Example:
 
-/region01/rack01/pve01/eno1
+/area-niigata-city/spot-yahiko-shrine/onsen-yahiko
 
 Identifiers SHOULD remain stable throughout the lifetime of an Entity.
 
@@ -66,13 +66,13 @@ Example:
 
 Correct
 
-kind: server
+kind: hot_spring
 
-platform: proxmox
+spring_quality: sulfur
 
 Incorrect
 
-kind: proxmox
+kind: yahiko-onsen
 
 ---
 
@@ -166,12 +166,12 @@ Example:
 ```yaml
 extensions:
   attributes:
-    platform: proxmox
+    operator: yahiko-onsen-kyodo
     environment: production
   spec:
-    proxmox:
-      vmid: 100
-      pool: production
+    booking:
+      reservation_id: 100
+      plan: stay
 ```
 
 ---
@@ -198,6 +198,8 @@ provider
 extensions
 
 These values never replace the Entity kind.
+
+(この節はベンダー中立性の一般的な原則を説明するものであり、例としてデータセンター業界のベンダー名を用いている。)
 
 ---
 

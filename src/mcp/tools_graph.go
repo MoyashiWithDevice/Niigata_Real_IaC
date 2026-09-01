@@ -8,7 +8,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 func registerGraphMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {

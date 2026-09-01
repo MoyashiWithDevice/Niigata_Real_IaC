@@ -1,9 +1,9 @@
 package main
 
 import (
-	"IACForge/src/core"
-	"IACForge/src/extension"
-	"IACForge/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/extension"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
 )
 
 func Extension() *extension.Extension {

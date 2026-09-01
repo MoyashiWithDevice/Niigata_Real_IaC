@@ -3,7 +3,7 @@ package kinds
 import (
 	"testing"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 func TestIsValidStatus(t *testing.T) {
@@ -32,27 +32,17 @@ func TestIsValidStatus(t *testing.T) {
 
 func TestKindValues(t *testing.T) {
 	expected := map[core.EntityKind]string{
-		Region:            "region",
-		Rack:              "rack",
-		Server:            "server",
-		Interface:         "interface",
-		Cable:             "cable",
-		PowerDistribution: "power_distribution",
-		Network:           "network",
-		VLAN:              "vlan",
-		Switch:            "switch",
-		Router:            "router",
-		Firewall:          "firewall",
-		ACL:               "acl",
-		ACLRule:           "acl_rule",
-		VM:                "vm",
-		Container:         "container",
-		Application:       "application",
-		OpenPort:          "open_port",
-		Storage:           "storage",
-		Volume:            "volume",
-		Cluster:           "cluster",
-		AvailabilityZone:  "availability_zone",
+		Area:          "area",
+		Ground:        "ground",
+		Terrain:       "terrain",
+		WaterBody:     "water_body",
+		Forest:        "forest",
+		Species:       "species",
+		Population:    "population",
+		TourismSpot:   "tourism_spot",
+		HotSpring:     "hot_spring",
+		CulturalAsset: "cultural_asset",
+		Event:         "event",
 	}
 
 	for kind, value := range expected {

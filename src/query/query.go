@@ -1,7 +1,7 @@
 package query
 
 import (
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // Query represents a complete query against a Graph.

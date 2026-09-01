@@ -1,6 +1,6 @@
 # YAML Reference
 
-IACForgeのYAMLファイル作成のための完全版リファレンスです。
+Niigata Real ModelのYAMLファイル作成のための完全版リファレンスです。
 
 ## 目次
 
@@ -11,11 +11,9 @@ IACForgeのYAMLファイル作成のための完全版リファレンスです�
 | [Entity Kinds](entity-kinds.md) | 全Entity種類の定義とプロパティ |
 | [Relation Syntax](relation-syntax.md) | Relation共通構文、participantフォーマット |
 | [Relation Types](relation-types.md) | 全Relation種類の定義とプロパティ |
-| [References](references.md) | 参照構文（シンプル、修飾、インターフェース） |
+| [References](references.md) | 参照構文（シンプル、修飾、パス） |
 | [Validation](validation.md) | 検証ルール、命名規則、Graph制約 |
-| [Example](example.md) | 完全なインフラモデルの例 |
-| [AWS Entity Kinds](aws-entity-kinds.md) | AWS拡張のEntity種類（47種）とプロパティ |
-| [AWS Relation Types](aws-relation-types.md) | AWS拡張のRelation種類とAugmented Core Relations |
+| [Example](example.md) | 完全なモデルの例（佐渡島） |
 
 ## 共通ルール
 

@@ -1,29 +1,20 @@
 package kinds
 
-import "IACForge/src/core"
+import "github.com/bababa/Niigata_Real_IaC/src/core"
 
+// Entity kinds for Niigata nature and tourism resource management.
 const (
-	Region            core.EntityKind = "region"
-	Rack              core.EntityKind = "rack"
-	Server            core.EntityKind = "server"
-	Interface         core.EntityKind = "interface"
-	Cable             core.EntityKind = "cable"
-	PowerDistribution core.EntityKind = "power_distribution"
-	Network           core.EntityKind = "network"
-	VLAN              core.EntityKind = "vlan"
-	Switch            core.EntityKind = "switch"
-	Router            core.EntityKind = "router"
-	Firewall          core.EntityKind = "firewall"
-	ACL               core.EntityKind = "acl"
-	ACLRule           core.EntityKind = "acl_rule"
-	VM                core.EntityKind = "vm"
-	Container         core.EntityKind = "container"
-	Application       core.EntityKind = "application"
-	OpenPort          core.EntityKind = "open_port"
-	Storage           core.EntityKind = "storage"
-	Volume            core.EntityKind = "volume"
-	Cluster           core.EntityKind = "cluster"
-	AvailabilityZone  core.EntityKind = "availability_zone"
+	Area         core.EntityKind = "area"
+	Ground       core.EntityKind = "ground"
+	Terrain      core.EntityKind = "terrain"
+	WaterBody    core.EntityKind = "water_body"
+	Forest       core.EntityKind = "forest"
+	Species      core.EntityKind = "species"
+	Population   core.EntityKind = "population"
+	TourismSpot  core.EntityKind = "tourism_spot"
+	HotSpring    core.EntityKind = "hot_spring"
+	CulturalAsset core.EntityKind = "cultural_asset"
+	Event        core.EntityKind = "event"
 )
 
 func IsValidStatus(s core.Status) bool {

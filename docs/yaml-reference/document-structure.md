@@ -19,11 +19,11 @@ YAMLのコメントはパース時に破棄され、round-trip変換（parse →
 保持されません。コメントに意味を持たせないでください。
 
 ```yaml
-# Region情報
+# エリア情報
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: sado-island
+    kind: area
+    name: Sado Island
     attributes:
       # プライマリロケーション
       status: active

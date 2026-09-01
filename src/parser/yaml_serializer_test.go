@@ -4,14 +4,14 @@ import (
 	"strings"
 	"testing"
 
-	"IACForge/src/core"
-	"IACForge/src/core/kinds"
-	"IACForge/src/core/types"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core/kinds"
+	"github.com/bababa/Niigata_Real_IaC/src/core/types"
 )
 
 func TestSerializeBasicEntity(t *testing.T) {
 	g := core.NewGraph()
-	e := core.NewEntity("region-ap-northeast-1", kinds.Region, "Tokyo Datacenter 1")
+	e := core.NewEntity("area-sado-island", kinds.Area, "Sado Island")
 	if err := g.AddEntity(e); err != nil {
 		t.Fatalf("failed to add entity: %v", err)
 	}
@@ -29,9 +29,9 @@ func TestSerializeBasicEntity(t *testing.T) {
 		t.Fatalf("failed to parse serialized data: %v", err)
 	}
 
-	e2, ok := g2.GetEntity("region-ap-northeast-1")
+	e2, ok := g2.GetEntity("area-sado-island")
 	if !ok {
-		t.Fatal("entity region-ap-northeast-1 not found in parsed data")
+		t.Fatal("entity area-sado-island not found in parsed data")
 	}
 
 	if e2.ID != e.ID {
@@ -47,19 +47,20 @@ func TestSerializeBasicEntity(t *testing.T) {
 
 func TestSerializeEntityWithAllProperties(t *testing.T) {
 	g := core.NewGraph()
-	e := core.NewEntity("srv-proxmox-01", kinds.Server, "Proxmox Node 01")
-	e.Description = "Primary Proxmox server"
+	e := core.NewEntity("sapi-01", kinds.Species, "Toki (Crested Ibis)")
+	e.Description = "Reintroduced crested ibis population on Sado Island"
 	e.SetStatus(core.StatusActive)
-	e.AddTag("production")
-	e.AddTag("compute")
-	e.SetLabel("region", "ap-northeast-1")
-	e.SetLabel("environment", "production")
-	e.Extensions = map[string]interface{}{"vendor": "dell"}
-	e.SetProperty("platform", "proxmox")
-	e.SetProperty("cpu_cores", 32)
-	e.SetProperty("memory", []interface{}{
-		map[string]interface{}{"size_gb": 64, "speed": 3200, "type": "ddr4"},
-		map[string]interface{}{"size_gb": 64, "speed": 3200, "type": "ddr4"},
+	e.AddTag("endangered")
+	e.AddTag("bird")
+	e.SetLabel("habitat", "wetland")
+	e.SetLabel("monitoring", "annual")
+	e.Extensions = map[string]interface{}{"surveyor": "sado-city"}
+	e.SetProperty("scientific_name", "Nipponia nippon")
+	e.SetProperty("category", "bird")
+	e.SetProperty("red_list_status", "endangered")
+	e.SetProperty("recent_counts", []interface{}{
+		map[string]interface{}{"count": 43, "survey_date": "2023-11-15", "method": "visual_count"},
+		map[string]interface{}{"count": 39, "survey_date": "2022-11-15", "method": "visual_count"},
 	})
 
 	if err := g.AddEntity(e); err != nil {
@@ -79,9 +80,9 @@ func TestSerializeEntityWithAllProperties(t *testing.T) {
 		t.Fatalf("failed to parse serialized data: %v", err)
 	}
 
-	e2, ok := g2.GetEntity("srv-proxmox-01")
+	e2, ok := g2.GetEntity("sapi-01")
 	if !ok {
-		t.Fatal("entity srv-proxmox-01 not found in parsed data")
+		t.Fatal("entity sapi-01 not found in parsed data")
 	}
 
 	if e2.Description != e.Description {
@@ -93,28 +94,28 @@ func TestSerializeEntityWithAllProperties(t *testing.T) {
 	if len(e2.Tags) != 2 {
 		t.Errorf("expected 2 tags, got %d", len(e2.Tags))
 	}
-	if e2.Labels["region"] != "ap-northeast-1" {
-		t.Errorf("expected label region=ap-northeast-1, got %s", e2.Labels["region"])
+	if e2.Labels["habitat"] != "wetland" {
+		t.Errorf("expected label habitat=wetland, got %s", e2.Labels["habitat"])
 	}
-	if platform, ok := e2.GetProperty("platform"); !ok || platform != "proxmox" {
-		t.Errorf("expected property platform=proxmox, got %v", platform)
+	if sciName, ok := e2.GetProperty("scientific_name"); !ok || sciName != "Nipponia nippon" {
+		t.Errorf("expected property scientific_name=Nipponia nippon, got %v", sciName)
 	}
 }
 
 func TestSerializeDirectedRelation(t *testing.T) {
 	g := core.NewGraph()
 
-	srv := core.NewEntity("srv-01", kinds.Server, "Server 01")
-	vm := core.NewEntity("vm-01", kinds.VM, "VM 01")
+	species := core.NewEntity("species-toki", kinds.Species, "Toki (Crested Ibis)")
+	pond := core.NewEntity("wb-koike", kinds.WaterBody, "Koike Pond")
 
-	if err := g.AddEntity(srv); err != nil {
+	if err := g.AddEntity(species); err != nil {
 		t.Fatalf("failed to add entity: %v", err)
 	}
-	if err := g.AddEntity(vm); err != nil {
+	if err := g.AddEntity(pond); err != nil {
 		t.Fatalf("failed to add entity: %v", err)
 	}
 
-	r := core.NewDirectedRelation("rel-hosts-vm", types.Hosts, "srv-01", "vm-01")
+	r := core.NewDirectedRelation("rel-inhabits-toki", types.Inhabits, "species-toki", "wb-koike")
 	if err := g.AddRelation(r); err != nil {
 		t.Fatalf("failed to add relation: %v", err)
 	}
@@ -132,22 +133,22 @@ func TestSerializeDirectedRelation(t *testing.T) {
 		t.Fatalf("failed to parse serialized data: %v", err)
 	}
 
-	r2, ok := g2.GetRelation("rel-hosts-vm")
+	r2, ok := g2.GetRelation("rel-inhabits-toki")
 	if !ok {
-		t.Fatal("relation rel-hosts-vm not found in parsed data")
+		t.Fatal("relation rel-inhabits-toki not found in parsed data")
 	}
 
-	if r2.Type != types.Hosts {
-		t.Errorf("expected type hosts, got %s", r2.Type)
+	if r2.Type != types.Inhabits {
+		t.Errorf("expected type inhabits, got %s", r2.Type)
 	}
 	if r2.Direction != core.DirectionDirected {
 		t.Errorf("expected direction directed, got %s", r2.Direction)
 	}
-	if r2.Source() != "srv-01" {
-		t.Errorf("expected source srv-01, got %s", r2.Source())
+	if r2.Source() != "species-toki" {
+		t.Errorf("expected source species-toki, got %s", r2.Source())
 	}
-	if r2.Target() != "vm-01" {
-		t.Errorf("expected target vm-01, got %s", r2.Target())
+	if r2.Target() != "wb-koike" {
+		t.Errorf("expected target wb-koike, got %s", r2.Target())
 	}
 }
 
@@ -155,28 +156,28 @@ func TestSerializeSymmetricRelation(t *testing.T) {
 	g := core.NewGraph()
 
 	// Create parent entities first
-	srv := core.NewEntity("srv-01", kinds.Server, "Server 01")
-	sw := core.NewEntity("sw-01", kinds.Switch, "Switch 01")
-	if err := g.AddEntity(srv); err != nil {
+	forest := core.NewEntity("forest-sado-01", kinds.Forest, "Sado Forest 01")
+	terrain := core.NewEntity("terrain-koshiba", kinds.Terrain, "Koshiba Coast Terrain")
+	if err := g.AddEntity(forest); err != nil {
 		t.Fatalf("failed to add entity: %v", err)
 	}
-	if err := g.AddEntity(sw); err != nil {
-		t.Fatalf("failed to add entity: %v", err)
-	}
-
-	iface1 := core.NewEntity("eno1", kinds.Interface, "eno1")
-	iface1.SetOwner("srv-01")
-	iface2 := core.NewEntity("port1", kinds.Interface, "port1")
-	iface2.SetOwner("sw-01")
-
-	if err := g.AddEntity(iface1); err != nil {
-		t.Fatalf("failed to add entity: %v", err)
-	}
-	if err := g.AddEntity(iface2); err != nil {
+	if err := g.AddEntity(terrain); err != nil {
 		t.Fatalf("failed to add entity: %v", err)
 	}
 
-	r := core.NewSymmetricRelation("rel-connects", types.Connects, []string{"eno1", "port1"})
+	gr1 := core.NewEntity("gr-loam-plot", kinds.Ground, "Loam Plot")
+	gr1.SetOwner("forest-sado-01")
+	gr2 := core.NewEntity("gr-sand-shore", kinds.Ground, "Sand Shore")
+	gr2.SetOwner("terrain-koshiba")
+
+	if err := g.AddEntity(gr1); err != nil {
+		t.Fatalf("failed to add entity: %v", err)
+	}
+	if err := g.AddEntity(gr2); err != nil {
+		t.Fatalf("failed to add entity: %v", err)
+	}
+
+	r := core.NewSymmetricRelation("rel-near-grounds", types.Near, []string{"gr-loam-plot", "gr-sand-shore"})
 	if err := g.AddRelation(r); err != nil {
 		t.Fatalf("failed to add relation: %v", err)
 	}
@@ -194,13 +195,13 @@ func TestSerializeSymmetricRelation(t *testing.T) {
 		t.Fatalf("failed to parse serialized data: %v", err)
 	}
 
-	r2, ok := g2.GetRelation("rel-connects")
+	r2, ok := g2.GetRelation("rel-near-grounds")
 	if !ok {
-		t.Fatal("relation rel-connects not found in parsed data")
+		t.Fatal("relation rel-near-grounds not found in parsed data")
 	}
 
-	if r2.Type != types.Connects {
-		t.Errorf("expected type connects, got %s", r2.Type)
+	if r2.Type != types.Near {
+		t.Errorf("expected type near, got %s", r2.Type)
 	}
 	if r2.Direction != core.DirectionSymmetric {
 		t.Errorf("expected direction symmetric, got %s", r2.Direction)
@@ -213,56 +214,51 @@ func TestSerializeSymmetricRelation(t *testing.T) {
 func TestRoundTrip(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: area-sado-island
+    kind: area
+    name: Sado Island
     attributes:
       status: active
       labels:
-        region: ap-northeast-1
+        region: chubu
 
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  - id: forest-sado-beech
+    kind: forest
+    name: Sado Beech Forest
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado-island
       status: active
     spec:
-      height_units: 42
+      forest_type: beech
+      area_ha: 120
 
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: species-toki
+    kind: species
+    name: Toki (Crested Ibis)
     attributes:
-      owner: rack-a01
+      owner: area-sado-island
       status: active
     spec:
-      platform: proxmox
-      cpu_cores: 32
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
+      scientific_name: Nipponia nippon
+      category: bird
+      red_list_status: endangered
 
-  - id: vm-web-01
-    kind: vm
-    name: Web Server 01
+  - id: pop-toki-2024
+    kind: population
+    name: Toki Survey 2024
     attributes:
-      owner: srv-proxmox-01
+      owner: species-toki
       status: active
     spec:
-      cpu_cores: 4
-      memory:
-        - size_gb: 8
-          speed: 3200
-          type: ddr4
-      os: ubuntu
+      count: 43
+      survey_date: "2024-11-15"
+      survey_method: visual_count
 
-  - id: rel-hosts-server-vm
-    type: hosts
+  - id: rel-inhabits-species-area
+    type: inhabits
     participants:
-      source: srv-proxmox-01
-      target: vm-web-01
+      source: species-toki
+      target: area-sado-island
 `
 
 	// Parse original
@@ -349,33 +345,35 @@ objects:
 	}
 }
 
-func TestRoundTripClusterNestedNodes(t *testing.T) {
+func TestRoundTripSpotNestedHotSpringsAndEvents(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
-  - id: k8s-prod
-    kind: cluster
-    name: Production K8s Cluster
+  - id: area-sado-island
+    kind: area
+    name: Sado Island
+  - id: spot-shukunegi
+    kind: tourism_spot
+    name: Shukunegi Historic Village
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado-island
     spec:
-      cluster_type: compute
-      ha_enabled: true
-      vms:
-        - id: vm-k8s-node-01
-          name: K8s Node 01
+      spot_type: historic
+      annual_visitors: 150000
+      events:
+        - id: ev-lantern-festival
+          name: Shukunegi Lantern Festival
           spec:
-            cpu:
-              - cores: 4
-            memory:
-              - size_gb: 16
-        - id: vm-k8s-node-02
-          name: K8s Node 02
-      servers:
-        - id: srv-k8s-node-01
-          name: K8s Bare-metal Node 01
+            season: autumn
+            held_month: 10
+            visitor_count: 8000
+        - id: ev-morning-market
+          name: Morning Market
+      hot_springs:
+        - id: onsen-shukunegi-01
+          name: Shukunegi Onsen 01
+          spec:
+            spring_quality: chloride
+            temperature_c: 72
 `
 	// Parse original
 	parser1 := NewParser()
@@ -419,9 +417,9 @@ objects:
 
 	// Auto-generated belongs_to relations must be preserved
 	for _, relID := range []string{
-		"rel-auto-belongs_to-vm-k8s-node-01-k8s-prod",
-		"rel-auto-belongs_to-vm-k8s-node-02-k8s-prod",
-		"rel-auto-belongs_to-srv-k8s-node-01-k8s-prod",
+		"rel-auto-belongs_to-ev-lantern-festival-spot-shukunegi",
+		"rel-auto-belongs_to-ev-morning-market-spot-shukunegi",
+		"rel-auto-belongs_to-onsen-shukunegi-01-spot-shukunegi",
 	} {
 		r2, ok := g2.GetRelation(relID)
 		if !ok {
@@ -431,45 +429,46 @@ objects:
 		if r2.Type != types.BelongsTo {
 			t.Errorf("relation %s: expected belongs_to, got %s", relID, r2.Type)
 		}
-		if r2.Source() == "" || r2.Target() != "k8s-prod" {
-			t.Errorf("relation %s: expected source member -> target k8s-prod, got %s -> %s",
+		if r2.Source() == "" || r2.Target() != "spot-shukunegi" {
+			t.Errorf("relation %s: expected source member -> target spot-shukunegi, got %s -> %s",
 				relID, r2.Source(), r2.Target())
 		}
 	}
 }
 
-func TestRoundTripSwitchRouterPorts(t *testing.T) {
+func TestRoundTripForestTerrainGrounds(t *testing.T) {
 	yaml := `
 objects:
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
+  - id: forest-sado-01
+    kind: forest
+    name: Sado National Forest 01
     spec:
-      port_count: 24
-      ports:
-        - id: port1
-          name: port1
+      forest_type: mixed
+      area_ha: 24
+      grounds:
+        - id: gr-loam
+          name: Loam Plot
           spec:
-            type: ethernet
-            speed_mbps: 10000
-            mode: trunk
-        - id: port2
-          name: port2
+            soil_type: loam
+            slope_deg: 10
+            stability: stable
+        - id: gr-clay
+          name: Clay Plot
           spec:
-            type: ethernet
-            speed_mbps: 1000
-            mode: access
+            soil_type: clay
+            slope_deg: 5
+            stability: watch
 
-  - id: rt-core-01
-    kind: router
-    name: Core Router 01
+  - id: terrain-koshiba
+    kind: terrain
+    name: Koshiba Coast Terrain
     spec:
-      ports:
-        - id: ge0/0
-          name: GigabitEthernet0/0
+      terrain_type: coast
+      grounds:
+        - id: gr-0/0
+          name: Shore Section 0/0
           spec:
-            type: ethernet
-            speed_mbps: 1000
+            soil_type: sand
 `
 	// Parse original
 	parser1 := NewParser()
@@ -485,13 +484,13 @@ objects:
 		t.Fatalf("failed to serialize: %v", err)
 	}
 
-	// The serialized output must use the `ports` nest key for switch/router,
-	// not the global `interfaces` nest key.
-	if !strings.Contains(string(data), "ports:") {
-		t.Errorf("serialized output missing 'ports:' nest key:\n%s", data)
+	// The serialized output must use the `grounds` nest key for forest/terrain,
+	// not any other nest key from unrelated parent kinds.
+	if !strings.Contains(string(data), "grounds:") {
+		t.Errorf("serialized output missing 'grounds:' nest key:\n%s", data)
 	}
-	if strings.Contains(string(data), "interfaces:") {
-		t.Errorf("serialized output should not use 'interfaces:' nest key:\n%s", data)
+	if strings.Contains(string(data), "water_bodies:") {
+		t.Errorf("serialized output should not use 'water_bodies:' nest key:\n%s", data)
 	}
 
 	// Parse serialized data
@@ -520,21 +519,21 @@ objects:
 		}
 	}
 
-	// port_count property must survive round-trip
-	sw2, ok := g2.GetEntity("sw-core-01")
+	// area_ha property must survive round-trip
+	forest2, ok := g2.GetEntity("forest-sado-01")
 	if !ok {
-		t.Fatal("entity sw-core-01 not found after round-trip")
+		t.Fatal("entity forest-sado-01 not found after round-trip")
 	}
-	portCount, ok := sw2.GetProperty("port_count")
-	if !ok || portCount != 24 {
-		t.Errorf("expected port_count 24 after round-trip, got %v", portCount)
+	areaHa, ok := forest2.GetProperty("area_ha")
+	if !ok || areaHa != 24 {
+		t.Errorf("expected area_ha 24 after round-trip, got %v", areaHa)
 	}
 
 	// Auto-generated belongs_to relations must be preserved
 	for _, relID := range []string{
-		"rel-auto-belongs_to-port1-sw-core-01",
-		"rel-auto-belongs_to-port2-sw-core-01",
-		"rel-auto-belongs_to-ge0/0-rt-core-01",
+		"rel-auto-belongs_to-gr-loam-forest-sado-01",
+		"rel-auto-belongs_to-gr-clay-forest-sado-01",
+		"rel-auto-belongs_to-gr-0/0-terrain-koshiba",
 	} {
 		r2, ok := g2.GetRelation(relID)
 		if !ok {
@@ -549,7 +548,7 @@ objects:
 
 func TestSerializeFile(t *testing.T) {
 	g := core.NewGraph()
-	e := core.NewEntity("test-entity", kinds.Server, "Test Entity")
+	e := core.NewEntity("test-entity", kinds.Area, "Test Area")
 	if err := g.AddEntity(e); err != nil {
 		t.Fatalf("failed to add entity: %v", err)
 	}
@@ -580,18 +579,19 @@ func TestSerializeFile(t *testing.T) {
 func TestRoundTripPropertyReference(t *testing.T) {
 	input := `
 objects:
-  - id: net-mgmt
-    kind: network
-    name: Management Network
+  - id: wb-shinano
+    kind: water_body
+    name: Shinano River
     spec:
-      cidr: 10.0.0.0/24
+      water_type: river
+      length_km: 367
 
-  - id: vlan-100
-    kind: vlan
-    name: VLAN 100
+  - id: pond-100
+    kind: water_body
+    name: Irrigation Pond 100
     spec:
-      vlan_id: 100
-      associated_network: "@net-mgmt"
+      water_type: pond
+      feeder_channel: "@wb-shinano"
 `
 	parser := NewParser()
 	g, err := parser.Parse([]byte(input))
@@ -607,8 +607,8 @@ objects:
 
 	// Verify @ prefix is preserved in output (YAML may use single or double quotes)
 	output := string(data)
-	if !strings.Contains(output, "@net-mgmt") {
-		t.Errorf("serialized output should contain @net-mgmt reference, got:\n%s", output)
+	if !strings.Contains(output, "@wb-shinano") {
+		t.Errorf("serialized output should contain @wb-shinano reference, got:\n%s", output)
 	}
 
 	// Parse back and verify round-trip
@@ -617,40 +617,40 @@ objects:
 		t.Fatalf("failed to re-parse: %v", err)
 	}
 
-	vlan, ok := g2.GetEntity("vlan-100")
+	pond, ok := g2.GetEntity("pond-100")
 	if !ok {
-		t.Fatal("expected entity vlan-100")
+		t.Fatal("expected entity pond-100")
 	}
 
-	v, ok := vlan.GetProperty("associated_network")
+	v, ok := pond.GetProperty("feeder_channel")
 	if !ok {
-		t.Fatal("expected property associated_network")
+		t.Fatal("expected property feeder_channel")
 	}
 	ref, ok := v.(core.ReferenceValue)
 	if !ok {
 		t.Fatalf("expected ReferenceValue after round-trip, got %T", v)
 	}
-	if ref.RefTargetID() != "net-mgmt" {
-		t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+	if ref.RefTargetID() != "wb-shinano" {
+		t.Errorf("expected reference target wb-shinano, got %s", ref.RefTargetID())
 	}
 }
 
-func TestRoundTripInterfaceNetworkReference(t *testing.T) {
+func TestRoundTripHotSpringWaterBodyReference(t *testing.T) {
 	input := `
 objects:
-  - id: net-mgmt
-    kind: network
-    name: Management Network
+  - id: wb-kamo
+    kind: water_body
+    name: Kamo River
     spec:
-      cidr: 10.0.0.0/24
+      water_type: river
 
-  - id: eno1
-    kind: interface
-    name: eno1
+  - id: onsen-01
+    kind: hot_spring
+    name: Onsen 01
     spec:
-      network: "@net-mgmt"
-      ip_address:
-        - 10.0.0.10
+      water_source: "@wb-kamo"
+      source_temperatures:
+        - 78.5
 `
 	parser := NewParser()
 	g, err := parser.Parse([]byte(input))
@@ -665,8 +665,8 @@ objects:
 	}
 
 	output := string(data)
-	if !strings.Contains(output, "@net-mgmt") {
-		t.Errorf("serialized output should contain @net-mgmt reference, got:\n%s", output)
+	if !strings.Contains(output, "@wb-kamo") {
+		t.Errorf("serialized output should contain @wb-kamo reference, got:\n%s", output)
 	}
 
 	g2, err := parser.Parse(data)
@@ -674,20 +674,20 @@ objects:
 		t.Fatalf("failed to re-parse: %v", err)
 	}
 
-	intf, ok := g2.GetEntity("eno1")
+	onsen, ok := g2.GetEntity("onsen-01")
 	if !ok {
-		t.Fatal("expected entity eno1")
+		t.Fatal("expected entity onsen-01")
 	}
 
-	v, ok := intf.GetProperty("network")
+	v, ok := onsen.GetProperty("water_source")
 	if !ok {
-		t.Fatal("expected property network")
+		t.Fatal("expected property water_source")
 	}
 	ref, ok := v.(core.ReferenceValue)
 	if !ok {
 		t.Fatalf("expected ReferenceValue after round-trip, got %T", v)
 	}
-	if ref.RefTargetID() != "net-mgmt" {
-		t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+	if ref.RefTargetID() != "wb-kamo" {
+		t.Errorf("expected reference target wb-kamo, got %s", ref.RefTargetID())
 	}
 }

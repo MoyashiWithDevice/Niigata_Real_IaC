@@ -8,8 +8,8 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 
-	"IACForge/src/core"
-	"IACForge/src/query"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/query"
 )
 
 func registerEntityMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {

@@ -1,178 +1,137 @@
-# Validation Rules
+# Validation Rules（検証ルール）
 
-## Overview
+## 概要
 
-Validation Rules define how a Graph is evaluated against the Schema.
+Validation Rule は、Graph を Schema に対して評価する方法を定義する。
 
-Validation is deterministic and side-effect free.
+検証は決定的（deterministic）かつ副作用なしで行われる。
 
-Every compliant implementation MUST support the Core Validation Rules.
-
----
-
-## Rule Structure
-
-Every Validation Rule is defined with:
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| id | string | yes | Unique rule identifier |
-| name | string | yes | Human-readable name |
-| description | string | no | Rule description |
-| severity | enum | yes | Finding severity level |
-| scope | enum | yes | Rule evaluation scope |
-| condition | string | yes | Rule condition expression |
+準拠実装はすべてのコア検証ルールをサポートしなければならない（MUST）。
 
 ---
 
-## Severity Levels
+## ルール構造
 
-Every Validation Finding has a severity level.
+すべての Validation Rule は次のように定義される。
 
-| Level | Description |
-|-------|-------------|
-| info | Informational finding |
-| warning | Potential issue |
-| error | Violation that must be fixed |
-
-Implementations MAY define additional levels.
+| Field | Type | Required | 説明 |
+|-------|------|----------|------|
+| id | string | yes | 一意なルール識別子 |
+| name | string | yes | 人間が読める名前 |
+| description | string | no | ルールの説明 |
+| severity | enum | yes | Finding の重大度 |
 
 ---
 
-## Finding Structure
+## 重大度レベル
 
-Validation produces Findings.
+すべての Validation Finding は重大度レベルを持つ。
 
-| Field | Type | Description |
-|-------|------|-------------|
-| rule_id | string | Rule identifier |
-| severity | enum | Finding severity |
-| message | string | Human-readable message |
-| object_id | string | Related Object identifier |
-| object_type | enum | Object type (entity/relation) |
-| path | string | Object path in Graph |
+| Level | 説明 |
+|-------|------|
+| info | 参考情報 |
+| warning | 潜在的な問題。検証はパスする |
+| error | 修正が必須の違反。検証は失敗する |
 
-### Finding Example
+実装は追加のレベルを定義してよい（MAY）。
+
+---
+
+## Finding 構造
+
+検証は Finding を生成する。
+
+| Field | Type | 説明 |
+|-------|------|------|
+| rule_id | string | ルール識別子 |
+| severity | enum | Finding の重大度 |
+| message | string | 人間が読めるメッセージ |
+| object_id | string | 対象オブジェクトの識別子 |
+| object_type | enum | オブジェクト型（entity/relation） |
+| path | string | Graph 内のオブジェクトパス |
+
+### Finding の例
 
 ```json
 {
-  "rule_id": "unique-id",
+  "rule_id": "population-requires-species",
   "severity": "error",
-  "message": "Duplicate identifier: srv-01",
-  "object_id": "srv-01",
-  "object_type": "entity",
-  "path": "/region-01/rack-01/srv-01"
+  "message": "population entity \"pop-toki-01\" has no owner (must be owned by a species)",
+  "object_id": "pop-toki-01",
+  "object_type": "entity"
 }
 ```
 
 ---
 
-## Core Validation Rules
+## コア検証ルール
 
-### Graph Integrity Rules
+### Graph 整合性ルール
 
-| Rule ID | Severity | Description |
-|---------|----------|-------------|
-| unique-id | error | Object identifiers MUST be unique |
-| valid-reference | error | References MUST point to existing Objects |
-| valid-owner | error | Owner identifier MUST reference an existing Entity |
-| single-owner | error | Every Entity except root has exactly one owner specified |
+| Rule ID | Severity | 説明 |
+|---------|----------|------|
+| unique-id | error | オブジェクト識別子は一意でなければならない（MUST） |
+| valid-reference | error | 関係の参加者参照は既存オブジェクトを指さなければならない（MUST） |
+| valid-owner | error | owner 識別子は既存 Entity を参照しなければならない（MUST） |
+| single-owner | error | root 以外の Entity には owner が必須。root は 1 つのみ（root 権限を持つ kind を除く） |
+| valid-property | warning | spec プロパティはスキーマ定義に適合しなければならない（型・enum・min/max・required）。未定義プロパティも報告される |
 
-### Entity Rules
+### Entity ルール
 
-| Rule ID | Severity | Description |
-|---------|----------|-------------|
-| required-kind | error | Entity MUST define kind |
-| required-name | error | Entity MUST define name |
-| valid-kind | error | Entity kind MUST be defined in Schema |
-| valid-status | warning | Status SHOULD be a valid enum value |
-| valid-port-range | error | open_port port MUST be between 1 and 65535 |
-| valid-acl-rule-parent | error | acl_rule MUST have owner referencing an acl |
-| valid-ip-format | warning | interface ip_address values SHOULD be valid IP addresses or CIDR notation |
-| ip-requires-network | warning | interface with IP addresses SHOULD reference a network (via `network` property or `belongs_to` relation) |
-| network-reference-kind | warning | interface `network` reference SHOULD point to an entity of kind network |
-| ip-in-cidr | warning | interface IP addresses SHOULD be within the CIDR of a referenced network |
-| network-cidr-required | warning | network with member interfaces that have IP addresses SHOULD define a valid cidr |
-| gateway-in-cidr | warning | network gateway SHOULD be within the network cidr |
-| ip-unique-in-network | warning | IP addresses SHOULD be unique within a network |
+| Rule ID | Severity | 説明 |
+|---------|----------|------|
+| required-kind | error | Entity は kind を定義しなければならない（MUST） |
+| required-name | error | Entity は name を定義しなければならない（MUST） |
+| valid-kind | error | Entity kind は Schema で定義されていなければならない（MUST） |
+| valid-status | warning | status は有効な列挙値であるべき（SHOULD）。Entity と Relation の両方に適用 |
+| no-slash-in-id | error | Entity ID にスラッシュ `/` を含めてはならない（MUST NOT） |
+| valid-nesting-parent | warning | 所有関係の親子は Schema で定義されたネストであるべき（SHOULD） |
 
-### Relation Rules
+### Relation ルール
 
-| Rule ID | Severity | Description |
-|---------|----------|-------------|
-| required-type | error | Relation MUST define type |
-| required-participants | error | Relation MUST define participants |
-| valid-type | error | Relation type MUST be defined in Schema |
-| valid-direction | error | Directed relations MUST have source and target |
-| valid-cardinality | error | Participant count MUST satisfy constraints |
-| valid-participant-kind | warning | Participant kind SHOULD be allowed by type |
+| Rule ID | Severity | 説明 |
+|---------|----------|------|
+| required-type | error | Relation は type を定義しなければならない（MUST） |
+| required-participants | error | Relation は最低 2 参加者を持たなければならない（MUST） |
+| valid-type | error | Relation type は Schema で定義されていなければならない（MUST） |
+| valid-direction | error | directed relation は source と target を持たなければならない（MUST） |
+| valid-cardinality | error | 参加者数は min/max 制約を満たさなければならない（MUST） |
+| valid-participant-kind | warning | 参加者の kind は型の制約で許可されているべき（SHOULD） |
 
-### Ownership Rules
+### Ownership ルール
 
-| Rule ID | Severity | Description |
-|---------|----------|-------------|
-| ownership-tree | error | Ownership MUST form exactly one tree |
-| no-ownership-cycle | error | Ownership MUST NOT contain cycles |
-| root-entity | error | Exactly one root Entity MUST exist |
+| Rule ID | Severity | 説明 |
+|---------|----------|------|
+| ownership-tree | error | 所有関係は単一ツリーを形成しなければならない（MUST）。全ルートが root 権限を持つ kind の場合は森を許容 |
+| no-ownership-cycle | error | 所有関係にサイクルを含んではならない（MUST NOT） |
+| root-entity | error | root Entity は 1 つでなければならない（root 権限を持つ kind を除く） |
 
-### Reference Rules
+### Reference ルール
 
-| Rule ID | Severity | Description |
-|---------|----------|-------------|
-| dangling-reference | error | References MUST resolve to existing Objects |
-| invalid-path | error | Path references MUST be valid |
+| Rule ID | Severity | 説明 |
+|---------|----------|------|
+| dangling-reference | error | `@` 参照・owner・participants は既存オブジェクトに解決されなければならない（MUST） |
+| invalid-path | error | パス表記は所有ツリーと一致しなければならない（末尾セグメントが ID、中間セグメントが実際の親） |
 
----
+### 新潟ドメインルール
 
-## Rule Evaluation
-
-### Scope
-
-Rules define their evaluation scope.
-
-| Scope | Description |
-|-------|-------------|
-| graph | Evaluates entire Graph |
-| entity | Evaluates each Entity |
-| relation | Evaluates each Relation |
-| ownership | Evaluates ownership structure |
-
-### Condition Expression
-
-Conditions use a declarative expression language.
-
-#### Examples
-
-```yaml
-condition: "entity.id is unique"
-condition: "relation.type is defined in schema"
-condition: "entity.status in ['planned', 'active', 'maintenance', 'deprecated', 'offline', 'standby']"
-condition: "relation.participants.count >= 2"
-condition: "ownership.forms.tree"
-```
-
-### Expression Types
-
-| Type | Description | Example |
-|------|-------------|---------|
-| equality | Compare values | `entity.kind == 'server'` |
-| membership | Check set membership | `entity.status in allowed_statuses` |
-| existence | Check existence | `relation.participants exist` |
-| cardinality | Count check | `participants.count >= 2` |
-| structural | Graph structure | `ownership.forms.tree` |
+| Rule ID | Severity | 説明 |
+|---------|----------|------|
+| population-requires-species | error | population Entity は species を owner としなければならない（MUST） |
+| positive-count | warning | population の count は 0 以上であるべき（SHOULD） |
+| valid-niigata-coordinates | warning | area の緯度経度は新潟県の概略範囲内であるべき（SHOULD） |
 
 ---
 
-## Core Rule Definitions
+## コアルール定義
 
 ### unique-id
 
 ```yaml
 id: unique-id
 name: Unique Identifier
-description: "Object identifiers MUST be unique"
+description: "オブジェクト識別子は一意でなければならない"
 severity: error
-scope: graph
 condition: "all object.id are unique"
 ```
 
@@ -181,10 +140,19 @@ condition: "all object.id are unique"
 ```yaml
 id: valid-reference
 name: Valid Reference
-description: "References MUST point to existing Objects"
+description: "Relation の参加者は既存オブジェクトを参照しなければならない"
 severity: error
-scope: relation
-condition: "all relation.participants reference existing entities"
+condition: "all relation.participants reference existing objects"
+```
+
+### valid-owner
+
+```yaml
+id: valid-owner
+name: Valid Owner
+description: "owner は既存 Entity を参照しなければならない"
+severity: error
+condition: "entity.owner is undefined or references an existing entity"
 ```
 
 ### single-owner
@@ -192,10 +160,19 @@ condition: "all relation.participants reference existing entities"
 ```yaml
 id: single-owner
 name: Single Owner
-description: "Every Entity except root has exactly one owner specified"
+description: "root 以外の Entity には owner が必須。root は 1 つのみ"
 severity: error
-scope: ownership
-condition: "all entities except root have exactly one owner specified"
+condition: "exactly one root unless all roots have root authority"
+```
+
+### valid-property
+
+```yaml
+id: valid-property
+name: Valid Property
+description: "spec プロパティはスキーマ定義に適合しなければならない"
+severity: warning
+condition: "entity.spec conforms to schema property definitions and contains no undefined properties"
 ```
 
 ### ownership-tree
@@ -203,10 +180,29 @@ condition: "all entities except root have exactly one owner specified"
 ```yaml
 id: ownership-tree
 name: Ownership Tree
-description: "Ownership MUST form exactly one tree"
+description: "所有関係は単一ツリーを形成しなければならない"
 severity: error
-scope: ownership
-condition: "ownership.forms.single.tree"
+condition: "ownership.forms.single.tree and tree reaches every entity"
+```
+
+### no-ownership-cycle
+
+```yaml
+id: no-ownership-cycle
+name: No Ownership Cycle
+description: "所有関係にサイクルを含んではならない"
+severity: error
+condition: "owner chain never repeats an entity"
+```
+
+### root-entity
+
+```yaml
+id: root-entity
+name: Root Entity
+description: "root Entity は 1 つでなければならない"
+severity: error
+condition: "count(entities without owner) == 1 unless all roots are root-authorized kinds"
 ```
 
 ### required-kind
@@ -214,9 +210,8 @@ condition: "ownership.forms.single.tree"
 ```yaml
 id: required-kind
 name: Required Kind
-description: "Entity MUST define kind"
+description: "Entity は kind を定義しなければならない"
 severity: error
-scope: entity
 condition: "entity.kind is defined"
 ```
 
@@ -225,10 +220,29 @@ condition: "entity.kind is defined"
 ```yaml
 id: required-name
 name: Required Name
-description: "Entity MUST define name"
+description: "Entity は name を定義しなければならない"
 severity: error
-scope: entity
 condition: "entity.name is defined"
+```
+
+### no-slash-in-id
+
+```yaml
+id: no-slash-in-id
+name: No Slash in Entity ID
+description: "Entity ID にスラッシュを含めてはならない"
+severity: error
+condition: "'/' not in entity.id"
+```
+
+### valid-nesting-parent
+
+```yaml
+id: valid-nesting-parent
+name: Valid Nesting Parent
+description: "親子のネストは Schema で定義されているべき"
+severity: warning
+condition: "nesting(parent.kind, entity.kind) is defined in schema"
 ```
 
 ### required-type
@@ -236,9 +250,8 @@ condition: "entity.name is defined"
 ```yaml
 id: required-type
 name: Required Type
-description: "Relation MUST define type"
+description: "Relation は type を定義しなければならない"
 severity: error
-scope: relation
 condition: "relation.type is defined"
 ```
 
@@ -247,10 +260,9 @@ condition: "relation.type is defined"
 ```yaml
 id: required-participants
 name: Required Participants
-description: "Relation MUST define participants"
+description: "Relation は最低 2 参加者を持たなければならない"
 severity: error
-scope: relation
-condition: "relation.participants is defined and not empty"
+condition: "relation.participants.count >= 2"
 ```
 
 ### valid-kind
@@ -258,9 +270,8 @@ condition: "relation.participants is defined and not empty"
 ```yaml
 id: valid-kind
 name: Valid Kind
-description: "Entity kind MUST be defined in Schema"
+description: "Entity kind は Schema で定義されていなければならない"
 severity: error
-scope: entity
 condition: "entity.kind exists in schema.entity_kinds"
 ```
 
@@ -269,9 +280,8 @@ condition: "entity.kind exists in schema.entity_kinds"
 ```yaml
 id: valid-type
 name: Valid Type
-description: "Relation type MUST be defined in Schema"
+description: "Relation type は Schema で定義されていなければならない"
 severity: error
-scope: relation
 condition: "relation.type exists in schema.relation_types"
 ```
 
@@ -280,10 +290,19 @@ condition: "relation.type exists in schema.relation_types"
 ```yaml
 id: valid-status
 name: Valid Status
-description: "Status SHOULD be a valid enum value"
+description: "status は有効な列挙値であるべき"
 severity: warning
-scope: entity
-condition: "entity.status in schema.status_enum"
+condition: "object.status in ['planned', 'active', 'maintenance', 'deprecated', 'offline', 'standby']"
+```
+
+### valid-direction
+
+```yaml
+id: valid-direction
+name: Valid Direction
+description: "directed relation は source と target を持たなければならない"
+severity: error
+condition: "schema.direction == 'directed' implies relation.source is defined and relation.target is defined"
 ```
 
 ### valid-cardinality
@@ -291,9 +310,8 @@ condition: "entity.status in schema.status_enum"
 ```yaml
 id: valid-cardinality
 name: Valid Cardinality
-description: "Participant count MUST satisfy constraints"
+description: "参加者数は制約を満たさなければならない"
 severity: error
-scope: relation
 condition: "relation.participants.count between schema.min_participants and schema.max_participants"
 ```
 
@@ -302,233 +320,240 @@ condition: "relation.participants.count between schema.min_participants and sche
 ```yaml
 id: valid-participant-kind
 name: Valid Participant Kind
-description: "Participant kind SHOULD be allowed by type"
+description: "参加者の kind は型の制約で許可されているべき"
 severity: warning
-scope: relation
 condition: "all relation.participants.kind in schema.relation_types[type].allowed_kinds"
 ```
 
-### valid-port-range
+### dangling-reference
 
 ```yaml
-id: valid-port-range
-name: Valid Port Range
-description: "open_port port MUST be between 1 and 65535"
+id: dangling-reference
+name: Dangling Reference
+description: "@ 参照・owner・participants は既存オブジェクトに解決されなければならない"
 severity: error
-scope: entity
-condition: "entity.kind == 'open_port' implies 1 <= entity.port <= 65535"
+condition: "all @-references resolve to existing objects"
 ```
 
-### valid-acl-rule-parent
+### invalid-path
 
 ```yaml
-id: valid-acl-rule-parent
-name: Valid ACL Rule Parent
-description: "acl_rule MUST have owner referencing an acl"
+id: invalid-path
+name: Invalid Path
+description: "パス表記は所有ツリーと一致しなければならない"
 severity: error
-scope: entity
-condition: "entity.kind == 'acl_rule' implies entity.owner is defined and entity(entity.id == entity.owner).kind == 'acl'"
-```
-
-### valid-ip-format
-
-```yaml
-id: valid-ip-format
-name: Valid IP Address Format
-description: "interface ip_address values SHOULD be valid IP addresses or CIDR notation"
-severity: warning
-scope: entity
-condition: "entity.kind == 'interface' implies all entity.ip_address parse as IP or CIDR"
-```
-
-### ip-requires-network
-
-```yaml
-id: ip-requires-network
-name: IP Requires Network
-description: "interface with IP addresses SHOULD reference a network"
-severity: warning
-scope: entity
-condition: "entity.kind == 'interface' and entity.ip_address is defined and not empty implies entity.network is defined or exists relation type == 'belongs_to' where source == entity.id and target.kind == 'network'"
-```
-
-### network-reference-kind
-
-```yaml
-id: network-reference-kind
-name: Network Reference Kind
-description: "interface network reference SHOULD point to an entity of kind network"
-severity: warning
-scope: entity
-condition: "entity.kind == 'interface' and entity.network is defined implies entity(entity.id == entity.network).kind == 'network'"
-```
-
-### ip-in-cidr
-
-```yaml
-id: ip-in-cidr
-name: IP Within Network CIDR
-description: "interface IP addresses SHOULD be within the CIDR of a referenced network"
-severity: warning
-scope: entity
-condition: "entity.kind == 'interface' implies all entity.ip_address are within the cidr of a referenced network"
-```
-
-### network-cidr-required
-
-```yaml
-id: network-cidr-required
-name: Network CIDR Required
-description: "network with member interfaces that have IP addresses SHOULD define a valid cidr"
-severity: warning
-scope: entity
-condition: "entity.kind == 'network' and exists interface with ip_address belonging to entity implies entity.cidr is defined and valid"
-```
-
-### gateway-in-cidr
-
-```yaml
-id: gateway-in-cidr
-name: Gateway Within Network CIDR
-description: "network gateway SHOULD be within the network cidr"
-severity: warning
-scope: entity
-condition: "entity.kind == 'network' and entity.gateway is defined implies entity.gateway is within entity.cidr"
-```
-
-### ip-unique-in-network
-
-```yaml
-id: ip-unique-in-network
-name: Unique IP Within Network
-description: "IP addresses SHOULD be unique within a network"
-severity: warning
-scope: graph
-condition: "for each network, all member interface ip_address are unique"
+condition: "each path segment is an existing entity owned by the previous segment"
 ```
 
 ---
 
-## Custom Rules
+## 新潟ドメインルール定義
 
-Implementations MAY define custom rules.
+### population-requires-species
 
-Custom rules MUST follow the rule structure.
+population Entity は必ず species を owner としなければならない。
 
-Custom rules MUST NOT redefine core rule semantics.
-
-### Custom Rule Example
+違反例:
 
 ```yaml
-id: custom-required-ip
-name: Required IP Address
-description: "Servers MUST have IP address"
-severity: error
-scope: entity
-condition: "entity.kind == 'server' implies entity.ip_address is defined"
+objects:
+  - id: pop-orphan
+    kind: population
+    name: 孤立した個体群記録
+    count: 12
+    # owner 未指定 → error:
+    # population entity "pop-orphan" has no owner (must be owned by a species)
+
+  - id: pop-wrong-parent
+    kind: population
+    name: 親が種ではない個体群記録
+    attributes:
+      owner: forest-myoko-beech   # species ではない → error
+    count: 5
 ```
 
+正しい例:
+
 ```yaml
-id: custom-ssh-restricted
-name: SSH Restricted
-description: "SSH access SHOULD be restricted to management network"
+objects:
+  - id: species-japanese-serow
+    kind: species
+    name: ニホンカモシカ
+    category: mammal
+
+  - id: pop-serow-2025
+    kind: population
+    name: カモシカ生息数調査 2025
+    attributes:
+      owner: species-japanese-serow   # species を owner とする
+    spec:
+      count: 42
+      survey_date: "2025-10-01"
+      survey_method: transect
+```
+
+### positive-count
+
+population の count は 0 以上であるべき。負の値は warning となる。
+
+違反例:
+
+```yaml
+- id: pop-negative
+  kind: population
+  name: 負の個体数
+  attributes:
+    owner: species-japanese-serow
+  spec:
+    count: -3
+    # warning: population entity "pop-negative" has negative count -3
+```
+
+count が非数値の場合も warning となる。count 自体の欠如は `valid-property`（required プロパティ）により報告される。
+
+### valid-niigata-coordinates
+
+area の latitude / longitude は新潟県（佐渡島を含む）の概略範囲内であるべき。
+
+範囲:
+
+| 項目 | 下限 | 上限 |
+|------|------|------|
+| latitude | 36.6 | 38.7 |
+| longitude | 137.9 | 139.9 |
+
+違反例:
+
+```yaml
+- id: area-out-of-bounds
+  kind: area
+  name: 範囲外の地点
+  spec:
+    latitude: 35.6812    # 東京。warning: outside Niigata bounds (36.6-38.7)
+    longitude: 139.7671
+```
+
+latitude / longitude が両方とも未指定の場合は何も報告しない。片方のみ指定された場合は指定された側のみ検査する。非数値の場合も warning となる。
+
+---
+
+## カスタムルール
+
+実装はカスタムルールを定義してよい（MAY）。
+
+カスタムルールはルール構造に従わなければならない（MUST）。
+
+カスタムルールはコアルールの意味論を再定義してはならない（MUST NOT）。
+
+### カスタムルールの例
+
+```yaml
+id: custom-onsen-requires-source
+name: Onsen Requires Source
+description: "温泉は源泉への依存を持つべき"
 severity: warning
-scope: relation
-condition: "relation.type == 'applies_to' and relation.source.kind == 'acl' implies acl_rule(action='allow', destination_port='22').source_address in ['10.0.0.0/24']"
+scope: entity
+condition: "entity.kind == 'hot_spring' implies exists relation type == 'depends_on' where source == entity.id"
 ```
 
 ---
 
 ## Validation Profiles
 
-Validation Rules are grouped into Profiles.
+Validation Rule は Profile にグループ化できる。
 
-Profiles are user-defined.
+Profile はユーザー定義である。
 
-The Core Schema does not define specific profiles.
+コア Schema は特定の profile を定義しない。
 
-### Profile Structure
+profile に rules が指定された場合、リストに含まれないルールは評価から除外される。
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| name | string | yes | Profile name |
-| description | string | no | Profile description |
-| rules | list[string] | yes | Rule IDs to include |
-| required_kinds | list[string] | no | Entity Kinds that must exist |
-| required_relations | list[string] | no | Relation Types that must exist |
+### Profile 構造
 
-### Profile Example
+| Field | Type | Required | 説明 |
+|-------|------|----------|------|
+| name | string | yes | Profile 名 |
+| description | string | no | Profile の説明 |
+| rules | list[string] | no | 含める Rule ID |
+| required_kinds | list[string] | no | 存在が必須の Entity Kind |
+| required_relations | list[string] | no | 存在が必須の Relation Type |
+
+`required_kinds` / `required_relations` が満たされない場合、それぞれ `profile-required-kind` / `profile-required-relation`（error）が報告される。
+
+### Profile の例
 
 ```yaml
-- name: my-profile
-  description: Custom validation profile
+- name: nature-survey-profile
+  description: 自然環境調査データ用プロファイル
   rules:
     - unique-id
     - valid-reference
+    - valid-owner
     - single-owner
     - ownership-tree
     - required-kind
     - required-name
     - required-type
     - required-participants
-    - valid-port-range
-    - valid-acl-rule-parent
+    - population-requires-species
+    - positive-count
   required_kinds:
-    - region
-    - rack
-    - server
+    - area
+    - species
+  required_relations:
+    - inhabits
 ```
 
 ---
 
-## Validation Execution
+## 検証実行
 
-### Input
+### 入力
 
-- Graph to validate
-- Schema (optional)
-- Profile (optional)
+- 検証対象の Graph
+- Schema（任意）
+- Profile（任意）
 
-### Process
+### 処理
 
-1. Load Graph
-2. Load Schema (if provided)
-3. Load Profile (if provided)
-4. Select applicable rules
-5. Execute rules against Graph
-6. Collect Findings
-7. Return Results
+1. Graph を読み込む
+2. Schema を読み込む（指定された場合）
+3. Profile を読み込む（指定された場合）
+4. 適用されるルールを選択する
+5. Graph に対してルールを実行する
+6. Finding を収集する
+7. Result を返す
 
-### Output
+### 出力
 
-| Field | Type | Description |
-|-------|------|-------------|
-| findings | list[Finding] | List of validation findings |
-| passed | boolean | Whether validation passed |
-| summary | map | Summary statistics |
+| Field | Type | 説明 |
+|-------|------|------|
+| findings | list[Finding] | 検証結果のリスト |
+| passed | boolean | エラーが 0 件の場合 true |
+| summary | map | サマリー統計 |
 
-### Summary Structure
+### Summary 構造
 
-| Field | Type | Description |
-|-------|------|-------------|
-| total_rules | integer | Number of rules evaluated |
-| total_findings | integer | Total findings count |
-| errors | integer | Error count |
-| warnings | integer | Warning count |
-| infos | integer | Info count |
-
----
-
-## Determinism
-
-Validation is deterministic.
-
-Running the same validation against the same Graph MUST always produce identical findings.
+| Field | Type | 説明 |
+|-------|------|------|
+| total_rules | integer | 評価されたルール数 |
+| total_findings | integer | Finding 合計数 |
+| errors | integer | エラー数 |
+| warnings | integer | 警告数 |
+| infos | integer | 情報数 |
 
 ---
 
-## Extensibility
+## 決定性
 
-Implementations MAY introduce custom Validation Rules.
+検証は決定的である。
 
-Custom Rules MUST NOT redefine the semantics of the Core Schema.
+同じ Graph に対する同じ検証は、常に同一の findings を生成しなければならない（MUST）。
+
+---
+
+## 拡張性
+
+実装はカスタム Validation Rule を導入してよい（MAY）。
+
+カスタム Rule はコア Schema の意味論を再定義してはならない（MUST NOT）。

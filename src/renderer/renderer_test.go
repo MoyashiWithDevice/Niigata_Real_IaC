@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"IACForge/src/core"
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 func TestNewSVGRenderer(t *testing.T) {
@@ -348,6 +348,85 @@ func TestSVGRendererRenderWithTheme(t *testing.T) {
 	}
 }
 
+func TestSVGRendererUsesKindColors(t *testing.T) {
+	g := core.NewGraph()
+	e := core.NewEntity("species-toki", "species", "Crested Ibis")
+	if err := g.AddEntity(e); err != nil {
+		t.Fatalf("failed to add: %v", err)
+	}
+
+	v := view.NewView("test-view", "Test View")
+	engine := view.NewEngine(g)
+	result, err := engine.Apply(v)
+	if err != nil {
+		t.Fatalf("failed to apply view: %v", err)
+	}
+
+	artifact, err := NewSVGRenderer().Render(result, nil)
+	if err != nil {
+		t.Fatalf("failed to render: %v", err)
+	}
+
+	content := artifact.Content
+	if !strings.Contains(content, `fill="#0d9488"`) {
+		t.Errorf("expected species accent fill:\n%s", content)
+	}
+	if !strings.Contains(content, "🐾 Crested Ibis") {
+		t.Errorf("expected species icon in node label:\n%s", content)
+	}
+}
+
+func TestMermaidRendererEmitsClassDef(t *testing.T) {
+	g := core.NewGraph()
+	if err := g.AddEntity(core.NewEntity("species-toki", "species", "Crested Ibis")); err != nil {
+		t.Fatalf("failed to add: %v", err)
+	}
+
+	v := view.NewView("test-view", "Test View")
+	engine := view.NewEngine(g)
+	result, err := engine.Apply(v)
+	if err != nil {
+		t.Fatalf("failed to apply view: %v", err)
+	}
+
+	artifact, err := NewMermaidRenderer().Render(result, nil)
+	if err != nil {
+		t.Fatalf("failed to render: %v", err)
+	}
+
+	content := artifact.Content
+	if !strings.Contains(content, "classDef kind_species") {
+		t.Errorf("expected classDef for species:\n%s", content)
+	}
+	if !strings.Contains(content, ":::kind_species") {
+		t.Errorf("expected species node class application:\n%s", content)
+	}
+}
+
+func TestMarkdownRendererKindIcon(t *testing.T) {
+	g := core.NewGraph()
+	if err := g.AddEntity(core.NewEntity("species-toki", "species", "Crested Ibis")); err != nil {
+		t.Fatalf("failed to add: %v", err)
+	}
+
+	v := view.NewView("test-view", "Test View")
+	engine := view.NewEngine(g)
+	result, err := engine.Apply(v)
+	if err != nil {
+		t.Fatalf("failed to apply view: %v", err)
+	}
+
+	artifact, err := NewMarkdownRenderer().Render(result, nil)
+	if err != nil {
+		t.Fatalf("failed to render: %v", err)
+	}
+
+	content := artifact.Content
+	if !strings.Contains(content, "🐾 **Crested Ibis**") {
+		t.Errorf("expected species icon in hierarchy bullet:\n%s", content)
+	}
+}
+
 func TestSanitizeID(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -419,7 +498,7 @@ func TestRenderFormat(t *testing.T) {
 	if err != nil {
 		t.Fatalf("mermaid render failed: %v", err)
 	}
-	if !strings.HasPrefix(mermaid, "graph ") {
+	if !strings.Contains(mermaid, "graph ") {
 		t.Errorf("expected mermaid graph, got:\n%s", mermaid)
 	}
 
@@ -564,7 +643,7 @@ func TestSVGRendererContainment(t *testing.T) {
 	}
 
 	content := artifact.Content
-	regionRect := strings.Index(content, `fill="#f3f4f6"`)
+	regionRect := strings.Index(content, `fill="#f8fafc"`)
 	if regionRect < 0 {
 		t.Fatalf("expected region container rect at origin:\n%s", content)
 	}

@@ -1,10 +1,10 @@
 package extension
 
 import (
-	"IACForge/src/core"
-	"IACForge/src/renderer"
-	"IACForge/src/schema"
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/renderer"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 // Manifest holds machine-readable metadata for an extension.
@@ -39,6 +39,14 @@ type ExtensionPoint interface {
 type EntityKindContribution struct {
 	Kind       core.EntityKind
 	Definition *schema.EntityKindDefinition
+
+	// ParentKinds makes the contributed kind nestable under the listed parent
+	// kinds (e.g. area) by registering global nesting definitions. The child
+	// stays a leaf: its own definition does not change.
+	ParentKinds []core.EntityKind
+	// NestKey is the YAML nest key used when nesting under ParentKinds
+	// (e.g. "wildlife_incidents"). Defaults to the kind name plus "s".
+	NestKey string
 }
 
 // RelationTypeContribution represents a single relation type contributed by an extension.

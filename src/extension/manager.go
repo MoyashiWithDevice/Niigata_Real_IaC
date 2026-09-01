@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 var (
@@ -306,19 +306,15 @@ func (m *Manager) applyExtension(ext *Extension) error {
 
 // coreEntityKinds lists all entity kinds defined by the core specification.
 var coreEntityKinds = map[string]bool{
-	"region": true, "rack": true, "server": true, "interface": true,
-	"cable": true, "power_distribution": true, "network": true, "vlan": true,
-	"switch": true, "router": true, "firewall": true, "acl": true,
-	"acl_rule": true, "vm": true, "container": true, "application": true,
-	"open_port": true, "storage": true, "volume": true, "cluster": true,
-	"availability_zone": true,
+	"area": true, "ground": true, "terrain": true, "water_body": true,
+	"forest": true, "species": true, "population": true, "tourism_spot": true,
+	"hot_spring": true, "cultural_asset": true, "event": true,
 }
 
 // coreRelationTypes lists all relation types defined by the core specification.
 var coreRelationTypes = map[string]bool{
-	"connects": true, "hosts": true, "depends_on": true, "belongs_to": true,
-	"replicates_to": true, "backs_up": true, "monitors": true, "managed_by": true,
-	"mounted_on": true, "applies_to": true, "listens_on": true,
+	"located_in": true, "inhabits": true, "near": true, "depends_on": true,
+	"belongs_to": true, "flows_into": true,
 }
 
 func isCoreEntityKind(k core.EntityKind) bool {

@@ -3,10 +3,15 @@ package renderer
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
+
+// headerBarHeight is the height of the colored title bar drawn on containers.
+const headerBarHeight = 24.0
 
 // SVGRenderer renders views as SVG diagrams.
 type SVGRenderer struct {
@@ -44,6 +49,7 @@ func (r *SVGRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Artifact
 	if opts == nil {
 		opts = NewRenderOptions()
 	}
+	theme := ResolveTheme(opts)
 
 	width := opts.Width
 	height := opts.Height
@@ -63,16 +69,23 @@ func (r *SVGRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Artifact
 	fmt.Fprintf(&svg, `<svg xmlns="http://www.w3.org/2000/svg" width="%.0f" height="%.0f" viewBox="0 0 %.0f %.0f">`, width, height, width, height)
 	svg.WriteString("\n")
 
-	if opts.Theme != nil && opts.Theme.Colors != nil {
-		fmt.Fprintf(&svg, `<rect width="100%%" height="100%%" fill="%s"/>`, opts.Theme.Colors.Background)
-		svg.WriteString("\n")
-	} else {
-		svg.WriteString(`<rect width="100%" height="100%" fill="#ffffff"/>`)
-		svg.WriteString("\n")
+	// Fonts and reusable arrow marker.
+	fmt.Fprintf(&svg, `<style>text{font-family:%s;}</style>`, theme.FontFamily())
+	svg.WriteString("\n")
+	fmt.Fprintf(&svg, `<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 z"/></marker></defs>`)
+	svg.WriteString("\n")
+
+	fmt.Fprintf(&svg, `<rect width="100%%" height="100%%" fill="%s"/>`, theme.BackgroundColor())
+	svg.WriteString("\n")
+
+	if isMapLayout(opts.Layout) {
+		r.drawMapFrame(&svg, layout, theme)
 	}
 
+	relTypeByID := relationTypesByID(v)
+
 	for _, edge := range layout.Edges {
-		r.renderEdge(&svg, edge, opts)
+		r.renderEdge(&svg, edge, relTypeByID[edge.ID], theme)
 	}
 
 	// Draw containers before their contents so child nodes render on top.
@@ -89,7 +102,7 @@ func (r *SVGRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Artifact
 	})
 
 	for _, node := range nodesByDepth {
-		r.renderNode(&svg, node, v, opts, len(node.Children) > 0)
+		r.renderNode(&svg, node, v, theme, len(node.Children) > 0)
 	}
 
 	svg.WriteString("</svg>")
@@ -107,84 +120,240 @@ func (r *SVGRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Artifact
 	return artifact, nil
 }
 
-// renderEdge renders a single edge.
-func (r *SVGRenderer) renderEdge(svg *strings.Builder, edge EdgePosition, opts *RenderOptions) {
+// isMapLayout reports whether the render options request the geographic map
+// layout ("map" or its "geographic" alias).
+func isMapLayout(cfg *LayoutConfig) bool {
+	if cfg == nil {
+		return false
+	}
+	return cfg.Type == "map" || cfg.Type == "geographic"
+}
+
+// drawMapFrame draws the geographic reference frame of a map layout: a border
+// around the projected area and min/max latitude/longitude axis labels.
+func (r *SVGRenderer) drawMapFrame(svg *strings.Builder, layout *LayoutResult, theme *Theme) {
+	x, okX := parseMetaFloat(layout.Meta, "geo_x")
+	y, okY := parseMetaFloat(layout.Meta, "geo_y")
+	w, okW := parseMetaFloat(layout.Meta, "geo_w")
+	h, okH := parseMetaFloat(layout.Meta, "geo_h")
+	if !okX || !okY || !okW || !okH {
+		return
+	}
+
+	fmt.Fprintf(svg, `<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" fill="none" stroke="%s" stroke-width="1" stroke-dasharray="4 4"/>`,
+		x, y, w, h, theme.Colors.Border)
+	svg.WriteString("\n")
+
+	labelColor := "#64748b"
+	if theme.Colors != nil && theme.Colors.Secondary != "" {
+		labelColor = theme.Colors.Secondary
+	}
+	fontSize := 10
+
+	minLat, okMinLat := layout.Meta["geo_min_lat"]
+	maxLat, okMaxLat := layout.Meta["geo_max_lat"]
+	minLon, okMinLon := layout.Meta["geo_min_lon"]
+	maxLon, okMaxLon := layout.Meta["geo_max_lon"]
+
+	if okMaxLat {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="start" font-size="%d" fill="%s">N %s°</text>`,
+			x+6, y-6, fontSize, labelColor, escapeXML(maxLat))
+		svg.WriteString("\n")
+	}
+	if okMinLat {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="start" font-size="%d" fill="%s">S %s°</text>`,
+			x+6, y+h+float64(fontSize)+4, fontSize, labelColor, escapeXML(minLat))
+		svg.WriteString("\n")
+	}
+	if okMaxLon {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="end" font-size="%d" fill="%s">E %s°</text>`,
+			x+w-6, y-6, fontSize, labelColor, escapeXML(maxLon))
+		svg.WriteString("\n")
+	}
+	if okMinLon {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="end" font-size="%d" fill="%s">W %s°</text>`,
+			x+w-6, y+h+float64(fontSize)+4, fontSize, labelColor, escapeXML(minLon))
+		svg.WriteString("\n")
+	}
+
+	if rowY, ok := parseMetaFloat(layout.Meta, "fallback_row_y"); ok {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="start" font-size="%d" fill="%s">no coordinates</text>`,
+			x, rowY-8, fontSize, labelColor)
+		svg.WriteString("\n")
+	}
+}
+
+// parseMetaFloat reads a float from layout metadata.
+func parseMetaFloat(meta map[string]string, key string) (float64, bool) {
+	if meta == nil {
+		return 0, false
+	}
+	s, ok := meta[key]
+	if !ok {
+		return 0, false
+	}
+	f, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return 0, false
+	}
+	return f, true
+}
+
+// renderEdge renders a single edge. The look is driven by the relation type:
+// line color and stroke style come from the theme, and a small arrowhead is
+// drawn at the target when the edge is directed.
+func (r *SVGRenderer) renderEdge(svg *strings.Builder, edge EdgePosition, relType string, theme *Theme) {
 	if len(edge.Points) < 2 {
 		return
 	}
 
-	color := "#6b7280"
-	width := 2.0
-	if opts.Theme != nil && opts.Theme.Lines != nil && opts.Theme.Lines.Default != nil {
-		if opts.Theme.Lines.Default.Color != "" {
-			color = opts.Theme.Lines.Default.Color
-		}
-		if opts.Theme.Lines.Default.Width > 0 {
-			width = opts.Theme.Lines.Default.Width
-		}
-	}
+	p1 := edge.Points[0]
+	p2 := edge.Points[1]
 
-	fmt.Fprintf(svg, `<line x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="%.1f"/>`,
-		edge.Points[0].X, edge.Points[0].Y,
-		edge.Points[1].X, edge.Points[1].Y,
-		color, width)
+	color := theme.LineColor(relType)
+	width := theme.LineWidth(relType)
+	dash := theme.LineDash(relType)
+
+	attrs := fmt.Sprintf(`x1="%.0f" y1="%.0f" x2="%.0f" y2="%.0f" stroke="%s" stroke-width="%.1f"`,
+		p1.X, p1.Y, p2.X, p2.Y, color, width)
+	if dash != "" {
+		attrs += fmt.Sprintf(` stroke-dasharray="%s"`, dash)
+	}
+	fmt.Fprintf(svg, `<line %s marker-end="url(#arrow)"/>`, attrs)
 	svg.WriteString("\n")
 }
 
-// renderNode renders a single node. Containers (nodes with children) are
-// drawn as large labeled boxes; leaves as compact boxes with centered text.
-func (r *SVGRenderer) renderNode(svg *strings.Builder, node NodePosition, v *view.ViewResult, opts *RenderOptions, container bool) {
-	fill := "#e5e7eb"
-	stroke := "#9ca3af"
-	textColor := "#111827"
+// renderNode renders a single node. Containers (nodes with children) are drawn
+// as large labeled boxes tinted by their kind; leaves as compact boxes filled
+// with the kind accent color, white text, and an optional subtitle.
+func (r *SVGRenderer) renderNode(svg *strings.Builder, node NodePosition, v *view.ViewResult, theme *Theme, container bool) {
+	entity := entityByID(v, node.ID)
+	kind := ""
+	if entity != nil {
+		kind = string(entity.Kind)
+	}
+	accent := theme.AccentColor(kind)
+
+	fill := accent
+	stroke := accent
+	textColor := "#ffffff"
 
 	if container {
-		fill = "#f3f4f6"
+		// Containers get a soft tinted surface with a colored border and title.
+		fill = theme.ContainerFill()
+		stroke = accent
+		textColor = theme.TextColor()
 	}
 
-	if opts.Theme != nil && opts.Theme.Colors != nil {
-		if container && opts.Theme.Colors.Background != "" {
-			fill = opts.Theme.Colors.Background
-		} else if !container && opts.Theme.Colors.Surface != "" {
-			fill = opts.Theme.Colors.Surface
-		}
-		stroke = opts.Theme.Colors.Border
-		textColor = opts.Theme.Colors.Text
-	}
-
-	fmt.Fprintf(svg, `<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" rx="4" fill="%s" stroke="%s"/>`,
+	fmt.Fprintf(svg, `<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" rx="8" fill="%s" stroke="%s" stroke-width="1.5"/>`,
 		node.Position.X, node.Position.Y,
 		node.Width, node.Height,
 		fill, stroke)
 	svg.WriteString("\n")
 
-	fontSize := 12
-	if opts.Theme != nil && opts.Theme.Typography != nil && opts.Theme.Typography.FontSize > 0 {
-		fontSize = opts.Theme.Typography.FontSize
+	name := node.ID
+	if entity != nil {
+		name = entity.Name
 	}
 
-	name := node.ID
-	for _, entity := range v.VisibleEntities {
-		if entity.ID == node.ID {
-			name = entity.Name
-			break
+	fontSize := theme.FontSize()
+	if fontSize <= 0 {
+		fontSize = theme.Typography.FontSize
+	}
+
+	if container {
+		// Title bar: colored accent strip + kind label + entity name.
+		fmt.Fprintf(svg, `<rect x="%.0f" y="%.0f" width="%.0f" height="%.0f" rx="8" fill="%s"/>`,
+			node.Position.X, node.Position.Y, node.Width, headerBarHeight, accent)
+		svg.WriteString("\n")
+		title := escapeXML(labelWithIcon(theme, kind, name))
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="start" font-size="%d" font-weight="bold" fill="#ffffff">%s</text>`,
+			node.Position.X+8, node.Position.Y+float64(fontSize), fontSize, title)
+		svg.WriteString("\n")
+		return
+	}
+
+	// Leaf node: icon + name centered; optional subtitle underneath.
+	subtitle := entitySubtitle(entity)
+	centerX := node.Position.X + node.Width/2
+	title := escapeXML(labelWithIcon(theme, kind, name))
+
+	if subtitle == "" {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="middle" font-size="%d" font-weight="bold" fill="%s">%s</text>`,
+			centerX, node.Position.Y+node.Height/2+float64(fontSize)/3, fontSize, textColor, title)
+		svg.WriteString("\n")
+	} else {
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="middle" font-size="%d" font-weight="bold" fill="%s">%s</text>`,
+			centerX, node.Position.Y+16, fontSize, textColor, title)
+		svg.WriteString("\n")
+		fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.85)">%s</text>`,
+			centerX, node.Position.Y+34, escapeXML(subtitle))
+		svg.WriteString("\n")
+	}
+}
+
+// relationTypesByID builds a map from relation ID to its type for edge styling.
+func relationTypesByID(v *view.ViewResult) map[string]string {
+	m := make(map[string]string, len(v.VisibleRelations))
+	for _, rel := range v.VisibleRelations {
+		m[rel.ID] = string(rel.Type)
+	}
+	return m
+}
+
+// entityByID finds the visible entity with the given ID, or nil.
+func entityByID(v *view.ViewResult, id string) *core.Entity {
+	for _, e := range v.VisibleEntities {
+		if e.ID == id {
+			return e
 		}
 	}
+	return nil
+}
 
-	var textX, textY float64
-	anchor := "middle"
-	if container {
-		anchor = "start"
-		textX = node.Position.X + 8
-		textY = node.Position.Y + float64(fontSize)
-	} else {
-		textX = node.Position.X + node.Width/2
-		textY = node.Position.Y + node.Height/2 + float64(fontSize)/3
+// entitySubtitle picks a human-readable secondary value for a leaf node, so
+// diagrams convey a meaningful fact (population count, elevation, etc.) instead
+// of only the name. Returns "" when no suitable value exists.
+func entitySubtitle(e *core.Entity) string {
+	if e == nil {
+		return ""
 	}
+	switch e.Kind {
+	case "population":
+		return propertyString(e, "count")
+	case "water_body":
+		return propertyString(e, "water_type")
+	case "terrain":
+		return propertyString(e, "elevation_m", "m")
+	case "ground":
+		return propertyString(e, "soil_type")
+	case "forest":
+		return propertyString(e, "forest_type")
+	case "hot_spring":
+		return propertyString(e, "spring_quality")
+	case "cultural_asset":
+		return propertyString(e, "asset_type")
+	case "event":
+		return propertyString(e, "season")
+	default:
+		return ""
+	}
+}
 
-	fmt.Fprintf(svg, `<text x="%.0f" y="%.0f" text-anchor="%s" font-size="%d" fill="%s">%s</text>`,
-		textX, textY, anchor, fontSize, textColor, escapeXML(name))
-	svg.WriteString("\n")
+// propertyString returns a JSON-style scalar property as a string, optionally
+// with a unit suffix. Only scalars are rendered.
+func propertyString(e *core.Entity, key string, unit ...string) string {
+	val, ok := e.GetProperty(key)
+	if !ok || val == nil {
+		return ""
+	}
+	s := fmt.Sprintf("%v", val)
+	if len(unit) > 0 && unit[0] != "" {
+		// Strip a trailing decimal when it is insignificant.
+		s = strings.TrimSuffix(strings.TrimSuffix(s, "0"), ".")
+		s += unit[0]
+	}
+	return s
 }
 
 // escapeXML escapes special XML characters.

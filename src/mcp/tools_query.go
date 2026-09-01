@@ -8,9 +8,9 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 
-	"IACForge/src/core"
-	"IACForge/src/query"
-	"IACForge/src/renderer"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/query"
+	"github.com/bababa/Niigata_Real_IaC/src/renderer"
 )
 
 func registerQueryMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {

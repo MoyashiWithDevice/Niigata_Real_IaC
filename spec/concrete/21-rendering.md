@@ -35,7 +35,7 @@ Every Renderer is defined with:
 
 The core specification defines the following output formats.
 
-> **Implementation status:** The current IACForge implementation ships the
+> **Implementation status:** The current Niigata Real Model implementation ships the
 > `svg`, `mermaid`, `markdown`, and `json` renderers. The `png`, `pdf`,
 > `graphviz`, `d2`, `html`, and `csv` renderers described below are part of the
 > specification but are **not yet implemented**; the CLI and MCP accept only
@@ -139,7 +139,7 @@ Lifted content (see the View Model spec) is rendered as follows:
   (`-.-`).
 - An endpoint referencing a lifted group links against the subgraph ID.
 - When a lifted edge collapsed multiple anchor candidates onto a
-  representative, its label carries an aggregation suffix (e.g. `connects ×3`).
+  representative, its label carries an aggregation suffix (e.g. `near ×3`).
 
 ### Graphviz Renderer
 
@@ -212,9 +212,9 @@ Layout determines spatial arrangement of rendered elements.
 | Type | Description | Use Case |
 |------|-------------|----------|
 | hierarchical | Tree-like structure | Ownership, dependencies |
-| force-directed | Physics-based simulation | Network topology |
-| orthogonal | Right-angle connections | Infrastructure diagrams |
-| rack | Physical rack view | Data center layout |
+| force-directed | Physics-based simulation | Resource topology |
+| orthogonal | Right-angle connections | Resource diagrams |
+| map | Geographic placement | Area and spot layout |
 | timeline | Time-based arrangement | Change history |
 | grid | Grid arrangement | Inventory views |
 
@@ -388,15 +388,15 @@ Renderers SHOULD support accessible output.
 
 ```yaml
 pipeline:
-  graph: infrastructure.yaml
-  projection: physical-topology
-  view: rack-layout
+  graph: niigata-resources.yaml
+  projection: nature-topology
+  view: area-map
   renderer: svg
   options:
     width: 1200
     height: 800
-  theme: datacenter-theme
-  output: rack-layout.svg
+  theme: niigata-theme
+  output: area-map.svg
 ```
 
 ---

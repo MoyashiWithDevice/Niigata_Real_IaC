@@ -26,41 +26,42 @@
 
 ### リスト形式（対称関係）
 
-`connects`のような対称関係の場合：
+`near`のような対称関係の場合：
 
 ```yaml
 participants:
-  - srv-proxmox-01/eno1
-  - sw-core-01/port1
+  - spot-shukunegi
+  - coast-otoline
 ```
 
 ### マップ形式（有向関係）
 
-`hosts`、`depends_on`のような有向関係の場合：
+`located_in`、`depends_on`のような有向関係の場合：
 
 ```yaml
 participants:
-  source: srv-proxmox-01
-  target: vm-web-01
+  source: species-toki
+  target: forest-osado-beech
 ```
 
 ## 全プロパティを指定したRelation
 
 ```yaml
-- id: rel-hosts-server-vm
-  type: hosts
+- id: rel-toki-inhabits
+  type: inhabits
   participants:
-    source: srv-proxmox-01
-    target: vm-web-01
+    source: species-toki
+    target: forest-osado-beech
   attributes:
-    description: "Server hosts VM"
+    description: "Toki inhabit the beech forest"
     status: active
     tags:
-      - hosting
+      - habitat
     labels:
-      source_type: server
-      target_type: vm
+      source_type: species
+      target_type: forest
     extensions:
       custom_key: custom_value
-  spec: {}
+  spec:
+    habitat_note: Roosts in tall trees
 ```

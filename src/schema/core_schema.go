@@ -1,17 +1,18 @@
 package schema
 
 import (
-	"IACForge/src/core"
-	"IACForge/src/core/kinds"
-	"IACForge/src/core/types"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core/kinds"
+	"github.com/bababa/Niigata_Real_IaC/src/core/types"
 )
 
 func intPtr(v float64) *float64 { return &v }
 
-// CoreSchema returns the default core schema with all entity kinds and relation types.
+// CoreSchema returns the default core schema with all entity kinds and relation types
+// for Niigata nature and tourism resource management.
 func CoreSchema() *Schema {
 	s := NewSchema("1.0.0", "1.0")
-	s.Version.Description = "Core Infrastructure Schema"
+	s.Version.Description = "Niigata Nature and Tourism Resource Schema"
 
 	registerEntityKinds(s)
 	registerRelationTypes(s)
@@ -19,338 +20,274 @@ func CoreSchema() *Schema {
 	return s
 }
 
-func registerEntityKinds(s *Schema) {
-	// Global nesting definitions shared by all entity kinds
-	s.NestingDefs = []NestingDefinition{
-		{NestKey: "interfaces", ChildKind: kinds.Interface, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		{NestKey: "servers", ChildKind: kinds.Server, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		{NestKey: "switches", ChildKind: kinds.Switch, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		{NestKey: "routers", ChildKind: kinds.Router, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		{NestKey: "firewalls", ChildKind: kinds.Firewall, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		{NestKey: "networks", ChildKind: kinds.Network, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+// geoProperties returns the optional geographic coordinate properties shared by
+// place-bearing entity kinds. Bounds follow WGS84 decimal degrees.
+func geoProperties() []PropertyDefinition {
+	return []PropertyDefinition{
+		{Name: "latitude", Type: PropertyTypeNumber, Required: false,
+			Constraints: &Constraint{Min: intPtr(-90), Max: intPtr(90)},
+			Description: "Geographic latitude in decimal degrees"},
+		{Name: "longitude", Type: PropertyTypeNumber, Required: false,
+			Constraints: &Constraint{Min: intPtr(-180), Max: intPtr(180)},
+			Description: "Geographic longitude in decimal degrees"},
 	}
+}
 
-	s.AddEntityKind(kinds.Region, &EntityKindDefinition{
-		Description: "Geographic region where infrastructure is deployed",
+func registerEntityKinds(s *Schema) {
+	s.AddEntityKind(kinds.Area, &EntityKindDefinition{
+		Description: "Geographic area such as a city, town, village, district, or island",
 		Properties: []PropertyDefinition{
+			{Name: "area_type", Type: PropertyTypeString, Required: false,
+				Constraints: &Constraint{Enum: []string{"prefecture", "city", "town", "village", "district", "island"}},
+				Description: "Administrative type of the area"},
+			{Name: "population", Type: PropertyTypeInteger, Required: false,
+				Constraints: &Constraint{Min: intPtr(0)},
+				Description: "Number of residents"},
 			{Name: "address", Type: PropertyTypeString, Required: false, Description: "Physical address"},
-			{Name: "latitude", Type: PropertyTypeNumber, Required: false, Description: "Geographic latitude"},
-			{Name: "longitude", Type: PropertyTypeNumber, Required: false, Description: "Geographic longitude"},
+			{Name: "latitude", Type: PropertyTypeNumber, Required: false,
+				Constraints: &Constraint{Min: intPtr(-90), Max: intPtr(90)},
+				Description: "Geographic latitude in decimal degrees"},
+			{Name: "longitude", Type: PropertyTypeNumber, Required: false,
+				Constraints: &Constraint{Min: intPtr(-180), Max: intPtr(180)},
+				Description: "Geographic longitude in decimal degrees"},
 			{Name: "timezone", Type: PropertyTypeString, Required: false, Description: "Timezone identifier"},
 		},
 		NestingDefs: []NestingDefinition{
-			{NestKey: "racks", ChildKind: kinds.Rack, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-			{NestKey: "clusters", ChildKind: kinds.Cluster, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-			{NestKey: "availability_zones", ChildKind: kinds.AvailabilityZone, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "grounds", ChildKind: kinds.Ground, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "terrains", ChildKind: kinds.Terrain, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "water_bodies", ChildKind: kinds.WaterBody, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "forests", ChildKind: kinds.Forest, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "tourism_spots", ChildKind: kinds.TourismSpot, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "species", ChildKind: kinds.Species, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "cultural_assets", ChildKind: kinds.CulturalAsset, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
 		},
 	})
 
-	s.AddEntityKind(kinds.Rack, &EntityKindDefinition{
-		Description: "Physical rack enclosure within a region",
-		Properties: []PropertyDefinition{
-			{Name: "height_units", Type: PropertyTypeInteger, Required: false, Default: 42, Description: "Rack height in rack units (U)"},
-			{Name: "power_capacity_watts", Type: PropertyTypeInteger, Required: false, Description: "Total power capacity in watts"},
-			{Name: "max_load_kg", Type: PropertyTypeNumber, Required: false, Description: "Maximum weight capacity in kg"},
+	s.AddEntityKind(kinds.Ground, &EntityKindDefinition{
+		Description: "Ground or soil condition at a specific site",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "soil_type", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"loam", "sand", "clay", "gravel", "rock", "volcanic_ash", "peat"}},
+					Description: "Dominant soil type"},
+				{Name: "elevation_m", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(-10)}, Description: "Elevation above sea level in meters"},
+				{Name: "slope_deg", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0), Max: intPtr(90)}, Description: "Slope angle in degrees"},
+				{Name: "stability", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"stable", "watch", "unstable", "landslide_prone", "subsidence"}},
+					Description: "Ground stability classification"},
+			},
+			geoProperties()...),
+	})
+
+	s.AddEntityKind(kinds.Terrain, &EntityKindDefinition{
+		Description: "Landform such as a mountain, plain, coast, or valley",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "terrain_type", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"mountain", "hill", "plain", "coast", "valley", "plateau", "cave"}},
+					Description: "Type of landform"},
+				{Name: "elevation_m", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Highest elevation in meters"},
+				{Name: "prominence_m", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Topographic prominence in meters"},
+			},
+			geoProperties()...),
+		NestingDefs: []NestingDefinition{
+			{NestKey: "grounds", ChildKind: kinds.Ground, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
 		},
 	})
 
-	s.AddEntityKind(kinds.Server, &EntityKindDefinition{
-		Description: "Physical or virtual compute host",
+	s.AddEntityKind(kinds.WaterBody, &EntityKindDefinition{
+		Description: "River, lake, sea area, pond, or marsh",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "water_type", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"river", "lake", "sea", "pond", "marsh", "waterfall"}},
+					Description: "Type of water body"},
+				{Name: "length_km", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Length in kilometers (rivers)"},
+				{Name: "max_depth_m", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Maximum depth in meters"},
+				{Name: "catchment_area_km2", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Catchment area in square kilometers"},
+			},
+			geoProperties()...),
+	})
+
+	s.AddEntityKind(kinds.Forest, &EntityKindDefinition{
+		Description: "Forest or wooded area",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "forest_type", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"natural", "beech", "cedar_plantation", "pine", "bamboo", "mixed"}},
+					Description: "Dominant forest type"},
+				{Name: "area_ha", Type: PropertyTypeNumber, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Area in hectares"},
+			},
+			geoProperties()...),
+		NestingDefs: []NestingDefinition{
+			{NestKey: "grounds", ChildKind: kinds.Ground, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+		},
+	})
+
+	s.AddEntityKind(kinds.Species, &EntityKindDefinition{
+		Description: "Animal or plant species living in the area",
 		Properties: []PropertyDefinition{
-			{Name: "manufacturer", Type: PropertyTypeString, Required: false, Description: "Hardware manufacturer"},
-			{Name: "model", Type: PropertyTypeString, Required: false, Description: "Hardware model"},
-			{Name: "serial_number", Type: PropertyTypeString, Required: false, Description: "Serial number"},
-			{Name: "cpu", Type: PropertyTypeList, Required: false, Description: "CPU configurations", Properties: []PropertyDefinition{
-				{Name: "cores", Type: PropertyTypeInteger, Required: false, Constraints: &Constraint{Min: intPtr(1), Max: intPtr(1024)}, Description: "Number of CPU cores"},
-				{Name: "architecture", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"x86_64", "arm64"}}, Description: "CPU architecture (x86_64, arm64)"},
-			}},
-			{Name: "memory", Type: PropertyTypeList, Required: false, Description: "Memory modules", Properties: []PropertyDefinition{
-				{Name: "size_gb", Type: PropertyTypeNumber, Required: true, Description: "Memory module size in GB"},
-				{Name: "speed", Type: PropertyTypeInteger, Required: false, Description: "Memory speed in MHz"},
-				{Name: "type", Type: PropertyTypeString, Required: false, Description: "Memory type (ddr4, ddr5, lpddr4, lpddr5)"},
-			}},
-			{Name: "storage", Type: PropertyTypeList, Required: false, Description: "Local storage devices", Properties: []PropertyDefinition{
-				{Name: "size_gb", Type: PropertyTypeNumber, Required: false, Description: "Storage size in GB"},
-				{Name: "type", Type: PropertyTypeString, Required: false, Description: "Storage type (ssd, hdd, nvme)"},
-			}},
-			{Name: "platform", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"proxmox", "vmware", "kubernetes", "baremetal"}}, Description: "Virtualization platform"},
-			{Name: "bios_version", Type: PropertyTypeString, Required: false, Description: "BIOS/UEFI version"},
+			{Name: "scientific_name", Type: PropertyTypeString, Required: false, Description: "Scientific (Latin) name"},
+			{Name: "category", Type: PropertyTypeString, Required: false,
+				Constraints: &Constraint{Enum: []string{"mammal", "bird", "reptile", "amphibian", "fish", "insect", "plant", "other"}},
+				Description: "Biological category"},
+			{Name: "red_list_status", Type: PropertyTypeString, Required: false,
+				Constraints: &Constraint{Enum: []string{"extinct", "extinct_in_wild", "critically_endangered", "endangered", "vulnerable", "near_threatened", "least_concern", "data_deficient"}},
+				Description: "Red List conservation status"},
 		},
 		NestingDefs: []NestingDefinition{
-			{NestKey: "vms", ChildKind: kinds.VM, AutoRelationType: types.Hosts, AutoRelationSource: "parent"},
-			{NestKey: "containers", ChildKind: kinds.Container, AutoRelationType: types.Hosts, AutoRelationSource: "parent"},
+			{NestKey: "populations", ChildKind: kinds.Population, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
 		},
 	})
 
-	s.AddEntityKind(kinds.Interface, &EntityKindDefinition{
-		Description: "Network interface on a device",
+	s.AddEntityKind(kinds.Population, &EntityKindDefinition{
+		Description: "Population record of a species from a survey",
 		Properties: []PropertyDefinition{
-			{Name: "type", Type: PropertyTypeString, Required: false, Default: "ethernet", Constraints: &Constraint{Enum: []string{"ethernet", "fiber", "wireless", "virtual", "bond", "vlan", "bridge", "loopback"}}, Description: "Interface type (ethernet, fiber, wireless, virtual, bond, vlan, bridge, loopback)"},
-			{Name: "mode", Type: PropertyTypeString, Required: false, Default: "none", Constraints: &Constraint{Enum: []string{"access", "trunk", "hybrid", "none"}}, Description: "Interface mode (access, trunk, hybrid, none)"},
-			{Name: "speed_mbps", Type: PropertyTypeInteger, Required: false, Description: "Interface speed in Mbps"},
-			{Name: "mac_address", Type: PropertyTypeString, Required: false, Description: "MAC address"},
-			{Name: "ip_address", Type: PropertyTypeList, Required: false, Description: "IP addresses if configured"},
-			{Name: "network", Type: PropertyTypeReference, Required: false, Description: "Reference to the network this interface belongs to"},
-			{Name: "vlan_id", Type: PropertyTypeInteger, Required: false, Constraints: &Constraint{Min: intPtr(1), Max: intPtr(4094)}, Description: "VLAN identifier for a VLAN sub-interface (e.g., vmbr.20)"},
-			{Name: "mtu", Type: PropertyTypeInteger, Required: false, Default: 1500, Description: "Maximum transmission unit"},
+			{Name: "count", Type: PropertyTypeInteger, Required: true,
+				Constraints: &Constraint{Min: intPtr(0)}, Description: "Number of individuals observed or estimated"},
+			{Name: "survey_date", Type: PropertyTypeString, Required: false, Description: "Survey date (YYYY-MM-DD)"},
+			{Name: "survey_method", Type: PropertyTypeString, Required: false,
+				Constraints: &Constraint{Enum: []string{"visual_count", "transect", "drone", "camera_trap", "interview", "estimate"}},
+				Description: "How the count was performed"},
 		},
+	})
+
+	s.AddEntityKind(kinds.TourismSpot, &EntityKindDefinition{
+		Description: "Tourist attraction such as a scenic spot, park, shrine, or museum",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "spot_type", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"scenic", "viewpoint", "park", "historic", "shrine_temple", "museum", "market", "ski_resort", "beach"}},
+					Description: "Type of tourist spot"},
+				{Name: "description", Type: PropertyTypeString, Required: false, Description: "Short description"},
+				{Name: "annual_visitors", Type: PropertyTypeInteger, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Annual number of visitors"},
+			},
+			geoProperties()...),
 		NestingDefs: []NestingDefinition{
-			{NestKey: "vlans", ChildKind: kinds.VLAN, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-			{NestKey: "cables", ChildKind: kinds.Cable},
+			{NestKey: "hot_springs", ChildKind: kinds.HotSpring, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "events", ChildKind: kinds.Event, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
 		},
 	})
 
-	s.AddEntityKind(kinds.Cable, &EntityKindDefinition{
-		Description: "Physical cable connecting two or more interfaces",
-		Properties: []PropertyDefinition{
-			{Name: "cable_type", Type: PropertyTypeString, Required: false, Default: "copper", Description: "Cable type (copper, fiber, dac)"},
-			{Name: "length_meters", Type: PropertyTypeNumber, Required: false, Description: "Cable length in meters"},
-			{Name: "connector_a", Type: PropertyTypeString, Required: false, Description: "Connector type at end A"},
-			{Name: "connector_b", Type: PropertyTypeString, Required: false, Description: "Connector type at end B"},
-		},
-	})
-
-	s.AddEntityKind(kinds.PowerDistribution, &EntityKindDefinition{
-		Description: "Power distribution unit (PDU) or power feed",
-		Properties: []PropertyDefinition{
-			{Name: "capacity_amps", Type: PropertyTypeInteger, Required: false, Description: "Total amperage capacity"},
-			{Name: "voltage", Type: PropertyTypeNumber, Required: false, Default: float64(240), Description: "Operating voltage"},
-			{Name: "phases", Type: PropertyTypeInteger, Required: false, Default: 1, Description: "Number of phases"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Network, &EntityKindDefinition{
-		Description: "Logical network or broadcast domain",
-		Properties: []PropertyDefinition{
-			{Name: "cidr", Type: PropertyTypeString, Required: false, Description: "Network CIDR notation"},
-			{Name: "gateway", Type: PropertyTypeString, Required: false, Description: "Default gateway address"},
-			{Name: "dns_servers", Type: PropertyTypeList, Required: false, Description: "DNS server addresses"},
-			{Name: "vlan_id", Type: PropertyTypeInteger, Required: false, Description: "Associated VLAN ID"},
-			{Name: "network_type", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"management", "storage", "vm", "public"}}, Description: "Network type (management, storage, vm, public)"},
-		},
-	})
-
-	s.AddEntityKind(kinds.VLAN, &EntityKindDefinition{
-		Description: "Virtual LAN configuration",
-		Properties: []PropertyDefinition{
-			{Name: "vlan_id", Type: PropertyTypeInteger, Required: true, Constraints: &Constraint{Min: intPtr(1), Max: intPtr(4094)}, Description: "VLAN identifier (1-4094)"},
-			{Name: "tagged", Type: PropertyTypeBoolean, Required: false, Default: false, Description: "Whether this VLAN carries tagged traffic on a trunk port"},
-			{Name: "associated_network", Type: PropertyTypeReference, Required: false, Description: "Reference to parent network"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Switch, &EntityKindDefinition{
-		Description: "Network switch",
-		Properties: []PropertyDefinition{
-			{Name: "manufacturer", Type: PropertyTypeString, Required: false, Description: "Hardware manufacturer"},
-			{Name: "model", Type: PropertyTypeString, Required: false, Description: "Hardware model"},
-			{Name: "serial_number", Type: PropertyTypeString, Required: false, Description: "Serial number"},
-			{Name: "port_count", Type: PropertyTypeInteger, Required: false, Description: "Total port count"},
-			{Name: "managed", Type: PropertyTypeBoolean, Required: false, Default: true, Description: "Whether switch is managed"},
-			{Name: "stackable", Type: PropertyTypeBoolean, Required: false, Default: false, Description: "Whether switch supports stacking"},
-		},
+	s.AddEntityKind(kinds.HotSpring, &EntityKindDefinition{
+		Description: "Hot spring source or bath facility",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "spring_quality", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"sulfur", "chloride", "simple", "carbonated", "iron", "alum", "sulfate"}},
+					Description: "Chemical quality of the spring"},
+				{Name: "temperature_c", Type: PropertyTypeNumber, Required: false,
+					Description: "Source temperature in degrees Celsius"},
+				{Name: "source_count", Type: PropertyTypeInteger, Required: false,
+					Constraints: &Constraint{Min: intPtr(0)}, Description: "Number of spring sources"},
+			},
+			geoProperties()...),
 		NestingDefs: []NestingDefinition{
-			{NestKey: "ports", ChildKind: kinds.Interface, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
+			{NestKey: "events", ChildKind: kinds.Event, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
 		},
 	})
 
-	s.AddEntityKind(kinds.Router, &EntityKindDefinition{
-		Description: "Network router",
-		Properties: []PropertyDefinition{
-			{Name: "manufacturer", Type: PropertyTypeString, Required: false, Description: "Hardware manufacturer"},
-			{Name: "model", Type: PropertyTypeString, Required: false, Description: "Hardware model"},
-			{Name: "serial_number", Type: PropertyTypeString, Required: false, Description: "Serial number"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "ports", ChildKind: kinds.Interface, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		},
+	s.AddEntityKind(kinds.CulturalAsset, &EntityKindDefinition{
+		Description: "Historic site or cultural property",
+		Properties: append(
+			[]PropertyDefinition{
+				{Name: "asset_type", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"historic_site", "treasure", "building", "monument", "archaeological", "folk_property"}},
+					Description: "Type of cultural asset"},
+				{Name: "designated_level", Type: PropertyTypeString, Required: false,
+					Constraints: &Constraint{Enum: []string{"national", "prefectural", "municipal", "unesco"}},
+					Description: "Designation level"},
+				{Name: "designated_date", Type: PropertyTypeString, Required: false, Description: "Designation date (YYYY-MM-DD)"},
+			},
+			geoProperties()...),
 	})
 
-	s.AddEntityKind(kinds.Firewall, &EntityKindDefinition{
-		Description: "Network firewall",
+	s.AddEntityKind(kinds.Event, &EntityKindDefinition{
+		Description: "Festival or recurring local event",
 		Properties: []PropertyDefinition{
-			{Name: "manufacturer", Type: PropertyTypeString, Required: false, Description: "Hardware manufacturer"},
-			{Name: "model", Type: PropertyTypeString, Required: false, Description: "Hardware model"},
-			{Name: "serial_number", Type: PropertyTypeString, Required: false, Description: "Serial number"},
-			{Name: "throughput_gbps", Type: PropertyTypeNumber, Required: false, Description: "Maximum throughput in Gbps"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "acls", ChildKind: kinds.ACL, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		},
-	})
-
-	s.AddEntityKind(kinds.ACL, &EntityKindDefinition{
-		Description: "Access Control List containing ordered rules",
-		Properties: []PropertyDefinition{
-			{Name: "default_action", Type: PropertyTypeString, Required: false, Default: "deny", Constraints: &Constraint{Enum: []string{"allow", "deny"}}, Description: "Default action when no rule matches"},
-			{Name: "direction", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"inbound", "outbound", "both"}}, Description: "Traffic direction"},
-			{Name: "protocol", Type: PropertyTypeString, Required: false, Default: "any", Constraints: &Constraint{Enum: []string{"tcp", "udp", "icmp", "any"}}, Description: "Protocol filter (tcp, udp, icmp, any)"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "acl_rules", ChildKind: kinds.ACLRule, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		},
-	})
-
-	s.AddEntityKind(kinds.ACLRule, &EntityKindDefinition{
-		Description: "Single rule within an Access Control List",
-		Properties: []PropertyDefinition{
-			{Name: "action", Type: PropertyTypeString, Required: true, Constraints: &Constraint{Enum: []string{"allow", "deny"}}, Description: "Rule action (allow, deny)"},
-			{Name: "protocol", Type: PropertyTypeString, Required: false, Default: "any", Description: "Protocol (tcp, udp, icmp, any)"},
-			{Name: "source_address", Type: PropertyTypeString, Required: false, Default: "any", Description: "Source IP address or CIDR"},
-			{Name: "source_port", Type: PropertyTypeString, Required: false, Default: "any", Description: "Source port or range"},
-			{Name: "destination_address", Type: PropertyTypeString, Required: false, Default: "any", Description: "Destination IP address or CIDR"},
-			{Name: "destination_port", Type: PropertyTypeString, Required: false, Default: "any", Description: "Destination port or range"},
-			{Name: "enabled", Type: PropertyTypeBoolean, Required: false, Default: true, Description: "Whether this rule is active"},
-		},
-	})
-
-	s.AddEntityKind(kinds.VM, &EntityKindDefinition{
-		Description: "Virtual machine",
-		Properties: []PropertyDefinition{
-			{Name: "cpu", Type: PropertyTypeList, Required: false, Description: "Virtual CPU configurations", Properties: []PropertyDefinition{
-				{Name: "cores", Type: PropertyTypeInteger, Required: false, Description: "Number of virtual CPU cores"},
-				{Name: "architecture", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"x86_64", "arm64"}}, Description: "CPU architecture (x86_64, arm64)"},
-			}},
-			{Name: "memory", Type: PropertyTypeList, Required: false, Description: "Memory modules", Properties: []PropertyDefinition{
-				{Name: "size_gb", Type: PropertyTypeNumber, Required: true, Description: "Memory module size in GB"},
-				{Name: "speed", Type: PropertyTypeInteger, Required: false, Description: "Memory speed in MHz"},
-				{Name: "type", Type: PropertyTypeString, Required: false, Description: "Memory type (ddr4, ddr5, lpddr4, lpddr5)"},
-			}},
-			{Name: "storage", Type: PropertyTypeList, Required: false, Description: "Virtual disk configurations", Properties: []PropertyDefinition{
-				{Name: "size_gb", Type: PropertyTypeNumber, Required: false, Description: "Disk size in GB"},
-				{Name: "type", Type: PropertyTypeString, Required: false, Description: "Disk type (ssd, hdd, nvme)"},
-			}},
-			{Name: "os", Type: PropertyTypeString, Required: false, Description: "Operating system"},
-			{Name: "os_version", Type: PropertyTypeString, Required: false, Description: "Operating system version"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "applications", ChildKind: kinds.Application, AutoRelationType: types.Hosts, AutoRelationSource: "parent"},
-			{NestKey: "containers", ChildKind: kinds.Container, AutoRelationType: types.Hosts, AutoRelationSource: "parent"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Container, &EntityKindDefinition{
-		Description: "Containerized workload",
-		Properties: []PropertyDefinition{
-			{Name: "image", Type: PropertyTypeString, Required: false, Description: "Container image"},
-			{Name: "image_tag", Type: PropertyTypeString, Required: false, Default: "latest", Description: "Image tag"},
-			{Name: "cpu_limit", Type: PropertyTypeString, Required: false, Description: "CPU limit"},
-			{Name: "memory_limit", Type: PropertyTypeString, Required: false, Description: "Memory limit"},
-			{Name: "ports", Type: PropertyTypeList, Required: false, Description: "Exposed ports"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "applications", ChildKind: kinds.Application, AutoRelationType: types.Hosts, AutoRelationSource: "parent"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Application, &EntityKindDefinition{
-		Description: "Software application or service",
-		Properties: []PropertyDefinition{
-			{Name: "version", Type: PropertyTypeString, Required: false, Description: "Application version"},
-			{Name: "port", Type: PropertyTypeInteger, Required: false, Description: "Primary listening port"},
-			{Name: "protocol", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"http", "https", "tcp", "udp"}}, Description: "Network protocol (http, https, tcp, udp)"},
-			{Name: "url", Type: PropertyTypeString, Required: false, Description: "Application URL if applicable"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "containers", ChildKind: kinds.Container, AutoRelationType: types.Hosts, AutoRelationSource: "parent"},
-			{NestKey: "open_ports", ChildKind: kinds.OpenPort, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		},
-	})
-
-	s.AddEntityKind(kinds.OpenPort, &EntityKindDefinition{
-		Description: "Listening or open network port",
-		Properties: []PropertyDefinition{
-			{Name: "port", Type: PropertyTypeInteger, Required: true, Constraints: &Constraint{Min: intPtr(1), Max: intPtr(65535)}, Description: "Port number (1-65535)"},
-			{Name: "protocol", Type: PropertyTypeString, Required: true, Constraints: &Constraint{Enum: []string{"tcp", "udp"}}, Description: "Transport protocol (tcp, udp)"},
-			{Name: "state", Type: PropertyTypeString, Required: false, Default: "listening", Constraints: &Constraint{Enum: []string{"listening", "established", "closed"}}, Description: "Port state (listening, established, closed)"},
-			{Name: "address", Type: PropertyTypeString, Required: false, Default: "0.0.0.0", Description: "Listening IP address"},
-			{Name: "process", Type: PropertyTypeString, Required: false, Description: "Process or service name using this port"},
-			{Name: "pid", Type: PropertyTypeInteger, Required: false, Description: "Process ID if known"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Storage, &EntityKindDefinition{
-		Description: "Storage system or array",
-		Properties: []PropertyDefinition{
-			{Name: "manufacturer", Type: PropertyTypeString, Required: false, Description: "Hardware manufacturer"},
-			{Name: "model", Type: PropertyTypeString, Required: false, Description: "Hardware model"},
-			{Name: "total_capacity_gb", Type: PropertyTypeNumber, Required: false, Description: "Total raw capacity in GB"},
-			{Name: "usable_capacity_gb", Type: PropertyTypeNumber, Required: false, Description: "Usable capacity after redundancy"},
-			{Name: "raid_level", Type: PropertyTypeString, Required: false, Description: "RAID level if applicable"},
-			{Name: "protocol", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"nfs", "iscsi", "fc", "local"}}, Description: "Storage protocol (nfs, iscsi, fc, local)"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Volume, &EntityKindDefinition{
-		Description: "Logical storage volume",
-		Properties: []PropertyDefinition{
-			{Name: "capacity_gb", Type: PropertyTypeNumber, Required: false, Description: "Volume capacity in GB"},
-			{Name: "filesystem", Type: PropertyTypeString, Required: false, Description: "Filesystem type if mounted"},
-			{Name: "mount_point", Type: PropertyTypeString, Required: false, Description: "Mount point if applicable"},
-			{Name: "thin_provisioned", Type: PropertyTypeBoolean, Required: false, Default: false, Description: "Whether volume is thin provisioned"},
-		},
-	})
-
-	s.AddEntityKind(kinds.Cluster, &EntityKindDefinition{
-		Description: "Logical grouping of compute resources",
-		Properties: []PropertyDefinition{
-			{Name: "cluster_type", Type: PropertyTypeString, Required: false, Constraints: &Constraint{Enum: []string{"compute", "storage", "hyperconverged"}}, Description: "Cluster type (compute, storage, hyperconverged)"},
-			{Name: "ha_enabled", Type: PropertyTypeBoolean, Required: false, Default: false, Description: "Whether HA is enabled"},
-			{Name: "drs_enabled", Type: PropertyTypeBoolean, Required: false, Default: false, Description: "Whether DRS is enabled"},
-		},
-		NestingDefs: []NestingDefinition{
-			{NestKey: "vms", ChildKind: kinds.VM, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-			{NestKey: "servers", ChildKind: kinds.Server, AutoRelationType: types.BelongsTo, AutoRelationSource: "child"},
-		},
-	})
-
-	s.AddEntityKind(kinds.AvailabilityZone, &EntityKindDefinition{
-		Description: "Logical availability zone within a region",
-		Properties: []PropertyDefinition{
-			{Name: "state", Type: PropertyTypeString, Required: false, Default: "available", Constraints: &Constraint{Enum: []string{"available", "impaired", "unavailable"}}, Description: "Availability zone state (available, impaired, unavailable)"},
+			{Name: "season", Type: PropertyTypeString, Required: false,
+				Constraints: &Constraint{Enum: []string{"spring", "summer", "autumn", "winter", "all"}},
+				Description: "Season when the event is held"},
+			{Name: "held_month", Type: PropertyTypeInteger, Required: false,
+				Constraints: &Constraint{Min: intPtr(1), Max: intPtr(12)}, Description: "Month when the event is held (1-12)"},
+			{Name: "visitor_count", Type: PropertyTypeInteger, Required: false,
+				Constraints: &Constraint{Min: intPtr(0)}, Description: "Number of visitors per holding"},
 		},
 	})
 }
 
 func registerRelationTypes(s *Schema) {
-	s.AddRelationType(types.Connects, &RelationTypeDefinition{
-		Direction:   DirectionSymmetric,
-		Description: "Physical or logical connection between entities",
+	natureKinds := []core.EntityKind{kinds.Ground, kinds.Terrain, kinds.WaterBody, kinds.Forest}
+	tourismKinds := []core.EntityKind{kinds.TourismSpot, kinds.HotSpring, kinds.CulturalAsset, kinds.Event}
+
+	s.AddRelationType(types.LocatedIn, &RelationTypeDefinition{
+		Direction:   DirectionDirected,
+		Description: "Entity is located within an area or terrain",
 		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.Interface},
-			TargetKinds:     []core.EntityKind{kinds.Interface},
+			SourceKinds:     append(append([]core.EntityKind{}, natureKinds...), append(tourismKinds, kinds.Species, kinds.Population)...),
+			TargetKinds:     []core.EntityKind{kinds.Area, kinds.Terrain},
 			MinParticipants: 2,
-			MaxParticipants: 0, // 0 means unlimited
+			MaxParticipants: 2,
 		},
 		Properties: []PropertyDefinition{
-			{Name: "connection_type", Type: PropertyTypeString, Required: false, Description: "Type of connection (physical, logical, virtual)"},
-			{Name: "bandwidth_mbps", Type: PropertyTypeInteger, Required: false, Description: "Connection bandwidth in Mbps"},
+			{Name: "distance_km", Type: PropertyTypeNumber, Required: false,
+				Constraints: &Constraint{Min: intPtr(0)}, Description: "Distance from the target in kilometers"},
 		},
 	})
 
-	s.AddRelationType(types.Hosts, &RelationTypeDefinition{
+	s.AddRelationType(types.Inhabits, &RelationTypeDefinition{
 		Direction:   DirectionDirected,
-		Description: "Execution hosting relationship",
+		Description: "Species lives in a habitat",
 		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.Server, kinds.VM, kinds.Container, kinds.Application},
-			TargetKinds:     []core.EntityKind{kinds.VM, kinds.Container, kinds.Application},
+			SourceKinds:     []core.EntityKind{kinds.Species, kinds.Population},
+			TargetKinds:     append(append([]core.EntityKind{}, natureKinds...), kinds.Area),
 			MinParticipants: 2,
 			MaxParticipants: 2,
+		},
+		Properties: []PropertyDefinition{
+			{Name: "habitat_note", Type: PropertyTypeString, Required: false, Description: "Notes about the habitat use"},
+		},
+	})
+
+	s.AddRelationType(types.Near, &RelationTypeDefinition{
+		Direction:   DirectionSymmetric,
+		Description: "Two resources are geographically close to each other",
+		Participants: &ParticipantConstraints{
+			SourceKinds:     append(append([]core.EntityKind{}, tourismKinds...), append(natureKinds, kinds.Area)...),
+			TargetKinds:     append(append([]core.EntityKind{}, tourismKinds...), append(natureKinds, kinds.Area)...),
+			MinParticipants: 2,
+			MaxParticipants: 2,
+		},
+		Properties: []PropertyDefinition{
+			{Name: "walking_minutes", Type: PropertyTypeInteger, Required: false,
+				Constraints: &Constraint{Min: intPtr(0)}, Description: "Walking time between the two in minutes"},
 		},
 	})
 
 	s.AddRelationType(types.DependsOn, &RelationTypeDefinition{
 		Direction:   DirectionDirected,
-		Description: "Directional dependency between entities",
+		Description: "Directional dependency, e.g. a hot spring depends on its ground source",
 		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.VM, kinds.Container, kinds.Application},
-			TargetKinds:     []core.EntityKind{kinds.VM, kinds.Container, kinds.Application, kinds.Storage, kinds.Network},
+			SourceKinds:     append([]core.EntityKind{kinds.HotSpring}, tourismKinds...),
+			TargetKinds:     append(append([]core.EntityKind{}, natureKinds...), tourismKinds...),
 			MinParticipants: 2,
 			MaxParticipants: 2,
 		},
 		Properties: []PropertyDefinition{
-			{Name: "dependency_type", Type: PropertyTypeString, Required: false, Description: "Type of dependency (runtime, build, network, storage)"},
-			{Name: "critical", Type: PropertyTypeBoolean, Required: false, Default: false, Description: "Whether failure causes cascading failure"},
+			{Name: "dependency_type", Type: PropertyTypeString, Required: false,
+				Constraints: &Constraint{Enum: []string{"source", "landscape", "access", "ecosystem", "event"}},
+				Description: "Nature of the dependency"},
+			{Name: "critical", Type: PropertyTypeBoolean, Required: false, Default: false,
+				Description: "Whether loss of the target destroys the source's value"},
 		},
 	})
 
@@ -358,117 +295,19 @@ func registerRelationTypes(s *Schema) {
 		Direction:   DirectionDirected,
 		Description: "Logical membership or association",
 		Participants: &ParticipantConstraints{
-			SourceKinds: []core.EntityKind{
-				kinds.VM, kinds.Container, kinds.Interface, kinds.Server, kinds.Switch,
-				kinds.Router, kinds.Firewall, kinds.Storage, kinds.ACL, kinds.ACLRule, kinds.OpenPort, kinds.AvailabilityZone,
-			},
-			TargetKinds: []core.EntityKind{
-				kinds.Cluster, kinds.Network, kinds.Region, kinds.Firewall, kinds.Interface,
-				kinds.Server, kinds.VM, kinds.Container, kinds.Application,
-			},
+			SourceKinds:     append(append([]core.EntityKind{}, natureKinds...), append(tourismKinds, kinds.Species, kinds.Population)...),
+			TargetKinds:     append([]core.EntityKind{kinds.Area}, append(natureKinds, tourismKinds...)...),
 			MinParticipants: 2,
 			MaxParticipants: 2,
 		},
 	})
 
-	s.AddRelationType(types.ReplicatesTo, &RelationTypeDefinition{
+	s.AddRelationType(types.FlowsInto, &RelationTypeDefinition{
 		Direction:   DirectionDirected,
-		Description: "Data replication between entities",
+		Description: "River or water flow destination",
 		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.VM, kinds.Container, kinds.Application, kinds.Storage},
-			TargetKinds:     []core.EntityKind{kinds.VM, kinds.Container, kinds.Application, kinds.Storage},
-			MinParticipants: 2,
-			MaxParticipants: 2,
-		},
-		Properties: []PropertyDefinition{
-			{Name: "replication_type", Type: PropertyTypeString, Required: false, Default: "synchronous", Description: "Replication type (synchronous, asynchronous)"},
-			{Name: "lag_seconds", Type: PropertyTypeNumber, Required: false, Description: "Replication lag in seconds"},
-		},
-	})
-
-	s.AddRelationType(types.BacksUp, &RelationTypeDefinition{
-		Direction:   DirectionDirected,
-		Description: "Backup relationship",
-		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.VM, kinds.Container, kinds.Application, kinds.Storage, kinds.Volume},
-			TargetKinds:     []core.EntityKind{kinds.Volume, kinds.Storage},
-			MinParticipants: 2,
-			MaxParticipants: 2,
-		},
-		Properties: []PropertyDefinition{
-			{Name: "backup_type", Type: PropertyTypeString, Required: false, Description: "Backup type (full, incremental, differential)"},
-			{Name: "schedule", Type: PropertyTypeString, Required: false, Description: "Backup schedule (cron expression)"},
-			{Name: "retention_days", Type: PropertyTypeInteger, Required: false, Description: "Backup retention in days"},
-		},
-	})
-
-	s.AddRelationType(types.Monitors, &RelationTypeDefinition{
-		Direction:   DirectionDirected,
-		Description: "Monitoring relationship",
-		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.Server, kinds.VM, kinds.Container, kinds.Application},
-			TargetKinds:     []core.EntityKind{kinds.Server, kinds.VM, kinds.Container, kinds.Application, kinds.Storage},
-			MinParticipants: 2,
-			MaxParticipants: 2,
-		},
-		Properties: []PropertyDefinition{
-			{Name: "monitor_type", Type: PropertyTypeString, Required: false, Description: "Monitor type (agent, agentless, snmp, api)"},
-			{Name: "interval_seconds", Type: PropertyTypeInteger, Required: false, Default: 60, Description: "Monitoring interval in seconds"},
-		},
-	})
-
-	s.AddRelationType(types.ManagedBy, &RelationTypeDefinition{
-		Direction:   DirectionDirected,
-		Description: "Management relationship",
-		Participants: &ParticipantConstraints{
-			SourceKinds: []core.EntityKind{
-				kinds.Server, kinds.VM, kinds.Container, kinds.Application,
-				kinds.Switch, kinds.Router, kinds.Firewall, kinds.Storage,
-			},
-			TargetKinds: []core.EntityKind{
-				kinds.Server, kinds.VM, kinds.Container, kinds.Application,
-			},
-			MinParticipants: 2,
-			MaxParticipants: 2,
-		},
-		Properties: []PropertyDefinition{
-			{Name: "management_type", Type: PropertyTypeString, Required: false, Description: "Management type (configuration, orchestration, monitoring)"},
-		},
-	})
-
-	s.AddRelationType(types.MountedOn, &RelationTypeDefinition{
-		Direction:   DirectionDirected,
-		Description: "Storage mounting relationship",
-		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.Volume},
-			TargetKinds:     []core.EntityKind{kinds.Server, kinds.VM, kinds.Container, kinds.Storage},
-			MinParticipants: 2,
-			MaxParticipants: 2,
-		},
-		Properties: []PropertyDefinition{
-			{Name: "mount_point", Type: PropertyTypeString, Required: false, Description: "Mount point path"},
-			{Name: "filesystem", Type: PropertyTypeString, Required: false, Description: "Filesystem type"},
-			{Name: "options", Type: PropertyTypeString, Required: false, Description: "Mount options"},
-		},
-	})
-
-	s.AddRelationType(types.AppliesTo, &RelationTypeDefinition{
-		Direction:   DirectionDirected,
-		Description: "ACL applied to a network target",
-		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.ACL},
-			TargetKinds:     []core.EntityKind{kinds.Interface, kinds.Firewall, kinds.Server, kinds.VM, kinds.Container},
-			MinParticipants: 2,
-			MaxParticipants: 2,
-		},
-	})
-
-	s.AddRelationType(types.ListensOn, &RelationTypeDefinition{
-		Direction:   DirectionDirected,
-		Description: "Open port listening on a network interface or host",
-		Participants: &ParticipantConstraints{
-			SourceKinds:     []core.EntityKind{kinds.OpenPort},
-			TargetKinds:     []core.EntityKind{kinds.Interface, kinds.Server, kinds.VM, kinds.Container},
+			SourceKinds:     []core.EntityKind{kinds.WaterBody},
+			TargetKinds:     []core.EntityKind{kinds.WaterBody},
 			MinParticipants: 2,
 			MaxParticipants: 2,
 		},

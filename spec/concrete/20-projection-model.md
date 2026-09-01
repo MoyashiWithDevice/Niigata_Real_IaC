@@ -12,7 +12,7 @@ A Projection transforms one Graph into another Graph.
 
 A Projection never modifies the source Graph.
 
-The output Graph represents the same infrastructure knowledge from a different perspective.
+The output Graph represents the same resource knowledge from a different perspective.
 
 Projections are composable and deterministic.
 
@@ -55,11 +55,11 @@ input:
 
 input:
   type: query
-  query_id: active-servers
+  query_id: active-spots
 
 input:
   type: projection
-  projection_id: physical-topology
+  projection_id: nature-topology
 ```
 
 ---
@@ -117,12 +117,12 @@ Choose a subset of Objects.
 operations:
   - type: select
     entities:
-      - kind: server
-      - kind: vm
+      - kind: tourism_spot
+      - kind: hot_spring
         where:
           status: active
     relations:
-      - type: hosts
+      - type: near
 ```
 
 ---
@@ -143,22 +143,22 @@ Remove Objects matching specific conditions.
 ### Examples
 
 ```yaml
-# Include only active servers
+# Include only active tourism spots
 operations:
   - type: filter
     action: include
     target: entities
     where:
-      kind: server
+      kind: tourism_spot
       status: active
 
-# Exclude cables
+# Exclude events
 operations:
   - type: filter
     action: exclude
     target: entities
     where:
-      kind: cable
+      kind: event
 ```
 
 ---
@@ -181,15 +181,15 @@ Follow Relations to discover additional Objects.
 ### Examples
 
 ```yaml
-# Get all VMs hosted by selected servers
+# Get all habitats of selected species (inhabits relations)
 operations:
   - type: traverse
     direction: forward
-    relation_type: hosts
+    relation_type: inhabits
     depth: 2
     include_origin: true
 
-# Get all ancestors of selected VMs (via owner property)
+# Get all ancestors of selected populations (via owner property)
 operations:
   - type: traverse
     direction: backward
@@ -238,24 +238,24 @@ Combine multiple Objects into a single derived Object.
 ### Examples
 
 ```yaml
-# Create rack summary from servers
+# Create area summary from populations
 operations:
   - type: aggregate
     source_selector:
-      kind: server
-    target_kind: rack_summary
+      kind: population
+    target_kind: area_summary
     group_by:
-      - labels.rack
+      - labels.area
     aggregations:
-      - property: cpu.cores
+      - property: count
         function: sum
-        target_property: total_cpu_cores
-      - property: memory.size_gb
-        function: sum
-        target_property: total_memory_gb
+        target_property: total_individuals
       - property: id
         function: count
-        target_property: server_count
+        target_property: survey_count
+      - property: count
+        function: max
+        target_property: max_count
 ```
 
 ---
@@ -283,17 +283,17 @@ Replace an abstract Object with more detailed Objects.
 ### Examples
 
 ```yaml
-# Expand network into VLANs
+# Expand tourism spots into their events
 operations:
   - type: expand
     source_selector:
-      kind: network
+      kind: tourism_spot
     expansion:
-      target_kind: vlan
+      target_kind: event
       property_mapping:
-        name: vlan_name
-        vlan_id: vlan_id
-      owner: network
+        name: event_name
+        season: season
+      owner: tourism_spot
 ```
 
 ---
@@ -333,16 +333,16 @@ Attach computed metadata to Objects.
 ### Examples
 
 ```yaml
-# Add server count to racks
+# Add population counts to species
 operations:
   - type: annotate
     target_selector:
-      kind: rack
+      kind: species
     annotations:
-      - property: server_count
-        expression: "count(children.servers)"
-      - property: total_cpu_cores
-        expression: "sum(children.servers.cpu.cores)"
+      - property: survey_count
+        expression: "count(children.populations)"
+      - property: latest_count
+        expression: "sum(children.populations.count)"
       - property: annotation_timestamp
         function: timestamp
 ```
@@ -365,23 +365,23 @@ Organize Objects into logical collections.
 ### Examples
 
 ```yaml
-# Group VMs by cluster
+# Group events by season
 operations:
   - type: group
     source_selector:
-      kind: vm
-    group_kind: vm_group
+      kind: event
+    group_kind: event_group
     group_by:
-      - labels.cluster
+      - season
 
-# Group servers by rack
+# Group hot springs by spring quality
 operations:
   - type: group
     source_selector:
-      kind: server
-    group_kind: rack_group
+      kind: hot_spring
+    group_kind: onsen_group
     group_by:
-      - labels.rack
+      - spring_quality
 ```
 
 ---
@@ -405,7 +405,7 @@ Simplify hierarchical structure.
 operations:
   - type: flatten
     target_selector:
-      kind: region
+      kind: area
     preserve_relations: true
 ```
 
@@ -434,18 +434,18 @@ Add computed properties to Objects.
 ### Examples
 
 ```yaml
-# Add utilization metrics
+# Add visitor metrics
 operations:
   - type: enrich
     target_selector:
-      kind: server
+      kind: area
     properties:
-      - name: cpu_utilization
+      - name: visitor_density
         type: number
-        expression: "(used_cpu / total_cpu) * 100"
-      - name: memory_utilization
+        expression: "(annual_visitors / population) * 100"
+      - name: spot_per_km2
         type: number
-        expression: "(used_memory / total_memory) * 100"
+        expression: "count(children.tourism_spots) / area_km2"
 ```
 
 ---
@@ -487,14 +487,14 @@ Transform Object properties.
 operations:
   - type: transform
     target_selector:
-      kind: server
+      kind: population
     transformations:
       - property: name
         operation: rename
-        value: server_name
-      - property: memory
-        operation: flatten
-        value: size_gb
+        value: survey_name
+      - property: survey_date
+        operation: cast
+        value: string
       - property: status
         operation: default
         value: unknown
@@ -527,20 +527,20 @@ Projections MAY create derived Objects.
 ### Derived Object Example
 
 ```yaml
-- id: rack-summary-a01
-  kind: rack_summary
-  name: Rack A01 Summary
+- id: area-summary-niigata-city
+  kind: area_summary
+  name: 新潟市 個体群サマリー
   provenance:
     source_ids:
-      - srv-proxmox-01
-      - srv-proxmox-02
-      - srv-proxmox-03
-    projection_id: physical-topology
-    timestamp: "2024-01-15T10:30:00Z"
+      - pop-toki-2025
+      - pop-serow-2025
+      - pop-kamoshika-2025
+    projection_id: nature-topology
+    timestamp: "2025-12-01T10:30:00Z"
     operation: aggregate
-  total_cpu_cores: 96
-  total_memory_gb: 384
-  server_count: 3
+  total_individuals: 240
+  survey_count: 3
+  max_count: 190
 ```
 
 ---
@@ -575,47 +575,46 @@ Projections MAY be chained.
 
 ```yaml
 projections:
-  - id: physical-topology
-    name: Physical Topology
+  - id: nature-topology
+    name: Nature Topology
     input:
       type: graph
     operations:
       - type: select
         entities:
-          - kind: region
-          - kind: rack
-          - kind: server
-          - kind: cable
+          - kind: area
+          - kind: terrain
+          - kind: forest
+          - kind: water_body
         relations:
-          - type: connects
+          - type: belongs_to
 
-  - id: network-topology
-    name: Network Topology
+  - id: habitat-topology
+    name: Habitat Topology
     input:
       type: projection
-      projection_id: physical-topology
+      projection_id: nature-topology
     operations:
       - type: select
         entities:
-          - kind: network
-          - kind: switch
-          - kind: interface
+          - kind: species
+          - kind: population
         relations:
+          - type: inhabits
           - type: belongs_to
-          - type: connects
 
   - id: documentation
     name: Documentation View
     input:
       type: projection
-      projection_id: network-topology
+      projection_id: habitat-topology
     operations:
       - type: annotate
         target_selector:
-          kind: server
+          kind: species
         annotations:
           - property: description
-            expression: "format('%s - %s', name, ip_address)"
+            expression: "format('%s (%s)', name, scientific_name)"
 ```
 
 ---

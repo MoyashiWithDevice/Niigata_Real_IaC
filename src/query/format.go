@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sort"
 
-	"IACForge/src/core"
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 // ToViewResult converts a query Result into a ViewResult that existing

@@ -9,7 +9,7 @@ import (
 	"github.com/mark3labs/mcp-go/mcp"
 	mcpserver "github.com/mark3labs/mcp-go/server"
 
-	"IACForge/src/extension"
+	"github.com/bababa/Niigata_Real_IaC/src/extension"
 )
 
 func registerExtensionMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {

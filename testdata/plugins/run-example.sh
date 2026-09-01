@@ -29,9 +29,9 @@ import (
 	"fmt"
 	"os"
 
-	"IACForge/src/extension"
-	"IACForge/src/schema"
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/extension"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 func main() {

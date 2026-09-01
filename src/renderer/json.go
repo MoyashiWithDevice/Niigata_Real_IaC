@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 // JSONRenderer renders views as JSON documents.

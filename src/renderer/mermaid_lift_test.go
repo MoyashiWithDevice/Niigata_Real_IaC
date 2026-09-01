@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"IACForge/src/core"
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 // buildLiftedViewResult returns a ViewResult simulating an application-only

@@ -2,14 +2,12 @@ package validation
 
 import (
 	"fmt"
-	"net"
 	"sort"
 	"strings"
 
-	"IACForge/src/core"
-	"IACForge/src/core/kinds"
-	"IACForge/src/core/types"
-	"IACForge/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core/kinds"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
 )
 
 // Engine is the validation engine that evaluates rules against a graph.
@@ -33,7 +31,7 @@ func NewEngine(s *schema.Schema) *Engine {
 
 // AddAllowedRootKind grants root authority to the given entity kind. A graph may
 // have multiple root entities only when every root's kind has been granted root
-// authority (e.g. an extension registering aws.organization).
+// authority (e.g. an extension registering prefecture.root).
 func (e *Engine) AddAllowedRootKind(kind core.EntityKind) {
 	e.allowedRootKinds[kind] = true
 }
@@ -173,7 +171,7 @@ func RegisterCoreRules(engine *Engine) {
 	registerRelationRules(engine)
 	registerOwnershipRules(engine)
 	registerReferenceRules(engine)
-	registerNetworkRules(engine)
+	registerNiigataRules(engine)
 }
 
 func registerGraphIntegrityRules(e *Engine) {
@@ -233,18 +231,6 @@ func registerEntityRules(e *Engine) {
 		Name:     "Valid Status",
 		Severity: SeverityWarning,
 	}, ruleValidStatus)
-
-	e.RegisterRule(&Rule{
-		ID:       "valid-port-range",
-		Name:     "Valid Port Range",
-		Severity: SeverityError,
-	}, ruleValidPortRange)
-
-	e.RegisterRule(&Rule{
-		ID:       "valid-acl-rule-parent",
-		Name:     "Valid ACL Rule Parent",
-		Severity: SeverityError,
-	}, ruleValidACLRULEParent)
 
 	e.RegisterRule(&Rule{
 		ID:       "no-slash-in-id",
@@ -331,56 +317,6 @@ func registerReferenceRules(e *Engine) {
 	}, ruleInvalidPath)
 }
 
-func registerNetworkRules(e *Engine) {
-	e.RegisterRule(&Rule{
-		ID:          "valid-ip-format",
-		Name:        "Valid IP Address Format",
-		Description: "interface ip_address values MUST be valid IP addresses or CIDR notation",
-		Severity:    SeverityWarning,
-	}, ruleValidIPFormat)
-
-	e.RegisterRule(&Rule{
-		ID:          "ip-requires-network",
-		Name:        "IP Requires Network",
-		Description: "interface with IP addresses SHOULD reference a network via the network property or a belongs_to relation",
-		Severity:    SeverityWarning,
-	}, ruleIPRequiresNetwork)
-
-	e.RegisterRule(&Rule{
-		ID:          "network-reference-kind",
-		Name:        "Network Reference Kind",
-		Description: "interface network reference MUST point to an entity of kind network",
-		Severity:    SeverityWarning,
-	}, ruleNetworkReferenceKind)
-
-	e.RegisterRule(&Rule{
-		ID:          "ip-in-cidr",
-		Name:        "IP Within Network CIDR",
-		Description: "interface IP addresses SHOULD be within the CIDR of a referenced network",
-		Severity:    SeverityWarning,
-	}, ruleIPInCIDR)
-
-	e.RegisterRule(&Rule{
-		ID:          "network-cidr-required",
-		Name:        "Network CIDR Required",
-		Description: "network with member interfaces that have IP addresses SHOULD define a valid cidr",
-		Severity:    SeverityWarning,
-	}, ruleNetworkCIDRRequired)
-
-	e.RegisterRule(&Rule{
-		ID:          "gateway-in-cidr",
-		Name:        "Gateway Within Network CIDR",
-		Description: "network gateway SHOULD be within the network cidr",
-		Severity:    SeverityWarning,
-	}, ruleGatewayInCIDR)
-
-	e.RegisterRule(&Rule{
-		ID:          "ip-unique-in-network",
-		Name:        "Unique IP Within Network",
-		Description: "IP addresses SHOULD be unique within a network",
-		Severity:    SeverityWarning,
-	}, ruleIPUniqueInNetwork)
-}
 
 // --- Rule Implementations ---
 
@@ -649,96 +585,6 @@ func ruleValidStatus(ctx *Context) []Finding {
 				ObjectID:   r.ID,
 				ObjectType: ObjectTypeRelation,
 			})
-		}
-	}
-
-	return findings
-}
-
-func ruleValidPortRange(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-
-	for _, e := range g.Entities() {
-		if e.Kind == kinds.OpenPort {
-			portVal, ok := e.GetProperty("port")
-			if !ok {
-				findings = append(findings, Finding{
-					Severity:   SeverityError,
-					Message:    fmt.Sprintf("open_port entity %q is missing required 'port' property", e.ID),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-				continue
-			}
-
-			var portNum int
-			switch v := portVal.(type) {
-			case int:
-				portNum = v
-			case int64:
-				portNum = int(v)
-			case float64:
-				portNum = int(v)
-			default:
-				findings = append(findings, Finding{
-					Severity:   SeverityError,
-					Message:    fmt.Sprintf("open_port entity %q has non-numeric port value", e.ID),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-				continue
-			}
-
-			if portNum < 1 || portNum > 65535 {
-				findings = append(findings, Finding{
-					Severity:   SeverityError,
-					Message:    fmt.Sprintf("open_port entity %q has port %d outside valid range 1-65535", e.ID, portNum),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-			}
-		}
-	}
-
-	return findings
-}
-
-func ruleValidACLRULEParent(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-
-	for _, e := range g.Entities() {
-		if e.Kind == kinds.ACLRule {
-			if e.Owner == "" {
-				findings = append(findings, Finding{
-					Severity:   SeverityError,
-					Message:    fmt.Sprintf("acl_rule entity %q has no owner", e.ID),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-				continue
-			}
-
-			ownerEntity, found := g.GetEntity(e.Owner)
-			if !found {
-				findings = append(findings, Finding{
-					Severity:   SeverityError,
-					Message:    fmt.Sprintf("acl_rule entity %q has non-existent owner %q", e.ID, e.Owner),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-				continue
-			}
-
-			if ownerEntity.Kind != kinds.ACL {
-				findings = append(findings, Finding{
-					Severity:   SeverityError,
-					Message:    fmt.Sprintf("acl_rule entity %q must be owned by an acl, but owner %q is of kind %q", e.ID, e.Owner, ownerEntity.Kind),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-			}
 		}
 	}
 
@@ -1235,168 +1081,67 @@ func ruleValidNestingParent(ctx *Context) []Finding {
 	return findings
 }
 
-// --- Network Rules ---
 
-// entityIPs returns the list of ip_address values configured on an interface.
-func entityIPs(e *core.Entity) []string {
-	v, ok := e.GetProperty("ip_address")
-	if !ok {
-		return nil
-	}
-	var ips []string
-	switch val := v.(type) {
-	case string:
-		if val != "" {
-			ips = append(ips, val)
-		}
-	case []interface{}:
-		for _, item := range val {
-			if s, ok := item.(string); ok && s != "" {
-				ips = append(ips, s)
-			}
-		}
-	case []string:
-		ips = append(ips, val...)
-	}
-	return ips
+// --- Niigata Domain Rules ---
+
+func registerNiigataRules(e *Engine) {
+	e.RegisterRule(&Rule{
+		ID:          "population-requires-species",
+		Name:        "Population Requires Species",
+		Description: "population entity MUST be owned by a species",
+		Severity:    SeverityError,
+	}, rulePopulationRequiresSpecies)
+
+	e.RegisterRule(&Rule{
+		ID:          "positive-count",
+		Name:        "Positive Count",
+		Description: "population count SHOULD be zero or greater",
+		Severity:    SeverityWarning,
+	}, rulePositiveCount)
+
+	e.RegisterRule(&Rule{
+		ID:          "valid-niigata-coordinates",
+		Name:        "Valid Niigata Coordinates",
+		Description: "area coordinates SHOULD be within or near Niigata Prefecture bounds",
+		Severity:    SeverityWarning,
+	}, ruleValidNiigataCoordinates)
 }
 
-// parseIPEntry parses an ip_address entry which may be a bare IP or CIDR notation.
-// It returns the IP address and whether parsing succeeded.
-func parseIPEntry(s string) (net.IP, bool) {
-	if ip := net.ParseIP(s); ip != nil {
-		return ip, true
-	}
-	if _, ipnet, err := net.ParseCIDR(s); err == nil {
-		return ipnet.IP, true
-	}
-	return nil, false
-}
+// niigataBounds approximates the geographic bounds of Niigata Prefecture
+// (including Sado Island) with a small margin.
+const (
+	niigataMinLat = 36.6
+	niigataMaxLat = 38.7
+	niigataMinLon = 137.9
+	niigataMaxLon = 139.9
+)
 
-// entityNetworkRef returns the target ID of the interface's network property reference.
-func entityNetworkRef(e *core.Entity) (string, bool) {
-	v, ok := e.GetProperty("network")
-	if !ok {
-		return "", false
-	}
-	if target, ok := core.ExtractReferenceValue(v); ok {
-		return target, true
-	}
-	if s, ok := v.(string); ok {
-		return strings.TrimPrefix(s, "@"), true
-	}
-	return "", false
-}
-
-// networkCIDR returns the parsed CIDR of a network entity.
-func networkCIDR(n *core.Entity) (*net.IPNet, error) {
-	v, ok := n.GetProperty("cidr")
-	if !ok {
-		return nil, fmt.Errorf("cidr not defined")
-	}
-	cidrStr, ok := v.(string)
-	if !ok {
-		return nil, fmt.Errorf("cidr is not a string")
-	}
-	_, ipnet, err := net.ParseCIDR(cidrStr)
-	if err != nil {
-		return nil, err
-	}
-	return ipnet, nil
-}
-
-// interfaceNetworks returns the network entities an interface belongs to.
-// Membership is determined by the network property and belongs_to relations.
-func interfaceNetworks(g *core.Graph, e *core.Entity) []*core.Entity {
-	var nets []*core.Entity
-	seen := make(map[string]bool)
-
-	if ref, ok := entityNetworkRef(e); ok {
-		if n, found := g.GetEntity(ref); found && n.Kind == kinds.Network {
-			seen[n.ID] = true
-			nets = append(nets, n)
-		}
-	}
-
-	for _, r := range g.RelationsByType(types.BelongsTo) {
-		if r.Participants.Source != e.ID {
-			continue
-		}
-		t, found := g.GetEntity(r.Participants.Target)
-		if found && t.Kind == kinds.Network && !seen[t.ID] {
-			seen[t.ID] = true
-			nets = append(nets, t)
-		}
-	}
-
-	return nets
-}
-
-func ruleValidIPFormat(ctx *Context) []Finding {
+// rulePopulationRequiresSpecies ensures every population entity is owned by a species.
+func rulePopulationRequiresSpecies(ctx *Context) []Finding {
 	g := ctx.Graph.(*core.Graph)
 	var findings []Finding
 
 	for _, e := range g.Entities() {
-		for _, ip := range entityIPs(e) {
-			if _, ok := parseIPEntry(ip); !ok {
-				findings = append(findings, Finding{
-					Severity:   SeverityWarning,
-					Message:    fmt.Sprintf("entity %q has invalid IP address %q", e.ID, ip),
-					ObjectID:   e.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-			}
-		}
-	}
-
-	return findings
-}
-
-func ruleIPRequiresNetwork(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-
-	for _, e := range g.Entities() {
-		if e.Kind != kinds.Interface {
+		if e.Kind != kinds.Population {
 			continue
 		}
-		if len(entityIPs(e)) == 0 {
-			continue
-		}
-		if len(interfaceNetworks(g, e)) > 0 {
-			continue
-		}
-		findings = append(findings, Finding{
-			Severity:   SeverityWarning,
-			Message:    fmt.Sprintf("interface %q has IP addresses but does not reference a network (use the 'network' property or a belongs_to relation to a network)", e.ID),
-			ObjectID:   e.ID,
-			ObjectType: ObjectTypeEntity,
-		})
-	}
-
-	return findings
-}
-
-func ruleNetworkReferenceKind(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-
-	for _, e := range g.Entities() {
-		if e.Kind != kinds.Interface {
-			continue
-		}
-		ref, ok := entityNetworkRef(e)
-		if !ok {
-			continue
-		}
-		n, found := g.GetEntity(ref)
-		if !found {
-			continue // non-existent references are handled by dangling-reference
-		}
-		if n.Kind != kinds.Network {
+		if e.Owner == "" {
 			findings = append(findings, Finding{
-				Severity:   SeverityWarning,
-				Message:    fmt.Sprintf("interface %q references %q as its network, but that entity is of kind %q (expected network)", e.ID, ref, n.Kind),
+				Severity:   SeverityError,
+				Message:    fmt.Sprintf("population entity %q has no owner (must be owned by a species)", e.ID),
+				ObjectID:   e.ID,
+				ObjectType: ObjectTypeEntity,
+			})
+			continue
+		}
+		owner, found := g.GetEntity(e.Owner)
+		if !found {
+			continue // handled by valid-owner
+		}
+		if owner.Kind != kinds.Species {
+			findings = append(findings, Finding{
+				Severity:   SeverityError,
+				Message:    fmt.Sprintf("population entity %q must be owned by a species, but owner %q is of kind %q", e.ID, e.Owner, owner.Kind),
 				ObjectID:   e.ID,
 				ObjectType: ObjectTypeEntity,
 			})
@@ -1406,44 +1151,88 @@ func ruleNetworkReferenceKind(ctx *Context) []Finding {
 	return findings
 }
 
-func ruleIPInCIDR(ctx *Context) []Finding {
+// rulePositiveCount warns when a population count is negative.
+func rulePositiveCount(ctx *Context) []Finding {
 	g := ctx.Graph.(*core.Graph)
 	var findings []Finding
 
 	for _, e := range g.Entities() {
-		if e.Kind != kinds.Interface {
+		if e.Kind != kinds.Population {
 			continue
 		}
-		ips := entityIPs(e)
-		if len(ips) == 0 {
+		v, ok := e.GetProperty("count")
+		if !ok {
+			continue // required property is handled by valid-property
+		}
+		count, err := toFloat(v)
+		if err != nil {
+			findings = append(findings, Finding{
+				Severity:   SeverityWarning,
+				Message:    fmt.Sprintf("population entity %q has non-numeric count value", e.ID),
+				ObjectID:   e.ID,
+				ObjectType: ObjectTypeEntity,
+			})
 			continue
 		}
-		nets := interfaceNetworks(g, e)
+		if count < 0 {
+			findings = append(findings, Finding{
+				Severity:   SeverityWarning,
+				Message:    fmt.Sprintf("population entity %q has negative count %v", e.ID, v),
+				ObjectID:   e.ID,
+				ObjectType: ObjectTypeEntity,
+			})
+		}
+	}
 
-		for _, ipEntry := range ips {
-			ip, ok := parseIPEntry(ipEntry)
-			if !ok {
-				continue // handled by valid-ip-format
-			}
+	return findings
+}
 
-			anyCidr := false
-			contained := false
-			for _, n := range nets {
-				ipnet, err := networkCIDR(n)
-				if err != nil {
-					continue // handled by network-cidr-required
-				}
-				anyCidr = true
-				if ipnet.Contains(ip) {
-					contained = true
-					break
-				}
-			}
+// ruleValidNiigataCoordinates warns when an area's coordinates fall outside the
+// approximate bounds of Niigata Prefecture.
+func ruleValidNiigataCoordinates(ctx *Context) []Finding {
+	g := ctx.Graph.(*core.Graph)
+	var findings []Finding
 
-			if anyCidr && !contained {
+	for _, e := range g.Entities() {
+		if e.Kind != kinds.Area {
+			continue
+		}
+		latVal, hasLat := e.GetProperty("latitude")
+		lonVal, hasLon := e.GetProperty("longitude")
+		if !hasLat && !hasLon {
+			continue
+		}
+		if hasLat {
+			lat, err := toFloat(latVal)
+			if err != nil {
 				findings = append(findings, Finding{
 					Severity:   SeverityWarning,
-					Message:    fmt.Sprintf("interface %q IP address %q is not within the CIDR of any referenced network", e.ID, ipEntry),
+					Message:    fmt.Sprintf("area %q has non-numeric latitude", e.ID),
+					ObjectID:   e.ID,
+					ObjectType: ObjectTypeEntity,
+				})
+			} else if lat < niigataMinLat || lat > niigataMaxLat {
+				findings = append(findings, Finding{
+					Severity:   SeverityWarning,
+					Message:    fmt.Sprintf("area %q latitude %.4f is outside Niigata bounds (%.1f-%.1f)", e.ID, lat, niigataMinLat, niigataMaxLat),
+					ObjectID:   e.ID,
+					ObjectType: ObjectTypeEntity,
+				})
+			}
+		}
+		if hasLon {
+			lon, err := toFloat(lonVal)
+			if err != nil {
+				findings = append(findings, Finding{
+					Severity:   SeverityWarning,
+					Message:    fmt.Sprintf("area %q has non-numeric longitude", e.ID),
+					ObjectID:   e.ID,
+					ObjectType: ObjectTypeEntity,
+				})
+			} else if lon < niigataMinLon || lon > niigataMaxLon {
+				findings = append(findings, Finding{
+					Severity:   SeverityWarning,
+					Message:    fmt.Sprintf("area %q longitude %.4f is outside Niigata bounds (%.1f-%.1f)", e.ID, lon, niigataMinLon, niigataMaxLon),
 					ObjectID:   e.ID,
 					ObjectType: ObjectTypeEntity,
 				})
@@ -1454,108 +1243,20 @@ func ruleIPInCIDR(ctx *Context) []Finding {
 	return findings
 }
 
-func ruleNetworkCIDRRequired(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-	flagged := make(map[string]bool)
-
-	for _, e := range g.Entities() {
-		if e.Kind != kinds.Interface || len(entityIPs(e)) == 0 {
-			continue
-		}
-		for _, n := range interfaceNetworks(g, e) {
-			if flagged[n.ID] {
-				continue
-			}
-			if _, err := networkCIDR(n); err != nil {
-				flagged[n.ID] = true
-				findings = append(findings, Finding{
-					Severity:   SeverityWarning,
-					Message:    fmt.Sprintf("network %q has interfaces with IP addresses but does not define a valid 'cidr'", n.ID),
-					ObjectID:   n.ID,
-					ObjectType: ObjectTypeEntity,
-				})
-			}
-		}
+// toFloat converts a numeric YAML value to float64.
+func toFloat(v interface{}) (float64, error) {
+	switch n := v.(type) {
+	case int:
+		return float64(n), nil
+	case int32:
+		return float64(n), nil
+	case int64:
+		return float64(n), nil
+	case float32:
+		return float64(n), nil
+	case float64:
+		return n, nil
+	default:
+		return 0, fmt.Errorf("value %v is not numeric", v)
 	}
-
-	return findings
-}
-
-func ruleGatewayInCIDR(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-
-	for _, n := range g.EntitiesByKind(kinds.Network) {
-		gwVal, ok := n.GetProperty("gateway")
-		if !ok {
-			continue
-		}
-		gwStr, ok := gwVal.(string)
-		if !ok {
-			continue
-		}
-
-		gw := net.ParseIP(gwStr)
-		if gw == nil {
-			findings = append(findings, Finding{
-				Severity:   SeverityWarning,
-				Message:    fmt.Sprintf("network %q has invalid gateway address %q", n.ID, gwStr),
-				ObjectID:   n.ID,
-				ObjectType: ObjectTypeEntity,
-			})
-			continue
-		}
-
-		ipnet, err := networkCIDR(n)
-		if err != nil {
-			continue // handled by network-cidr-required
-		}
-		if !ipnet.Contains(gw) {
-			findings = append(findings, Finding{
-				Severity:   SeverityWarning,
-				Message:    fmt.Sprintf("network %q gateway %q is not within its CIDR %q", n.ID, gwStr, ipnet.String()),
-				ObjectID:   n.ID,
-				ObjectType: ObjectTypeEntity,
-			})
-		}
-	}
-
-	return findings
-}
-
-func ruleIPUniqueInNetwork(ctx *Context) []Finding {
-	g := ctx.Graph.(*core.Graph)
-	var findings []Finding
-	seen := make(map[string]map[string]string) // network ID -> IP -> interface ID
-
-	for _, e := range g.Entities() {
-		if e.Kind != kinds.Interface {
-			continue
-		}
-		for _, n := range interfaceNetworks(g, e) {
-			if seen[n.ID] == nil {
-				seen[n.ID] = make(map[string]string)
-			}
-			for _, ipEntry := range entityIPs(e) {
-				ip, ok := parseIPEntry(ipEntry)
-				if !ok {
-					continue
-				}
-				key := ip.String()
-				if prev, dup := seen[n.ID][key]; dup && prev != e.ID {
-					findings = append(findings, Finding{
-						Severity:   SeverityWarning,
-						Message:    fmt.Sprintf("IP address %q is used by both interface %q and interface %q within network %q", key, prev, e.ID, n.ID),
-						ObjectID:   e.ID,
-						ObjectType: ObjectTypeEntity,
-					})
-				} else {
-					seen[n.ID][key] = e.ID
-				}
-			}
-		}
-	}
-
-	return findings
 }

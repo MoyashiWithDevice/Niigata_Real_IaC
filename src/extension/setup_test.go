@@ -3,7 +3,7 @@ package extension
 import (
 	"testing"
 
-	"IACForge/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
 )
 
 func TestNewSetup(t *testing.T) {
@@ -20,8 +20,8 @@ func TestNewSetup(t *testing.T) {
 	if setup.Manager == nil {
 		t.Fatal("expected non-nil extension manager")
 	}
-	if !setup.Schema.HasEntityKind("server") {
-		t.Error("core entity kind 'server' missing from setup schema")
+	if !setup.Schema.HasEntityKind("species") {
+		t.Error("core entity kind 'species' missing from setup schema")
 	}
 	if !setup.Manager.IsLoaded() {
 		t.Error("expected extension manager to be loaded")
@@ -46,6 +46,7 @@ func TestNewSetupNonexistentExtDir(t *testing.T) {
 }
 
 func TestRegisterBuiltin(t *testing.T) {
+	baseCount := len(BuiltinExtensions())
 	ext := &Extension{
 		Manifest: &Manifest{
 			ID:              "test-builtin-setup",
@@ -73,7 +74,7 @@ func TestRegisterBuiltin(t *testing.T) {
 	if !setup.Schema.HasEntityKind("test_builtin_setup_kind") {
 		t.Error("registered builtin kind not in setup schema")
 	}
-	if got := len(BuiltinExtensions()); got != 1 {
-		t.Errorf("expected exactly 1 builtin extension registered, got %d", got)
+	if got := len(BuiltinExtensions()); got != baseCount+1 {
+		t.Errorf("expected %d builtin extensions registered after RegisterBuiltin, got %d", baseCount+1, got)
 	}
 }

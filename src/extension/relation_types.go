@@ -3,8 +3,8 @@ package extension
 import (
 	"fmt"
 
-	"IACForge/src/core"
-	"IACForge/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
 )
 
 // RelationTypesExtensionPoint manages relation type extensions.

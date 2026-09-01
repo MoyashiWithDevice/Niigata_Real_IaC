@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"IACForge/src/core"
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 // MermaidRenderer renders views as Mermaid diagrams.
@@ -44,6 +44,7 @@ func (r *MermaidRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Arti
 	if opts == nil {
 		opts = NewRenderOptions()
 	}
+	theme := ResolveTheme(opts)
 
 	direction := "TB"
 	if opts.Options != nil {
@@ -54,16 +55,19 @@ func (r *MermaidRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Arti
 
 	var mermaid strings.Builder
 
+	r.writeInit(&mermaid, theme)
+
 	mermaid.WriteString("graph ")
 	mermaid.WriteString(direction)
 	mermaid.WriteString("\n")
 
-	r.writeOwnershipTree(&mermaid, v.VisibleEntities)
+	r.writeClassDefs(&mermaid, v, theme)
+	r.writeOwnershipTree(&mermaid, v.VisibleEntities, theme)
 
 	for _, group := range v.Groups {
 		fmt.Fprintf(&mermaid, "    subgraph %s[\"%s\"]\n", sanitizeID(group.ID), escapeMermaid(group.Name))
 		for _, memberID := range group.Members {
-			fmt.Fprintf(&mermaid, "        %s\n", sanitizeID(memberID))
+			fmt.Fprintf(&mermaid, "        %s:::kind_%s\n", sanitizeID(memberID), kindClassName(group.Kind))
 		}
 		mermaid.WriteString("    end\n")
 	}
@@ -117,6 +121,8 @@ func (r *MermaidRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Arti
 
 	r.writeLiftedRelations(&mermaid, v)
 
+	r.writeContainerStyles(&mermaid, v, theme)
+
 	artifact := NewArtifact(
 		fmt.Sprintf("artifact-%s-%s", r.id, v.ViewID),
 		r.id,
@@ -130,10 +136,42 @@ func (r *MermaidRenderer) Render(v *view.ViewResult, opts *RenderOptions) (*Arti
 	return artifact, nil
 }
 
+// writeInit emits a Mermaid init directive that applies the theme colors
+// globally (edges, node defaults, background).
+func (r *MermaidRenderer) writeInit(m *strings.Builder, theme *Theme) {
+	fmt.Fprintf(m, "%%%%{init: {\"theme\": \"base\", \"themeVariables\": {\n")
+	fmt.Fprintf(m, "  \"primaryColor\": \"%s\",\n", theme.AccentColor(""))
+	fmt.Fprintf(m, "  \"primaryTextColor\": \"%s\",\n", theme.TextColor())
+	fmt.Fprintf(m, "  \"primaryBorderColor\": \"%s\",\n", theme.AccentColor(""))
+	fmt.Fprintf(m, "  \"lineColor\": \"%s\",\n", theme.LineColor(""))
+	fmt.Fprintf(m, "  \"fontFamily\": \"%s\",\n", theme.FontFamily())
+	fmt.Fprintf(m, "  \"fontSize\": \"%dpx\",\n", theme.FontSize())
+	if b := theme.BackgroundColor(); b != "" {
+		fmt.Fprintf(m, "  \"background\": \"%s\",\n", b)
+	}
+	m.WriteString("  \"clusterBkg\": \"#ffffff\"")
+	m.WriteString("\n}}}%%\n")
+}
+
+// writeClassDefs emits a class definition per distinct entity kind so nodes are
+// colored by their kind. Classes are emitted only for kinds actually present.
+func (r *MermaidRenderer) writeClassDefs(m *strings.Builder, v *view.ViewResult, theme *Theme) {
+	seen := make(map[string]struct{})
+	for _, e := range v.VisibleEntities {
+		if _, ok := seen[string(e.Kind)]; ok {
+			continue
+		}
+		seen[string(e.Kind)] = struct{}{}
+		color := theme.AccentColor(string(e.Kind))
+		fmt.Fprintf(m, "    classDef %s fill:%s,stroke:%s,color:#ffffff\n",
+			kindClassName(string(e.Kind)), color, color)
+	}
+}
+
 // writeOwnershipTree declares visible entities as Mermaid nodes nested in
-// subgraphs according to the ownership hierarchy. Parents are declared
-// before their children so containment renders correctly.
-func (r *MermaidRenderer) writeOwnershipTree(mermaid *strings.Builder, entities []*core.Entity) {
+// subgraphs according to the ownership hierarchy. Parents are declared before
+// their children so containment renders correctly.
+func (r *MermaidRenderer) writeOwnershipTree(m *strings.Builder, entities []*core.Entity, theme *Theme) {
 	var write func(nodes []*OwnershipNode, depth int)
 	write = func(nodes []*OwnershipNode, depth int) {
 		indent := strings.Repeat("    ", depth+1)
@@ -141,16 +179,44 @@ func (r *MermaidRenderer) writeOwnershipTree(mermaid *strings.Builder, entities 
 			id := sanitizeID(node.Entity.ID)
 			name := escapeMermaid(node.Entity.Name)
 			if len(node.Children) > 0 {
-				fmt.Fprintf(mermaid, "%ssubgraph %s[\"%s\"]\n", indent, id, name)
+				fmt.Fprintf(m, "%ssubgraph %s[\"%s\"]\n", indent, id, name)
 				write(node.Children, depth+1)
-				fmt.Fprintf(mermaid, "%send\n", indent)
+				fmt.Fprintf(m, "%send\n", indent)
 			} else {
-				fmt.Fprintf(mermaid, "%s%s[\"%s\"]\n", indent, id, name)
+				fmt.Fprintf(m, "%s%s[\"%s\"]:::%s\n", indent, id, name, kindClassName(string(node.Entity.Kind)))
 			}
 		}
 	}
 
 	write(buildOwnershipTree(entities), 0)
+}
+
+// writeContainerStyles colors the subgraphs that correspond to container
+// entities, using the entity kind accent color as the cluster border.
+func (r *MermaidRenderer) writeContainerStyles(m *strings.Builder, v *view.ViewResult, theme *Theme) {
+	for _, e := range v.VisibleEntities {
+		if len(entityChildrenByOwner(v, e.ID)) == 0 {
+			continue
+		}
+		color := theme.AccentColor(string(e.Kind))
+		fmt.Fprintf(m, "    style %s fill:%s,stroke:%s\n", sanitizeID(e.ID), theme.ContainerFill(), color)
+	}
+}
+
+// entityChildrenByOwner returns the visible entities owned by the given ID.
+func entityChildrenByOwner(v *view.ViewResult, owner string) []*core.Entity {
+	var out []*core.Entity
+	for _, e := range v.VisibleEntities {
+		if e.Owner == owner {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// kindClassName returns the Mermaid class name for a kind.
+func kindClassName(kind string) string {
+	return "kind_" + sanitizeID(kind)
 }
 
 // sanitizeID replaces special characters for Mermaid IDs.

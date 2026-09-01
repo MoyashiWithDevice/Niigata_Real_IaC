@@ -1,7 +1,7 @@
 package renderer
 
 import (
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // OwnershipNode represents a node in the ownership hierarchy derived from

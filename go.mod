@@ -1,4 +1,4 @@
-module IACForge
+module github.com/bababa/Niigata_Real_IaC
 
 go 1.25.5
 

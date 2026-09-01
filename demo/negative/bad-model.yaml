@@ -1,46 +1,67 @@
 objects:
   # Intentionally broken model for validation demo
-  - id: region-tokyo
-    kind: region
-    name: Tokyo Datacenter 1
-
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
-    attributes:
-      owner: region-tokyo
-
-  # ERROR: invalid enum value for "platform"
-  - id: srv-broken-01
-    kind: server
-    name: Broken Server
-    attributes:
-      owner: rack-a01
+  - id: sado-island
+    kind: area
+    name: Sado Island
     spec:
-      platform: windows
-      cpu:
-        - cores: 4
-          architecture: x86_64
+      area_type: island
+
+  - id: forest-osado
+    kind: forest
+    name: Osado Beech Forest
+    attributes:
+      owner: sado-island
+
+  # ERROR: invalid enum value for "stability"
+  - id: ground-broken-01
+    kind: ground
+    name: Broken Ground
+    attributes:
+      owner: forest-osado
+    spec:
+      soil_type: loam
+      slope_deg: 15
+      stability: quicksand
 
   # ERROR: unknown entity kind
-  - id: db-legacy-01
-    kind: mainframe
-    name: Legacy Mainframe
+  - id: volcano-legacy-01
+    kind: volcano
+    name: Legacy Volcano
     attributes:
-      owner: rack-a01
+      owner: forest-osado
 
-  # WARNING: owner exists, but this model still has schema violations below
-  - id: net-orphan
-    kind: network
-    name: Orphan Network
+  # ERROR: population owned by an area instead of a species (population-requires-species)
+  - id: toki-count-orphan
+    kind: population
+    name: Orphan Toki Census
     attributes:
-      owner: region-tokyo
+      owner: sado-island
     spec:
-      cidr: 10.99.0.0/24
+      count: 12
 
-  # WARNING: dependency from a "server" (not an allowed source kind)
+  # WARNING: negative count (positive-count)
+  - id: medaka-count-bad
+    kind: population
+    name: Medaka Count Negative
+    attributes:
+      owner: sado-island
+    spec:
+      count: -5
+
+  # WARNING: coordinates outside Niigata bounds (valid-niigata-coordinates)
+  - id: area-tokyo-branch
+    kind: area
+    name: Tokyo Branch Office
+    attributes:
+      owner: sado-island
+    spec:
+      area_type: city
+      latitude: 35.68
+      longitude: 139.76
+
+  # WARNING: dependency from a "ground" (not an allowed source kind of depends_on)
   - id: rel-broken-dep
     type: depends_on
     participants:
-      source: srv-broken-01
-      target: net-orphan
+      source: ground-broken-01
+      target: forest-osado

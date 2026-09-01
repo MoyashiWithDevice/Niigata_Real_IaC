@@ -38,17 +38,16 @@ Every object that exists in infrastructure is represented as an Entity.
 
 Examples include:
 
-- Region
-- Rack
-- Server
-- Interface
-- Cable
-- Network
-- VM
-- Container
-- Application
-- ACL
-- Open Port
+- Area
+- Terrain
+- Water Body
+- Forest
+- Species
+- Population
+- Tourism Spot
+- Hot Spring
+- Cultural Asset
+- Event
 
 ---
 
@@ -60,11 +59,11 @@ Relations have their own identity and metadata.
 
 Examples include:
 
-- connects
-- hosts
+- located_in
+- inhabits
+- near
 - depends_on
-- applies_to
-- listens_on
+- flows_into
 
 ---
 

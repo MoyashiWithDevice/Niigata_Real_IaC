@@ -3,9 +3,9 @@ package schema
 import (
 	"testing"
 
-	"IACForge/src/core"
-	"IACForge/src/core/kinds"
-	"IACForge/src/core/types"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core/kinds"
+	"github.com/bababa/Niigata_Real_IaC/src/core/types"
 )
 
 func TestNewSchema(t *testing.T) {
@@ -31,11 +31,9 @@ func TestCoreSchemaEntityKinds(t *testing.T) {
 	s := CoreSchema()
 
 	expectedKinds := []core.EntityKind{
-		kinds.Region, kinds.Rack, kinds.Server, kinds.Interface, kinds.Cable,
-		kinds.PowerDistribution, kinds.Network, kinds.VLAN, kinds.Switch,
-		kinds.Router, kinds.Firewall, kinds.ACL, kinds.ACLRule,
-		kinds.VM, kinds.Container, kinds.Application, kinds.OpenPort,
-		kinds.Storage, kinds.Volume, kinds.Cluster, kinds.AvailabilityZone,
+		kinds.Area, kinds.Ground, kinds.Terrain, kinds.WaterBody,
+		kinds.Forest, kinds.Species, kinds.Population, kinds.TourismSpot,
+		kinds.HotSpring, kinds.CulturalAsset, kinds.Event,
 	}
 
 	if len(s.EntityKinds) != len(expectedKinds) {
@@ -53,9 +51,8 @@ func TestCoreSchemaRelationTypes(t *testing.T) {
 	s := CoreSchema()
 
 	expectedTypes := []core.RelationType{
-		types.Connects, types.Hosts, types.DependsOn, types.BelongsTo,
-		types.ReplicatesTo, types.BacksUp, types.Monitors, types.ManagedBy,
-		types.MountedOn, types.AppliesTo, types.ListensOn,
+		types.LocatedIn, types.Inhabits, types.Near,
+		types.DependsOn, types.BelongsTo, types.FlowsInto,
 	}
 
 	if len(s.RelationTypes) != len(expectedTypes) {
@@ -76,17 +73,12 @@ func TestCoreSchemaRelationDirections(t *testing.T) {
 		relType  core.RelationType
 		expected DirectionType
 	}{
-		{types.Connects, DirectionSymmetric},
-		{types.Hosts, DirectionDirected},
+		{types.LocatedIn, DirectionDirected},
+		{types.Inhabits, DirectionDirected},
+		{types.Near, DirectionSymmetric},
 		{types.DependsOn, DirectionDirected},
 		{types.BelongsTo, DirectionDirected},
-		{types.ReplicatesTo, DirectionDirected},
-		{types.BacksUp, DirectionDirected},
-		{types.Monitors, DirectionDirected},
-		{types.ManagedBy, DirectionDirected},
-		{types.MountedOn, DirectionDirected},
-		{types.AppliesTo, DirectionDirected},
-		{types.ListensOn, DirectionDirected},
+		{types.FlowsInto, DirectionDirected},
 	}
 
 	for _, tt := range tests {
@@ -103,74 +95,180 @@ func TestCoreSchemaRelationDirections(t *testing.T) {
 func TestCoreSchemaEntityKindProperties(t *testing.T) {
 	s := CoreSchema()
 
-	// Server should have cpu property (structured list)
-	serverDef, ok := s.GetEntityKindDef(kinds.Server)
+	// Population should have count property (required integer, min 0)
+	populationDef, ok := s.GetEntityKindDef(kinds.Population)
 	if !ok {
-		t.Fatal("server kind not found")
+		t.Fatal("population kind not found")
 	}
-	foundCpu := false
-	for _, p := range serverDef.Properties {
-		if p.Name == "cpu" {
-			foundCpu = true
-			if p.Type != PropertyTypeList {
-				t.Errorf("expected cpu type list, got %s", p.Type)
+	foundCount := false
+	for _, p := range populationDef.Properties {
+		if p.Name == "count" {
+			foundCount = true
+			if p.Type != PropertyTypeInteger {
+				t.Errorf("expected count type integer, got %s", p.Type)
 			}
-			if len(p.Properties) != 2 {
-				t.Errorf("expected cpu to have 2 sub-properties, got %d", len(p.Properties))
+			if !p.Required {
+				t.Error("expected count property to be required")
+			}
+			if p.Constraints == nil || p.Constraints.Min == nil {
+				t.Error("expected count property to have min constraint")
+			} else if *p.Constraints.Min != 0 {
+				t.Errorf("expected count min 0, got %v", *p.Constraints.Min)
 			}
 		}
 	}
-	if !foundCpu {
-		t.Error("server kind missing cpu property")
+	if !foundCount {
+		t.Error("population kind missing count property")
 	}
 
-	// Open port should have port property with range 1-65535
-	openPortDef, ok := s.GetEntityKindDef(kinds.OpenPort)
+	// Event should have held_month property with range 1-12
+	eventDef, ok := s.GetEntityKindDef(kinds.Event)
 	if !ok {
-		t.Fatal("open_port kind not found")
+		t.Fatal("event kind not found")
 	}
-	foundPort := false
-	for _, p := range openPortDef.Properties {
-		if p.Name == "port" {
-			foundPort = true
-			if !p.Required {
-				t.Error("expected port property to be required")
+	foundMonth := false
+	for _, p := range eventDef.Properties {
+		if p.Name == "held_month" {
+			foundMonth = true
+			if p.Required {
+				t.Error("expected held_month property to be optional")
 			}
 			if p.Constraints == nil || p.Constraints.Min == nil || p.Constraints.Max == nil {
-				t.Error("expected port property to have min and max constraints")
+				t.Error("expected held_month property to have min and max constraints")
 			}
 		}
 	}
-	if !foundPort {
-		t.Error("open_port kind missing port property")
+	if !foundMonth {
+		t.Error("event kind missing held_month property")
+	}
+
+	// Area should have latitude/longitude constraints
+	areaDef, ok := s.GetEntityKindDef(kinds.Area)
+	if !ok {
+		t.Fatal("area kind not found")
+	}
+	foundLat, foundLon := false, false
+	for _, p := range areaDef.Properties {
+		switch p.Name {
+		case "latitude":
+			foundLat = true
+			if p.Type != PropertyTypeNumber {
+				t.Errorf("expected latitude type number, got %s", p.Type)
+			}
+			if p.Constraints == nil || p.Constraints.Min == nil || p.Constraints.Max == nil {
+				t.Fatal("latitude should have min/max constraints")
+			}
+			if *p.Constraints.Min != -90 || *p.Constraints.Max != 90 {
+				t.Errorf("expected latitude range [-90,90], got [%v,%v]", *p.Constraints.Min, *p.Constraints.Max)
+			}
+		case "longitude":
+			foundLon = true
+			if p.Constraints == nil || p.Constraints.Min == nil || p.Constraints.Max == nil {
+				t.Fatal("longitude should have min/max constraints")
+			}
+			if *p.Constraints.Min != -180 || *p.Constraints.Max != 180 {
+				t.Errorf("expected longitude range [-180,180], got [%v,%v]", *p.Constraints.Min, *p.Constraints.Max)
+			}
+		}
+	}
+	if !foundLat {
+		t.Error("area kind missing latitude property")
+	}
+	if !foundLon {
+		t.Error("area kind missing longitude property")
+	}
+}
+
+// TestCoreSchemaGeoPropertiesOnPlaceKinds verifies that place-bearing entity
+// kinds declare optional latitude/longitude properties with WGS84 bounds.
+func TestCoreSchemaGeoPropertiesOnPlaceKinds(t *testing.T) {
+	s := CoreSchema()
+
+	placeKinds := []core.EntityKind{
+		kinds.Ground, kinds.Terrain, kinds.WaterBody, kinds.Forest,
+		kinds.TourismSpot, kinds.HotSpring, kinds.CulturalAsset,
+	}
+
+	for _, kind := range placeKinds {
+		def, ok := s.GetEntityKindDef(kind)
+		if !ok {
+			t.Fatalf("%s kind not found", kind)
+		}
+		props := make(map[string]PropertyDefinition, len(def.Properties))
+		for _, p := range def.Properties {
+			props[p.Name] = p
+		}
+		for _, name := range []string{"latitude", "longitude"} {
+			p, ok := props[name]
+			if !ok {
+				t.Errorf("%s kind missing %s property", kind, name)
+				continue
+			}
+			if p.Required {
+				t.Errorf("%s kind %s should be optional", kind, name)
+			}
+			if p.Type != PropertyTypeNumber {
+				t.Errorf("%s kind %s should be number, got %s", kind, name, p.Type)
+			}
+			if p.Constraints == nil || p.Constraints.Min == nil || p.Constraints.Max == nil {
+				t.Fatalf("%s kind %s should have min/max constraints", kind, name)
+			}
+		}
+		if p, ok := props["latitude"]; ok && (*p.Constraints.Min != -90 || *p.Constraints.Max != 90) {
+			t.Errorf("%s kind latitude range = [%v,%v], expected [-90,90]", kind, *p.Constraints.Min, *p.Constraints.Max)
+		}
+		if p, ok := props["longitude"]; ok && (*p.Constraints.Min != -180 || *p.Constraints.Max != 180) {
+			t.Errorf("%s kind longitude range = [%v,%v], expected [-180,180]", kind, *p.Constraints.Min, *p.Constraints.Max)
+		}
 	}
 }
 
 func TestCoreSchemaRelationParticipantConstraints(t *testing.T) {
 	s := CoreSchema()
 
-	// Connects should be symmetric with interface participants
-	connectsDef, ok := s.GetRelationTypeDef(types.Connects)
+	// FlowsInto should be restricted to water_body -> water_body
+	flowsDef, ok := s.GetRelationTypeDef(types.FlowsInto)
 	if !ok {
-		t.Fatal("connects relation type not found")
+		t.Fatal("flows_into relation type not found")
 	}
-	if connectsDef.Participants == nil {
-		t.Fatal("connects missing participant constraints")
+	if flowsDef.Participants == nil {
+		t.Fatal("flows_into missing participant constraints")
 	}
-	if len(connectsDef.Participants.SourceKinds) != 1 || connectsDef.Participants.SourceKinds[0] != kinds.Interface {
-		t.Errorf("connects source kinds should be [interface], got %v", connectsDef.Participants.SourceKinds)
+	if len(flowsDef.Participants.SourceKinds) != 1 || flowsDef.Participants.SourceKinds[0] != kinds.WaterBody {
+		t.Errorf("flows_into source kinds should be [water_body], got %v", flowsDef.Participants.SourceKinds)
+	}
+	if len(flowsDef.Participants.TargetKinds) != 1 || flowsDef.Participants.TargetKinds[0] != kinds.WaterBody {
+		t.Errorf("flows_into target kinds should be [water_body], got %v", flowsDef.Participants.TargetKinds)
 	}
 
-	// Hosts should have server, vm, container as source
-	hostsDef, ok := s.GetRelationTypeDef(types.Hosts)
+	// Inhabits should have species and population as source
+	inhabitsDef, ok := s.GetRelationTypeDef(types.Inhabits)
 	if !ok {
-		t.Fatal("hosts relation type not found")
+		t.Fatal("inhabits relation type not found")
 	}
-	if hostsDef.Participants == nil {
-		t.Fatal("hosts missing participant constraints")
+	if inhabitsDef.Participants == nil {
+		t.Fatal("inhabits missing participant constraints")
 	}
-	if len(hostsDef.Participants.SourceKinds) != 4 {
-		t.Errorf("hosts should have 4 source kinds, got %d", len(hostsDef.Participants.SourceKinds))
+	if len(inhabitsDef.Participants.SourceKinds) != 2 {
+		t.Errorf("inhabits should have 2 source kinds, got %d", len(inhabitsDef.Participants.SourceKinds))
+	}
+
+	// LocatedIn targets should be area or terrain
+	locDef, ok := s.GetRelationTypeDef(types.LocatedIn)
+	if !ok {
+		t.Fatal("located_in relation type not found")
+	}
+	if locDef.Participants == nil {
+		t.Fatal("located_in missing participant constraints")
+	}
+	validTargets := map[core.EntityKind]bool{kinds.Area: true, kinds.Terrain: true}
+	if len(locDef.Participants.TargetKinds) != len(validTargets) {
+		t.Fatalf("located_in should have %d target kinds, got %d", len(validTargets), len(locDef.Participants.TargetKinds))
+	}
+	for _, k := range locDef.Participants.TargetKinds {
+		if !validTargets[k] {
+			t.Errorf("located_in unexpected target kind %q", k)
+		}
 	}
 }
 
@@ -221,27 +319,24 @@ func TestCoreSchemaNestingDefinitions(t *testing.T) {
 		childKind   core.EntityKind
 		autoRelType core.RelationType
 	}{
-		// Server can nest VMs and Containers
-		{kinds.Server, "vms", kinds.VM, types.Hosts},
-		{kinds.Server, "containers", kinds.Container, types.Hosts},
-		// VM can nest Applications and Containers
-		{kinds.VM, "applications", kinds.Application, types.Hosts},
-		{kinds.VM, "containers", kinds.Container, types.Hosts},
-		// Container can nest Applications
-		{kinds.Container, "applications", kinds.Application, types.Hosts},
-		// Application can nest Containers and OpenPorts
-		{kinds.Application, "containers", kinds.Container, types.Hosts},
-		{kinds.Application, "open_ports", kinds.OpenPort, types.BelongsTo},
-		// Cluster can nest VMs and Servers as nodes (belongs_to membership)
-		{kinds.Cluster, "vms", kinds.VM, types.BelongsTo},
-		{kinds.Cluster, "servers", kinds.Server, types.BelongsTo},
-		// Region can nest racks, clusters, and availability zones
-		{kinds.Region, "racks", kinds.Rack, types.BelongsTo},
-		{kinds.Region, "clusters", kinds.Cluster, types.BelongsTo},
-		{kinds.Region, "availability_zones", kinds.AvailabilityZone, types.BelongsTo},
-		// Switch and Router can nest Ports as interface entities (belongs_to)
-		{kinds.Switch, "ports", kinds.Interface, types.BelongsTo},
-		{kinds.Router, "ports", kinds.Interface, types.BelongsTo},
+		// Area can nest grounds, terrains, water bodies, forests, tourism spots, and species
+		{kinds.Area, "grounds", kinds.Ground, types.BelongsTo},
+		{kinds.Area, "terrains", kinds.Terrain, types.BelongsTo},
+		{kinds.Area, "water_bodies", kinds.WaterBody, types.BelongsTo},
+		{kinds.Area, "forests", kinds.Forest, types.BelongsTo},
+		{kinds.Area, "tourism_spots", kinds.TourismSpot, types.BelongsTo},
+		{kinds.Area, "species", kinds.Species, types.BelongsTo},
+		// Terrain can nest grounds
+		{kinds.Terrain, "grounds", kinds.Ground, types.BelongsTo},
+		// Forest can nest grounds
+		{kinds.Forest, "grounds", kinds.Ground, types.BelongsTo},
+		// Species can nest populations
+		{kinds.Species, "populations", kinds.Population, types.BelongsTo},
+		// Tourism spot can nest hot springs and events
+		{kinds.TourismSpot, "hot_springs", kinds.HotSpring, types.BelongsTo},
+		{kinds.TourismSpot, "events", kinds.Event, types.BelongsTo},
+		// Hot spring can nest events
+		{kinds.HotSpring, "events", kinds.Event, types.BelongsTo},
 	}
 
 	for _, tt := range tests {
@@ -263,52 +358,122 @@ func TestCoreSchemaNestingDefinitions(t *testing.T) {
 	}
 }
 
+func TestFindNestingByChildKind(t *testing.T) {
+	s := CoreSchema()
+
+	// area nests grounds
+	def, ok := s.FindNestingByChildKind(kinds.Area, kinds.Ground)
+	if !ok {
+		t.Fatal("expected nesting definition for area -> ground")
+	}
+	if def.NestKey != "grounds" {
+		t.Errorf("expected nest key 'grounds', got %q", def.NestKey)
+	}
+	if def.ChildKind != kinds.Ground {
+		t.Errorf("expected child kind ground, got %s", def.ChildKind)
+	}
+	if def.AutoRelationType != types.BelongsTo {
+		t.Errorf("expected auto relation belongs_to, got %s", def.AutoRelationType)
+	}
+
+	// species nests populations
+	def, ok = s.FindNestingByChildKind(kinds.Species, kinds.Population)
+	if !ok {
+		t.Fatal("expected nesting definition for species -> population")
+	}
+	if def.NestKey != "populations" {
+		t.Errorf("expected nest key 'populations', got %q", def.NestKey)
+	}
+
+	// terrain does not nest populations
+	if _, ok := s.FindNestingByChildKind(kinds.Terrain, kinds.Population); ok {
+		t.Error("expected no nesting definition for terrain -> population")
+	}
+
+	// unknown parent kind yields no nesting
+	if _, ok := s.FindNestingByChildKind("unknown_kind", kinds.Ground); ok {
+		t.Error("expected no nesting definition for unknown parent kind")
+	}
+}
+
+func TestCoreSchemaFindNestingByNestKey(t *testing.T) {
+	s := CoreSchema()
+
+	def, ok := s.FindNestingByNestKey(kinds.TourismSpot, "hot_springs")
+	if !ok {
+		t.Fatal("expected nesting definition for tourism_spot/hot_springs")
+	}
+	if def.ChildKind != kinds.HotSpring {
+		t.Errorf("expected child kind hot_spring, got %s", def.ChildKind)
+	}
+
+	if _, ok := s.FindNestingByNestKey(kinds.TourismSpot, "nonexistent"); ok {
+		t.Error("expected no nesting definition for nonexistent nest key")
+	}
+}
+
 func TestValidateProperty(t *testing.T) {
 	s := CoreSchema()
 
-	serverDef, _ := s.GetEntityKindDef(kinds.Server)
+	populationDef, _ := s.GetEntityKindDef(kinds.Population)
 
-	// Find cpu property (structured list)
-	var cpuProp *PropertyDefinition
-	for i := range serverDef.Properties {
-		if serverDef.Properties[i].Name == "cpu" {
-			cpuProp = &serverDef.Properties[i]
+	// Find count property (required integer, min 0)
+	var countProp *PropertyDefinition
+	for i := range populationDef.Properties {
+		if populationDef.Properties[i].Name == "count" {
+			countProp = &populationDef.Properties[i]
 			break
 		}
 	}
-	if cpuProp == nil {
-		t.Fatal("cpu property not found")
+	if countProp == nil {
+		t.Fatal("count property not found")
 	}
 
-	// Test nil value (not required, should pass)
-	if err := s.ValidateProperty(cpuProp, nil); err != nil {
-		t.Errorf("expected nil error for nil value, got %v", err)
+	// Required property with nil value should fail
+	if err := s.ValidateProperty(countProp, nil); err == nil {
+		t.Error("expected error for nil value on required count property")
 	}
 
-	// Test valid structured list value
-	validCpu := []interface{}{
-		map[string]interface{}{
-			"cores":        16,
-			"architecture": "x86_64",
-		},
-	}
-	if err := s.ValidateProperty(cpuProp, validCpu); err != nil {
-		t.Errorf("expected no error for valid structured list value, got %v", err)
+	// Valid integer value
+	if err := s.ValidateProperty(countProp, 42); err != nil {
+		t.Errorf("expected no error for valid integer value, got %v", err)
 	}
 
-	// Test scalar value (should fail for list type)
-	if err := s.ValidateProperty(cpuProp, 8); err == nil {
-		t.Error("expected error for scalar value on list property")
+	// Value below minimum
+	if err := s.ValidateProperty(countProp, -1); err == nil {
+		t.Error("expected error for negative count value")
 	}
 
-	// Test invalid sub-property type
-	invalidCpu := []interface{}{
-		map[string]interface{}{
-			"cores": "not_a_number",
-		},
+	// Non-numeric value (should fail for integer type)
+	if err := s.ValidateProperty(countProp, "many"); err == nil {
+		t.Error("expected error for string value on integer property")
 	}
-	if err := s.ValidateProperty(cpuProp, invalidCpu); err == nil {
-		t.Error("expected error for invalid sub-property type")
+
+	// Find survey_method property (optional string enum)
+	var methodProp *PropertyDefinition
+	for i := range populationDef.Properties {
+		if populationDef.Properties[i].Name == "survey_method" {
+			methodProp = &populationDef.Properties[i]
+			break
+		}
+	}
+	if methodProp == nil {
+		t.Fatal("survey_method property not found")
+	}
+
+	// Optional property with nil value should pass
+	if err := s.ValidateProperty(methodProp, nil); err != nil {
+		t.Errorf("expected no error for nil value on optional property, got %v", err)
+	}
+
+	// Valid enum value
+	if err := s.ValidateProperty(methodProp, "transect"); err != nil {
+		t.Errorf("expected no error for valid enum value, got %v", err)
+	}
+
+	// Invalid enum value
+	if err := s.ValidateProperty(methodProp, "guess"); err == nil {
+		t.Error("expected error for invalid enum value")
 	}
 }
 
@@ -363,20 +528,20 @@ func TestValidatePropertyStringConstraints(t *testing.T) {
 func TestValidatePropertyEnumConstraints(t *testing.T) {
 	s := NewSchema("1.0.0", "1.0")
 	prop := &PropertyDefinition{
-		Name: "action",
+		Name: "soil_type",
 		Type: PropertyTypeString,
 		Constraints: &Constraint{
-			Enum: []string{"allow", "deny"},
+			Enum: []string{"loam", "sand"},
 		},
 	}
 
 	// Valid enum value
-	if err := s.ValidateProperty(prop, "allow"); err != nil {
+	if err := s.ValidateProperty(prop, "loam"); err != nil {
 		t.Errorf("expected no error for valid enum value, got %v", err)
 	}
 
 	// Invalid enum value
-	if err := s.ValidateProperty(prop, "reject"); err == nil {
+	if err := s.ValidateProperty(prop, "silt"); err == nil {
 		t.Error("expected error for invalid enum value")
 	}
 }
@@ -419,17 +584,17 @@ func TestValidatePropertyPatternConstraints(t *testing.T) {
 func TestValidatePropertyListUnknownKey(t *testing.T) {
 	s := NewSchema("1.0.0", "1.0")
 	prop := &PropertyDefinition{
-		Name: "cpu",
+		Name: "observations",
 		Type: PropertyTypeList,
 		Properties: []PropertyDefinition{
-			{Name: "cores", Type: PropertyTypeInteger},
-			{Name: "architecture", Type: PropertyTypeString},
+			{Name: "count", Type: PropertyTypeInteger},
+			{Name: "method", Type: PropertyTypeString},
 		},
 	}
 
 	// Valid item
 	valid := []interface{}{
-		map[string]interface{}{"cores": 4, "architecture": "x86_64"},
+		map[string]interface{}{"count": 4, "method": "transect"},
 	}
 	if err := s.ValidateProperty(prop, valid); err != nil {
 		t.Errorf("expected no error for valid list item, got %v", err)
@@ -437,7 +602,7 @@ func TestValidatePropertyListUnknownKey(t *testing.T) {
 
 	// Item with unknown key
 	invalid := []interface{}{
-		map[string]interface{}{"cores": 4, "sockets": 2},
+		map[string]interface{}{"count": 4, "observer": "tanaka"},
 	}
 	if err := s.ValidateProperty(prop, invalid); err == nil {
 		t.Error("expected error for list item with unknown key")
@@ -448,25 +613,25 @@ func TestValidatePropertyMapValueProperty(t *testing.T) {
 	s := NewSchema("1.0.0", "1.0")
 	valueProp := &PropertyDefinition{Name: "entry", Type: PropertyTypeInteger}
 	prop := &PropertyDefinition{
-		Name:          "ports",
+		Name:          "annual_visitors_by_year",
 		Type:          PropertyTypeMap,
 		ValueProperty: valueProp,
 	}
 
 	// Valid map values
-	valid := map[string]interface{}{"web": 8080, "db": 5432}
+	valid := map[string]interface{}{"2024": 8080, "2025": 5432}
 	if err := s.ValidateProperty(prop, valid); err != nil {
 		t.Errorf("expected no error for valid map values, got %v", err)
 	}
 
 	// map[string]string values must fail against integer value schema
-	invalid := map[string]string{"web": "8080"}
+	invalid := map[string]string{"2024": "8080"}
 	if err := s.ValidateProperty(prop, invalid); err == nil {
 		t.Error("expected error for map value not matching value property type")
 	}
 
 	// Non-numeric value in a numeric map
-	badVal := map[string]interface{}{"web": "8080"}
+	badVal := map[string]interface{}{"2024": "8080"}
 	if err := s.ValidateProperty(prop, badVal); err == nil {
 		t.Error("expected error for non-integer map value")
 	}
@@ -481,9 +646,9 @@ func TestValidatePropertyMapValueProperty(t *testing.T) {
 func TestValidatePropertyNumericConstraints(t *testing.T) {
 	s := NewSchema("1.0.0", "1.0")
 	min := float64(1)
-	max := float64(65535)
+	max := float64(12)
 	prop := &PropertyDefinition{
-		Name: "port",
+		Name: "held_month",
 		Type: PropertyTypeInteger,
 		Constraints: &Constraint{
 			Min: &min,
@@ -497,12 +662,12 @@ func TestValidatePropertyNumericConstraints(t *testing.T) {
 	}
 
 	// Above max
-	if err := s.ValidateProperty(prop, 70000); err == nil {
+	if err := s.ValidateProperty(prop, 13); err == nil {
 		t.Error("expected error for value above max")
 	}
 
 	// Valid
-	if err := s.ValidateProperty(prop, 8080); err != nil {
+	if err := s.ValidateProperty(prop, 8); err != nil {
 		t.Errorf("expected no error for valid value, got %v", err)
 	}
 }
@@ -525,38 +690,38 @@ func TestProfile(t *testing.T) {
 		t.Error("expected profile not to have rule 'nonexistent'")
 	}
 
-	p.AddRequiredKind("server")
-	if len(p.RequiredKinds) != 1 || p.RequiredKinds[0] != "server" {
-		t.Error("expected profile to require kind 'server'")
+	p.AddRequiredKind("area")
+	if len(p.RequiredKinds) != 1 || p.RequiredKinds[0] != "area" {
+		t.Error("expected profile to require kind 'area'")
 	}
 
-	p.AddRequiredRelation("connects")
-	if len(p.RequiredRelations) != 1 || p.RequiredRelations[0] != "connects" {
-		t.Error("expected profile to require relation 'connects'")
+	p.AddRequiredRelation("located_in")
+	if len(p.RequiredRelations) != 1 || p.RequiredRelations[0] != "located_in" {
+		t.Error("expected profile to require relation 'located_in'")
 	}
 }
 
 func TestValidatePropertyReferenceType(t *testing.T) {
 	s := NewSchema("1.0.0", "1.0")
 	propDef := &PropertyDefinition{
-		Name:     "associated_network",
+		Name:     "related_spot",
 		Type:     PropertyTypeReference,
 		Required: false,
 	}
 
 	// Valid ReferenceValue
-	ref := core.NewReferenceValue("@net-mgmt")
+	ref := core.NewReferenceValue("@spot-gappo")
 	if err := s.ValidateProperty(propDef, ref); err != nil {
 		t.Errorf("expected no error for valid ReferenceValue, got %v", err)
 	}
 
 	// Valid @ prefix string (not yet converted)
-	if err := s.ValidateProperty(propDef, "@net-mgmt"); err != nil {
+	if err := s.ValidateProperty(propDef, "@spot-gappo"); err != nil {
 		t.Errorf("expected no error for @ prefix string, got %v", err)
 	}
 
 	// Invalid: plain string without @ prefix
-	if err := s.ValidateProperty(propDef, "net-mgmt"); err == nil {
+	if err := s.ValidateProperty(propDef, "spot-gappo"); err == nil {
 		t.Error("expected error for plain string without @ prefix")
 	}
 
@@ -571,129 +736,206 @@ func TestValidatePropertyReferenceType(t *testing.T) {
 	}
 }
 
-func TestCoreSchemaInterfaceModeProperty(t *testing.T) {
+func TestCoreSchemaGroundSoilTypeProperty(t *testing.T) {
 	s := CoreSchema()
-	def, ok := s.GetEntityKindDef(kinds.Interface)
+	def, ok := s.GetEntityKindDef(kinds.Ground)
 	if !ok {
-		t.Fatal("interface kind not found")
+		t.Fatal("ground kind not found")
 	}
 
-	var modeProp *PropertyDefinition
+	var soilProp *PropertyDefinition
 	for _, p := range def.Properties {
-		if p.Name == "mode" {
-			modeProp = &p
+		if p.Name == "soil_type" {
+			soilProp = &p
 			break
 		}
 	}
-	if modeProp == nil {
-		t.Fatal("mode property not found on interface")
+	if soilProp == nil {
+		t.Fatal("soil_type property not found on ground")
 	}
-	if modeProp.Type != PropertyTypeString {
-		t.Errorf("expected type string, got %s", modeProp.Type)
+	if soilProp.Type != PropertyTypeString {
+		t.Errorf("expected type string, got %s", soilProp.Type)
 	}
-	if modeProp.Default != "none" {
-		t.Errorf("expected default 'none', got %v", modeProp.Default)
+	if soilProp.Required {
+		t.Error("soil_type should be optional")
 	}
-	if modeProp.Constraints == nil || len(modeProp.Constraints.Enum) != 4 {
-		t.Fatalf("expected 4 enum values, got %v", modeProp.Constraints)
+	if soilProp.Constraints == nil || len(soilProp.Constraints.Enum) != 7 {
+		t.Fatalf("expected 7 enum values, got %v", soilProp.Constraints)
 	}
 
-	validModes := map[string]bool{"access": true, "trunk": true, "hybrid": true, "none": true}
-	for _, v := range modeProp.Constraints.Enum {
-		if !validModes[v] {
+	validSoils := map[string]bool{
+		"loam": true, "sand": true, "clay": true, "gravel": true,
+		"rock": true, "volcanic_ash": true, "peat": true,
+	}
+	for _, v := range soilProp.Constraints.Enum {
+		if !validSoils[v] {
 			t.Errorf("unexpected enum value %q", v)
 		}
 	}
 }
 
-func TestCoreSchemaVlanTaggedProperty(t *testing.T) {
+func TestCoreSchemaDependsOnCriticalProperty(t *testing.T) {
 	s := CoreSchema()
-	def, ok := s.GetEntityKindDef(kinds.VLAN)
+	def, ok := s.GetRelationTypeDef(types.DependsOn)
 	if !ok {
-		t.Fatal("vlan kind not found")
+		t.Fatal("depends_on relation type not found")
 	}
 
-	var taggedProp *PropertyDefinition
+	var criticalProp *PropertyDefinition
 	for _, p := range def.Properties {
-		if p.Name == "tagged" {
-			taggedProp = &p
+		if p.Name == "critical" {
+			criticalProp = &p
 			break
 		}
 	}
-	if taggedProp == nil {
-		t.Fatal("tagged property not found on vlan")
+	if criticalProp == nil {
+		t.Fatal("critical property not found on depends_on")
 	}
-	if taggedProp.Type != PropertyTypeBoolean {
-		t.Errorf("expected type boolean, got %s", taggedProp.Type)
+	if criticalProp.Type != PropertyTypeBoolean {
+		t.Errorf("expected type boolean, got %s", criticalProp.Type)
 	}
-	if taggedProp.Default != false {
-		t.Errorf("expected default false, got %v", taggedProp.Default)
+	if criticalProp.Default != false {
+		t.Errorf("expected default false, got %v", criticalProp.Default)
+	}
+
+	// dependency_type should be an enum with 5 values
+	var depTypeProp *PropertyDefinition
+	for _, p := range def.Properties {
+		if p.Name == "dependency_type" {
+			depTypeProp = &p
+			break
+		}
+	}
+	if depTypeProp == nil {
+		t.Fatal("dependency_type property not found on depends_on")
+	}
+	if depTypeProp.Constraints == nil || len(depTypeProp.Constraints.Enum) != 5 {
+		t.Fatalf("expected 5 enum values, got %v", depTypeProp.Constraints)
+	}
+	validDeps := map[string]bool{
+		"source": true, "landscape": true, "access": true,
+		"ecosystem": true, "event": true,
+	}
+	for _, v := range depTypeProp.Constraints.Enum {
+		if !validDeps[v] {
+			t.Errorf("unexpected enum value %q", v)
+		}
 	}
 }
 
-func TestCoreSchemaInterfaceTypeEnum(t *testing.T) {
+func TestCoreSchemaSpeciesCategoryEnum(t *testing.T) {
 	s := CoreSchema()
-	def, ok := s.GetEntityKindDef(kinds.Interface)
+	def, ok := s.GetEntityKindDef(kinds.Species)
 	if !ok {
-		t.Fatal("interface kind not found")
+		t.Fatal("species kind not found")
 	}
 
-	var typeProp *PropertyDefinition
+	var categoryProp *PropertyDefinition
 	for _, p := range def.Properties {
-		if p.Name == "type" {
-			typeProp = &p
+		if p.Name == "category" {
+			categoryProp = &p
 			break
 		}
 	}
-	if typeProp == nil {
-		t.Fatal("type property not found on interface")
+	if categoryProp == nil {
+		t.Fatal("category property not found on species")
 	}
-	if typeProp.Constraints == nil || len(typeProp.Constraints.Enum) != 8 {
-		t.Fatalf("expected 8 enum values, got %v", typeProp.Constraints)
+	if categoryProp.Constraints == nil || len(categoryProp.Constraints.Enum) != 8 {
+		t.Fatalf("expected 8 enum values, got %v", categoryProp.Constraints)
+	}
+
+	validCategories := map[string]bool{
+		"mammal": true, "bird": true, "reptile": true, "amphibian": true,
+		"fish": true, "insect": true, "plant": true, "other": true,
+	}
+	for _, v := range categoryProp.Constraints.Enum {
+		if !validCategories[v] {
+			t.Errorf("unexpected enum value %q", v)
+		}
+	}
+}
+
+func TestCoreSchemaEventHeldMonthProperty(t *testing.T) {
+	s := CoreSchema()
+	def, ok := s.GetEntityKindDef(kinds.Event)
+	if !ok {
+		t.Fatal("event kind not found")
+	}
+
+	var monthProp *PropertyDefinition
+	for _, p := range def.Properties {
+		if p.Name == "held_month" {
+			monthProp = &p
+			break
+		}
+	}
+	if monthProp == nil {
+		t.Fatal("held_month property not found on event")
+	}
+	if monthProp.Type != PropertyTypeInteger {
+		t.Errorf("expected type integer, got %s", monthProp.Type)
+	}
+	if monthProp.Required {
+		t.Errorf("held_month should be optional, but is required")
+	}
+	if monthProp.Constraints == nil || monthProp.Constraints.Min == nil || monthProp.Constraints.Max == nil {
+		t.Fatal("held_month should have min/max constraints")
+	}
+	if *monthProp.Constraints.Min != 1 {
+		t.Errorf("expected min 1, got %v", *monthProp.Constraints.Min)
+	}
+	if *monthProp.Constraints.Max != 12 {
+		t.Errorf("expected max 12, got %v", *monthProp.Constraints.Max)
+	}
+}
+
+func TestCoreSchemaWaterBodyProperties(t *testing.T) {
+	s := CoreSchema()
+	def, ok := s.GetEntityKindDef(kinds.WaterBody)
+	if !ok {
+		t.Fatal("water_body kind not found")
+	}
+
+	var waterTypeProp *PropertyDefinition
+	for _, p := range def.Properties {
+		if p.Name == "water_type" {
+			waterTypeProp = &p
+			break
+		}
+	}
+	if waterTypeProp == nil {
+		t.Fatal("water_type property not found on water_body")
+	}
+	if waterTypeProp.Constraints == nil || len(waterTypeProp.Constraints.Enum) != 6 {
+		t.Fatalf("expected 6 enum values, got %v", waterTypeProp.Constraints)
 	}
 
 	validTypes := map[string]bool{
-		"ethernet": true, "fiber": true, "wireless": true, "virtual": true,
-		"bond": true, "vlan": true, "bridge": true, "loopback": true,
+		"river": true, "lake": true, "sea": true,
+		"pond": true, "marsh": true, "waterfall": true,
 	}
-	for _, v := range typeProp.Constraints.Enum {
+	for _, v := range waterTypeProp.Constraints.Enum {
 		if !validTypes[v] {
 			t.Errorf("unexpected enum value %q", v)
 		}
 	}
-}
 
-func TestCoreSchemaInterfaceVlanIDProperty(t *testing.T) {
-	s := CoreSchema()
-	def, ok := s.GetEntityKindDef(kinds.Interface)
-	if !ok {
-		t.Fatal("interface kind not found")
-	}
-
-	var vlanIDProp *PropertyDefinition
+	// length_km should be numeric with min 0
+	var lengthProp *PropertyDefinition
 	for _, p := range def.Properties {
-		if p.Name == "vlan_id" {
-			vlanIDProp = &p
+		if p.Name == "length_km" {
+			lengthProp = &p
 			break
 		}
 	}
-	if vlanIDProp == nil {
-		t.Fatal("vlan_id property not found on interface")
+	if lengthProp == nil {
+		t.Fatal("length_km property not found on water_body")
 	}
-	if vlanIDProp.Type != PropertyTypeInteger {
-		t.Errorf("expected type integer, got %s", vlanIDProp.Type)
+	if lengthProp.Type != PropertyTypeNumber {
+		t.Errorf("expected length_km type number, got %s", lengthProp.Type)
 	}
-	if vlanIDProp.Required {
-		t.Errorf("vlan_id should be optional, but is required")
-	}
-	if vlanIDProp.Constraints == nil || vlanIDProp.Constraints.Min == nil || vlanIDProp.Constraints.Max == nil {
-		t.Fatal("vlan_id should have min/max constraints")
-	}
-	if *vlanIDProp.Constraints.Min != 1 {
-		t.Errorf("expected min 1, got %v", *vlanIDProp.Constraints.Min)
-	}
-	if *vlanIDProp.Constraints.Max != 4094 {
-		t.Errorf("expected max 4094, got %v", *vlanIDProp.Constraints.Max)
+	if lengthProp.Constraints == nil || lengthProp.Constraints.Min == nil || *lengthProp.Constraints.Min != 0 {
+		t.Error("length_km should have min constraint of 0")
 	}
 }
 
@@ -701,7 +943,7 @@ func TestValidatePropertyIntegerFloat(t *testing.T) {
 	s := CoreSchema()
 
 	// Integral float64 (as produced by encoding/json) is acceptable for integer.
-	integral := &PropertyDefinition{Name: "height_units", Type: PropertyTypeInteger}
+	integral := &PropertyDefinition{Name: "count", Type: PropertyTypeInteger}
 	if err := s.ValidateProperty(integral, float64(42)); err != nil {
 		t.Errorf("integer property with integral float64 should be accepted, got %v", err)
 	}
@@ -719,7 +961,7 @@ func TestValidatePropertyIntegerFloat(t *testing.T) {
 
 func TestValidatePropertyNumberUnsigned(t *testing.T) {
 	s := CoreSchema()
-	def := &PropertyDefinition{Name: "voltage", Type: PropertyTypeNumber}
+	def := &PropertyDefinition{Name: "elevation_m", Type: PropertyTypeNumber}
 	if err := s.ValidateProperty(def, uint(240)); err != nil {
 		t.Errorf("number property with uint should be accepted, got %v", err)
 	}
@@ -731,14 +973,14 @@ func TestValidatePropertyNumberUnsigned(t *testing.T) {
 func TestValidateNumericConstraintsUnsigned(t *testing.T) {
 	s := CoreSchema()
 	def := &PropertyDefinition{
-		Name:        "vlan_id",
+		Name:        "held_month",
 		Type:        PropertyTypeInteger,
-		Constraints: &Constraint{Min: intPtr(1), Max: intPtr(4094)},
+		Constraints: &Constraint{Min: intPtr(1), Max: intPtr(12)},
 	}
-	if err := s.ValidateProperty(def, uint(100)); err != nil {
+	if err := s.ValidateProperty(def, uint(7)); err != nil {
 		t.Errorf("unsigned integer with min/max constraints should pass, got %v", err)
 	}
-	if err := s.ValidateProperty(def, uint(5000)); err == nil {
+	if err := s.ValidateProperty(def, uint(13)); err == nil {
 		t.Error("unsigned integer exceeding max should be rejected")
 	}
 }
@@ -747,14 +989,14 @@ func TestValidatePropertyStringReferenceValue(t *testing.T) {
 	minLength := 1
 	s := CoreSchema()
 	def := &PropertyDefinition{
-		Name:        "gateway",
+		Name:        "scientific_name",
 		Type:        PropertyTypeString,
 		Constraints: &Constraint{MinLength: &minLength},
 	}
-	if err := s.ValidateProperty(def, core.NewReferenceValue("@gw-01")); err != nil {
+	if err := s.ValidateProperty(def, core.NewReferenceValue("@species-tancho")); err != nil {
 		t.Errorf("string property with ReferenceValue should be accepted, got %v", err)
 	}
-	if err := s.ValidateProperty(def, "10.0.0.1"); err != nil {
+	if err := s.ValidateProperty(def, "Grus japonensis"); err != nil {
 		t.Errorf("string property with plain string should be accepted, got %v", err)
 	}
 }

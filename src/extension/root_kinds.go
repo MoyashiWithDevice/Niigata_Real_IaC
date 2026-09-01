@@ -1,13 +1,13 @@
 package extension
 
 import (
-	"IACForge/src/core"
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 // RootKindsExtensionPoint manages root-kind contributions from extensions.
 // Root kinds grant root authority to specific entity kinds, relaxing the
-// exactly-one-root ownership rules for kinds such as aws.organization.
+// exactly-one-root ownership rules for kinds such as area.
 type RootKindsExtensionPoint struct {
 	engine *validation.Engine
 	kinds  map[core.EntityKind]string // kind -> extension ID that granted it

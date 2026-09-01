@@ -7,25 +7,24 @@
 ## シンプル参照
 
 ```yaml
-source: srv-proxmox-01
-target: vm-web-01
+source: species-toki
+target: forest-osado-beech
 ```
 
 ## 修飾参照（フルパス）
 
 ```yaml
-source: /region-ap-northeast-1/rack-a01/srv-proxmox-01
-target: vm-web-01
+source: /sado-island/mt-kinpoku/ground-osado-hill
+target: lake-kamo
 ```
 
-## インターフェース参照
+## パス参照
 
-インターフェースはパス表記で参照します（`entity/interface`）：
+ネストされたエンティティはパス表記で参照します（`entity/child`）：
 
 ```yaml
 participants:
-  - srv-proxmox-01/eno1
-  - sw-core-01/port1
+  - sado-island/species-toki/toki-census-2025
 ```
 
 ## ネストされたエンティティへのパス参照
@@ -35,18 +34,17 @@ participants:
 ```yaml
 # パス表記: parent/child
 participants:
-  source: srv-proxmox-01/net-private/eth1
-  target: sw-core-01/port1
+  source: sado-island/species-toki/toki-census-2025
+  target: forest-osado-beech
 ```
 
 パスの各セグメントはエンティティIDに対応します：
-- `srv-proxmox-01` - 親サーバー
-- `net-private` - ネットワーク（サーバーの子）
-- `eth1` - インターフェース（ネットワークの子）
+- `sado-island` - ルートエリア
+- `species-toki` - 種（areaの子）
+- `toki-census-2025` - 個体群調査記録（speciesの子）
 
 ## 参照ルール
 
 - Referencesは既存のObjectsを指す必要があります
 - Unknown referenceは検証エラーとなります
-- Interface referenceはパス表記を使用します
 - パス参照は所有権チェーンを検証します（親→子の関係が正しいこと）

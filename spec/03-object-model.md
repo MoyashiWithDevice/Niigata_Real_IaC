@@ -88,7 +88,7 @@ The canonical path is constructed from ownership.
 
 Example
 
-/region01/rack01/pve01/eno1
+/area-niigata-city/spot-yahiko-shrine/onsen-yahiko
 
 Canonical paths are stable as long as ownership remains unchanged.
 

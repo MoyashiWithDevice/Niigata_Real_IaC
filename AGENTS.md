@@ -1,8 +1,10 @@
-# IACForge 開発ガイドライン
+# Niigata Real Model 開発ガイドライン
 
 ## プロジェクト目標
 
-IACForgeは、インフラストラクチャをモデルとして定義し、様々な表現を生成するためのフレームワークです。「インフラは知識」という哲学に基づき、モデルを唯一の信頼できる情報源とします。
+本プロジェクトは、新潟の自然環境・観光資源（地盤、地形、水系、森林、生物種とその個体数、温泉、文化財、行事など）をモデルとして定義し、様々な表現を生成するためのフレームワークです。「資源は知識」という哲学に基づき、モデルを唯一の信頼できる情報源とします。
+
+旧名称はIACForge（インフラ構成管理ツール）ですが、デジタルインフラ領域のKinds・検証ルールは完全に廃止されています。
 
 ## 開発方針
 
@@ -12,32 +14,32 @@ IACForgeは、インフラストラクチャをモデルとして定義し、様
 - シリアライズフォーマットに合わせてモデルを設計しない
 
 ### 2. エンティティとリレーション
-- インフラのすべてのオブジェクトはEntityとして表現
+- 新潟の自然・観光資源のすべてのオブジェクトはEntityとして表現
 - Entity間のピア・ツー・ピアの関係はRelationとして明示的に定義
 - 所有権（ownership）はツリー構造で表現
 - その他の関係はすべてRelationで表現
 
 ### 3. 人間が読める形式
-- インフラデータの主な著者は人間
+- 資源データの主な著者は人間
 - プレーンテキストで読みやすい状態を維持
 - 生成データが手書きデータを置き換えない
 
 ### 4. 拡張性
 - コアオブジェクトモデル以外はすべて拡張可能
-- Entity Kinds、Relation Types、Views、Validation Rules、Providers、Renderers
+- Entity Kinds、Relation Types、Views、Validation Rules、Renderers
 
 ### 5. ベンダーニュートラリティ
-- コアオブジェクトモデルはベンダ固有の概念を理解しない
-- ベンダ固有の情報はProvidersに属する
-- モデルはインフラの概念を表現し、実装ではない
+- コアオブジェクトモデルは特定の自治体・調査機関・システム固有の概念を理解しない
+- 固有の情報は拡張（Extension）に属する
+- モデルは資源の概念を表現し、実装ではない
 
 ## コーディング規約
 
 ### 命名規則
-- Entity Kind: 小文字、単数形（例: `server`, `vm`, `interface`）
-- Relation Type: スネークケース（例: `connects`, `hosts`, `depends_on`）
-- プロパティ: スネークケース（例: `cpu`, `memory`, `storage`）
-- ID: ケバブケース推奨（例: `srv-proxmox-01`）
+- Entity Kind: 小文字、単数形（例: `area`, `ground`, `species`, `hot_spring`）
+- Relation Type: スネークケース（例: `located_in`, `inhabits`, `flows_into`）
+- プロパティ: スネークケース（例: `elevation_m`, `soil_type`, `red_list_status`）
+- ID: ケバブケース推奨（例: `species-toki`, `spot-shukunegi`）
 
 ### ファイル構造
 ```
@@ -51,7 +53,6 @@ src/
 ├── validation/        # 検証エンジン
 ├── parser/            # YAMLパーサー
 ├── query/             # クエリエンジン
-├── projection/        # プロジェクションエンジン
 ├── view/              # ビュー定義
 ├── renderer/          # レンダリングエンジン
 └── extension/         # 拡張システム
@@ -90,7 +91,7 @@ go tool cover -html=coverage.out
 
 | 用語 | 定義 |
 |------|------|
-| Entity | インフラ内のすべてのオブジェクトを表す基本的な単位 |
+| Entity | 新潟の自然・観光資源内のすべてのオブジェクトを表す基本的な単位 |
 | Relation | Entity間のピア・ツー・ピアの関係を表す |
 | Graph | EntityとRelationのコレクション |
 | Ownership | Entity間の階層関係（ツリー構造） |

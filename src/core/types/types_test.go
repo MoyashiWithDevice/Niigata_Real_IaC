@@ -3,22 +3,17 @@ package types
 import (
 	"testing"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 func TestRelationTypeValues(t *testing.T) {
 	expected := map[core.RelationType]string{
-		Connects:     "connects",
-		Hosts:        "hosts",
-		DependsOn:    "depends_on",
-		BelongsTo:    "belongs_to",
-		ReplicatesTo: "replicates_to",
-		BacksUp:      "backs_up",
-		Monitors:     "monitors",
-		ManagedBy:    "managed_by",
-		MountedOn:    "mounted_on",
-		AppliesTo:    "applies_to",
-		ListensOn:    "listens_on",
+		LocatedIn: "located_in",
+		Inhabits:  "inhabits",
+		Near:      "near",
+		DependsOn: "depends_on",
+		BelongsTo: "belongs_to",
+		FlowsInto: "flows_into",
 	}
 
 	for typ, value := range expected {

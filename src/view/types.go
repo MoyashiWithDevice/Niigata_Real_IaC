@@ -1,7 +1,7 @@
 package view
 
 import (
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // View defines how a projected Graph is presented to a consumer.

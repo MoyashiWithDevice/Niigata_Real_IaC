@@ -8,8 +8,8 @@ import (
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"gopkg.in/yaml.v3"
 
-	"IACForge/src/renderer"
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/renderer"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 func registerRenderMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {
@@ -17,6 +17,8 @@ func registerRenderMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {
 		mcp.NewTool("render_graph",
 			mcp.WithDescription("Render the current graph to markdown, mermaid, svg, or json. Optionally filter by entity kinds, group by a field, or pass a full view definition in YAML."),
 			mcp.WithString("format", mcp.Description("Output format (markdown, mermaid, svg, json). Default: markdown")),
+			mcp.WithString("theme", mcp.Description("Built-in color theme (default, dark). Default: default")),
+			mcp.WithString("layout", mcp.Description("Layout engine for svg output (hierarchical, force-directed, map). Default: hierarchical")),
 			mcp.WithArray("kinds", mcp.Description("Restrict rendering to these entity kinds"), mcp.WithStringItems()),
 			mcp.WithString("group_by", mcp.Description("Field to group entities by (e.g. status)")),
 			mcp.WithString("view_yaml", mcp.Description("Full view definition as YAML (id, visibility, grouping, annotations)")),
@@ -35,7 +37,24 @@ func registerRenderMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {
 				return toolError(fmt.Sprintf("view application failed: %v", err)), nil
 			}
 
-			content, err := renderer.RenderFormat(vr, req.GetString("format", "markdown"))
+			opts := renderer.NewRenderOptions()
+			if themeID := req.GetString("theme", ""); themeID != "" {
+				theme := renderer.LookupTheme(themeID)
+				if theme == nil {
+					return toolError(fmt.Sprintf("unknown theme: %s (supported: default, dark)", themeID)), nil
+				}
+				opts.Theme = theme
+			}
+			if layout := req.GetString("layout", ""); layout != "" {
+				switch layout {
+				case "hierarchical", "force-directed", "map", "geographic":
+					opts.Layout = &renderer.LayoutConfig{Type: layout}
+				default:
+					return toolError(fmt.Sprintf("unknown layout: %s (supported: hierarchical, force-directed, map)", layout)), nil
+				}
+			}
+
+			content, err := renderer.RenderFormatWithOptions(vr, req.GetString("format", "markdown"), opts)
 			if err != nil {
 				return toolError(fmt.Sprintf("render failed: %v", err)), nil
 			}

@@ -42,27 +42,27 @@ Implementations MAY introduce additional relation types.
 
 The following relation types are defined by the core specification.
 
-### connects
+### near
 
-Represents a connection.
+Represents geographic proximity.
 
 This relation is symmetric.
 
 Typical examples include:
 
-- Interface ↔ Cable
-- Cable ↔ Interface
+- Hot Spring ↔ Tourism Spot
+- Tourism Spot ↔ Cultural Asset
 
 ---
 
-### hosts
+### inhabits
 
-Represents an execution or hosting relationship.
+Represents a habitat relationship.
 
 Examples include:
 
-- Server hosts VM
-- VM hosts Application
+- Species inhabits Forest
+- Population inhabits Water Body
 
 ---
 
@@ -86,8 +86,8 @@ Represents logical membership.
 
 Examples include:
 
-- Interface belongs_to Network
-- VM belongs_to Cluster
+- Tourism Spot located_in Area
+- Species belongs_to Area (via nesting)
 
 Membership does not imply ownership.
 
@@ -194,13 +194,9 @@ User-defined relation types MUST NOT redefine the semantics of standard relation
 
 Examples include:
 
-- replicates_to
-- backs_up
-- monitors
-- managed_by
-- mounted_on
-- applies_to
-- listens_on
+- sado.docks_at
+- ecotour.guided_by
+- nagaoka.sponsors
 
 ---
 

@@ -4,424 +4,366 @@
 
 ---
 
+新潟の自然・観光資源モデルの例（佐渡島）です。動作する完全なモデルは `demo/niigata/model.yaml` にあります。
+
+- Flat / Nested 混在定義（ネストは拡張 `belongs_to` を自動生成）
+- 共通属性（`description`, `status`, `tags`, `labels`, `extensions`）を entity / relation 両方に記述
+- リレーション種類（`located_in`, `inhabits`, `near`, `depends_on`, `belongs_to`, `flows_into`）の実演
+- ネストされた子（例: `mt-kinpoku/ground-osado-hill`）も単純 ID で参照可能
+
 ```yaml
+# Niigata nature and tourism resource model — Sado Island example.
+# Demonstrates flat + nested (mixed) definitions, common attributes
+# on entities and relations, auto-generated belongs_to relations, and
+# the full set of core entity kinds and relation types.
+schema_version: "1.0"
+
 objects:
-  # Regions
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  # ==============================================================
+  # Area (root) with nested children.
+  # The nest keys (terrains, forests, species, tourism_spots) are
+  # declared inline; each nested child receives its owner and an
+  # auto-generated belongs_to relation automatically.
+  # ==============================================================
+  - id: sado-island
+    kind: area
+    name: Sado Island
     attributes:
+      description: Island in the Sea of Japan, home of the reintroduced crested ibis.
       status: active
       labels:
-        region: ap-northeast-1
-
-  # Racks
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
-    attributes:
-      owner: region-ap-northeast-1
-      status: active
-      labels:
-        row: A
+        prefecture: niigata
+        region: sado
+      tags:
+        - island
+        - unesco-geopark
     spec:
-      height_units: 42
+      area_type: island
+      population: 54897
+      latitude: 38.04
+      longitude: 138.35
+      timezone: Asia/Tokyo
 
-  # Servers
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
-    attributes:
-      owner: rack-a01
-      status: active
-    spec:
-      platform: proxmox
-      cpu:
-        - cores: 16
-          architecture: x86_64
-        - cores: 16
-          architecture: x86_64
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 500
-          type: ssd
-        - size_gb: 500
-          type: ssd
-
-  - id: srv-proxmox-02
-    kind: server
-    name: Proxmox Node 02
-    attributes:
-      owner: rack-a01
-      status: active
-    spec:
-      platform: proxmox
-      cpu:
-        - cores: 16
-          architecture: x86_64
-        - cores: 16
-          architecture: x86_64
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 500
-          type: ssd
-        - size_gb: 500
-          type: ssd
-
-  # Switches
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
-    attributes:
-      owner: rack-a01
-      status: active
-    spec:
-      manufacturer: cisco
-      model: Catalyst 9300
-      port_count: 48
-      ports:
-        - id: port1
-          name: port1
+      terrains:
+        - id: mt-kinpoku
+          name: Mount Kinpoku
+          attributes:
+            description: Highest peak of Sado, at the heart of the Osado range.
+            status: active
+            tags:
+              - mountain
+              - hiking
           spec:
-            type: ethernet
-            speed_mbps: 10000
-            mode: trunk
+            terrain_type: mountain
+            elevation_m: 1172
+            prominence_m: 1092
+            grounds:
+              - id: ground-osado-hill
+                name: Osado Hillside Ground
+                attributes:
+                  description: Volcanic hillside used as the recharge area for local hot springs.
+                  status: maintenance
+                  labels:
+                    microregion: osado
+                spec:
+                  soil_type: volcanic_ash
+                  elevation_m: 640
+                  slope_deg: 28
+                  stability: watch
 
-  # Interfaces
-  - id: eno1
-    kind: interface
-    name: eno1
+        - id: coast-otoline
+          name: Otago Coast Cliffs
+          attributes:
+            description: Eroded coastline along the southern shore of the island.
+            status: active
+          spec:
+            terrain_type: coast
+            elevation_m: 210
+
+      forests:
+        - id: forest-osado-beech
+          name: Osado Beech Forest
+          attributes:
+            description: Old-growth beech forest on the Osado mountainside.
+            status: active
+            tags:
+              - old-growth
+              - forest
+          spec:
+            forest_type: beech
+            area_ha: 1250
+            grounds:
+              - id: ground-beech-soil
+                name: Beech Forest Soil Plot
+                attributes:
+                  description: Loam soil plot beneath the beech canopy.
+                  status: active
+                spec:
+                  soil_type: loam
+                  elevation_m: 720
+                  slope_deg: 18
+                  stability: stable
+
+      species:
+        - id: species-toki
+          name: Crested Ibis (Toki)
+          attributes:
+            description: Bird that was extinct in the wild in Japan and later reintroduced on Sado.
+            status: active
+            tags:
+              - symbolic-species
+              - released-population
+            labels:
+              conservation: national
+            extensions:
+              reintroduction_program: sado-toki-center
+          spec:
+            scientific_name: Nipponia nippon
+            category: bird
+            red_list_status: endangered
+
+        - id: species-medaka
+          name: Sado Medaka
+          attributes:
+            description: Native rice-fish population preserved in irrigation channels.
+            status: active
+            tags:
+              - endemic
+            labels:
+              conservation: prefectural
+          spec:
+            scientific_name: Oryzias latipes
+            category: fish
+            red_list_status: near_threatened
+
+      tourism_spots:
+        - id: spot-shukunegi
+          name: Shukunegi Boat Village
+          attributes:
+            description: Edo-period shipwright village on Ogi Bay, with preserved timber storehouses.
+            status: active
+            labels:
+              municipality: sado-city
+            tags:
+              - historic
+              - village
+          spec:
+            spot_type: historic
+            description: Edo-period shipwright village on Ogi Bay
+            annual_visitors: 310000
+            hot_springs:
+              - id: onsen-ogi
+                name: Ogi Onsen
+                attributes:
+                  description: Chloride spring feeding the town's public baths.
+                  status: active
+                  tags:
+                    - onsen
+                  extensions:
+                    operator: ogi-onsen-kyodo
+                spec:
+                  spring_quality: chloride
+                  temperature_c: 72.5
+                  source_count: 3
+            events:
+              - id: event-earth-celebration
+                name: Earth Celebration
+                attributes:
+                  description: World music festival tied to the taiko group Kodo.
+                  status: planned
+                  tags:
+                    - festival
+                    - music
+                spec:
+                  season: summer
+                  held_month: 8
+                  visitor_count: 25000
+
+  # --------------------------------------------------------------
+  # Flat entities (leaf top-level, explicit owner).
+  # These stay flat to illustrate the "mixed definition" syntax.
+  # --------------------------------------------------------------
+  - id: toki-census-2025
+    kind: population
+    name: Toki Census 2025
     attributes:
-      owner: srv-proxmox-01
+      description: Spring visual count conducted across restored rice paddies.
+      owner: species-toki
+      status: active
+      extensions:
+        survey_org: sado-toki-center
     spec:
-      type: ethernet
-      speed_mbps: 10000
-      mac_address: "aa:bb:cc:dd:ee:f0"
-      network: "@mgmt-network-01"
-      ip_address: 10.0.0.10
+      count: 731
+      survey_date: "2025-03-15"
+      survey_method: visual_count
 
-  - id: eno2
-    kind: interface
-    name: eno2
+  - id: toki-census-2024
+    kind: population
+    name: Toki Census 2024
     attributes:
-      owner: srv-proxmox-01
+      description: Drone-assisted count from the previous year.
+      owner: species-toki
+      status: maintenance
     spec:
-      type: ethernet
-      speed_mbps: 10000
-      mac_address: "aa:bb:cc:dd:ee:f1"
+      count: 688
+      survey_date: "2024-03-10"
+      survey_method: drone
 
-  # Network
-  - id: mgmt-network-01
-    kind: network
-    name: Management Network
-    spec:
-      cidr: 10.0.0.0/24
-      gateway: 10.0.0.1
-      network_type: management
-
-  # VMs
-  - id: vm-web-01
-    kind: vm
-    name: Web Server 01
+  - id: medaka-count-2025
+    kind: population
+    name: Medaka Count 2025
     attributes:
-      owner: srv-proxmox-01
+      description: Transect survey of the Kamo inlet irrigation network.
+      owner: species-medaka
       status: active
     spec:
-      cpu:
-        - cores: 4
-          architecture: x86_64
-      memory:
-        - size_gb: 8
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 100
-          type: ssd
-      os: ubuntu
-      os_version: "22.04"
+      count: 4200
+      survey_date: "2025-06-01"
+      survey_method: transect
 
-  # Applications
-  - id: app-web-server
-    kind: application
-    name: Nginx Web Server
+  - id: lake-kamo
+    kind: water_body
+    name: Lake Kamo
     attributes:
-      owner: vm-web-01
+      description: Shallow brackish lake fringed by reed beds and rice paddies.
+      owner: sado-island
+      status: active
+      tags:
+        - lake
+        - wetland
+    spec:
+      water_type: lake
+      max_depth_m: 8
+      catchment_area_km2: 41
+
+  - id: river-kamo-inlet
+    kind: water_body
+    name: Kamo Inlet Channel
+    attributes:
+      description: Channel carrying drainage from the Kamo basin into the lake.
+      owner: sado-island
       status: active
     spec:
-      version: "1.24.0"
-      port: 443
-      protocol: https
+      water_type: river
+      length_km: 1.6
 
-  # Open Ports
-  - id: port-443-nginx
-    kind: open_port
-    name: Nginx HTTPS
+  - id: asset-sado-goldmine
+    kind: cultural_asset
+    name: Sado Kinzan Gold Mine
     attributes:
-      owner: app-web-server
-    spec:
-      port: 443
-      protocol: tcp
-      state: listening
-      address: 0.0.0.0
-      process: nginx
-
-  - id: port-5432-postgres
-    kind: open_port
-    name: PostgreSQL
-    attributes:
-      owner: vm-web-01
-    spec:
-      port: 5432
-      protocol: tcp
-      state: listening
-      address: 10.0.2.10
-      process: postgres
-
-  # ACLs
-  - id: acl-web-ingress
-    kind: acl
-    name: Web Server Ingress ACL
-    attributes:
-      owner: vm-web-01
+      description: Historic gold mine inscribed as a World Heritage Site.
+      owner: sado-island
       status: active
+      labels:
+        designation: world-heritage
+      extensions:
+        designation_authority: unesco
     spec:
-      direction: inbound
-      default_action: deny
+      asset_type: historic_site
+      designated_level: unesco
+      designated_date: "2024-07-26"
 
-  # ACL Rules
-  - id: acl-rule-allow-https
-    kind: acl_rule
-    name: Allow HTTPS
+  # --------------------------------------------------------------
+  # Relations. Simple IDs reference entities (including nested ones).
+  # --------------------------------------------------------------
+  # The beech forest lies on the Osado mountainside.
+  - id: rel-forest-locatedin
+    type: located_in
     attributes:
-      owner: acl-web-ingress
-    spec:
-      action: allow
-      protocol: tcp
-      source_address: 0.0.0.0/0
-      destination_port: "443"
-      enabled: true
-
-  - id: acl-rule-allow-ssh
-    kind: acl_rule
-    name: Allow SSH from Management
-    attributes:
-      owner: acl-web-ingress
-    spec:
-      action: allow
-      protocol: tcp
-      source_address: 10.0.0.0/24
-      destination_port: "22"
-      enabled: true
-
-  # Cluster
-  - id: cluster-prod-01
-    kind: cluster
-    name: Production Cluster 01
-    attributes:
+      description: Beech forest occupies the slopes of Mount Kinpoku.
       status: active
-    spec:
-      cluster_type: hyperconverged
-      ha_enabled: true
-
-  # Cables
-  - id: cable-001
-    kind: cable
-    name: Patch Cable SRV01-SW01
-    spec:
-      cable_type: cat6a
-      length_meters: 3.0
-
-  # Connection Relations (connects)
-  - id: rel-connects-srv-sw
-    type: connects
-    spec:
-      connection_type: physical
-      bandwidth_mbps: 10000
     participants:
-      - srv-proxmox-01/eno1
-      - sw-core-01/port1
+      source: forest-osado-beech
+      target: mt-kinpoku
 
-  # Hosting Relations (hosts)
-  - id: rel-hosts-server-vm
-    type: hosts
+  # Toki inhabit the beech forest habitat.
+  - id: rel-toki-inhabits
+    type: inhabits
+    attributes:
+      description: Toki roost and forage in the forest edge and paddies.
+      status: active
+      tags:
+        - roosting
     participants:
-      source: srv-proxmox-01
-      target: vm-web-01
+      source: species-toki
+      target: forest-osado-beech
+    spec:
+      habitat_note: Roosts in tall trees; feeds in restored rice paddies
 
-  - id: rel-hosts-vm-app
-    type: hosts
+  # Medaka live in Lake Kamo.
+  - id: rel-medaka-inhabits
+    type: inhabits
+    attributes:
+      description: Medaka thrive in the lake's inflow channels.
+      status: active
     participants:
-      source: vm-web-01
-      target: app-web-server
+      source: species-medaka
+      target: lake-kamo
 
-  # Membership Relations (belongs_to)
-  - id: rel-belongsto-vm-cluster
+  # The inlet channel flows into Lake Kamo.
+  - id: rel-flows-kamo
+    type: flows_into
+    attributes:
+      description: Kamo inlet discharges into the lake.
+      status: active
+    participants:
+      source: river-kamo-inlet
+      target: lake-kamo
+
+  # Shukunegi is close to the Otago coastline.
+  # Symmetric relation uses the list participant format.
+  - id: rel-shukunegi-near-coast
+    type: near
+    attributes:
+      description: Short walk from the village to the cliff viewpoint.
+      status: active
+      tags:
+        - access
+      labels:
+        route: walking
+    participants:
+      - spot-shukunegi
+      - coast-otoline
+    spec:
+      walking_minutes: 25
+
+  # Ogi Onsen depends on the hillside ground as its source area.
+  - id: rel-onsen-depends-ground
+    type: depends_on
+    attributes:
+      description: The onsen draws its mineral recharge from the hillside.
+      status: active
+      labels:
+        dependency: source
+    participants:
+      source: onsen-ogi
+      target: ground-osado-hill
+    spec:
+      dependency_type: source
+      critical: true
+
+  # The gold mine tour is a key attraction of the island's tourism.
+  - id: rel-goldmine-belongs
     type: belongs_to
-    participants:
-      source: vm-web-01
-      target: cluster-prod-01
-
-  - id: rel-belongsto-intf-network
-    type: belongs_to
-    participants:
-      source: vm-web-01/eth0
-      target: mgmt-network-01
-
-  # ACL Application Relations (applies_to)
-  - id: rel-applies-web-acl
-    type: applies_to
-    participants:
-      source: acl-web-ingress
-      target: vm-web-01/eth0
-
-  # Open Port Relations (belongs_to)
-  - id: rel-belongsto-port-nginx
-    type: belongs_to
-    participants:
-      source: port-443-nginx
-      target: app-web-server
-
-  - id: rel-belongsto-port-postgres
-    type: belongs_to
-    participants:
-      source: port-5432-postgres
-      target: vm-web-01
-
-  # Port Listening Relations (listens_on)
-  - id: rel-listens-nginx
-    type: listens_on
-    participants:
-      source: port-443-nginx
-      target: vm-web-01/eth0
-
-  - id: rel-listens-postgres
-    type: listens_on
-    participants:
-      source: port-5432-postgres
-      target: vm-web-01/eth0
-```
-
----
-
-## AWSモデル例
-
-AWS拡張（`aws.*` Kind）を使用したモデル例です。Kindの全定義は [AWS Entity Kinds](aws-entity-kinds.md) を参照してください。
-
-```yaml
-objects:
-  # Organization / Account
-  - id: org-01
-    kind: aws.organization
-    name: Example Org
     attributes:
+      description: The mine belongs to the island's cultural estate.
       status: active
-
-  - id: acct-01
-    kind: aws.account
-    name: Example Account
-    attributes:
-      owner: org-01
-      status: active
-    spec:
-      account_id: "123456789012"
-      alias: example-acct
-
-  # Region / AZ / VPC
-  - id: region-us-east-1
-    kind: aws.region
-    name: us-east-1
-    attributes:
-      owner: acct-01
-    spec:
-      region_code: us-east-1
-
-  - id: az-us-east-1a
-    kind: aws.availability_zone
-    name: us-east-1a
-    attributes:
-      owner: region-us-east-1
-    spec:
-      zone_name: us-east-1a
-
-  - id: vpc-01
-    kind: aws.vpc
-    name: Main VPC
-    attributes:
-      owner: region-us-east-1
-    spec:
-      cidr_block: 10.0.0.0/16
-
-  - id: subnet-01
-    kind: aws.subnet
-    name: Public Subnet
-    attributes:
-      owner: vpc-01
-    spec:
-      cidr_block: 10.0.1.0/24
-
-  # Compute / Storage
-  - id: ec2-web-01
-    kind: aws.ec2
-    name: Web Server
-    attributes:
-      owner: subnet-01
-      status: active
-    spec:
-      instance_type: t3.micro
-      subnet: "@subnet-01"
-
-  - id: s3-assets
-    kind: aws.s3_bucket
-    name: Assets Bucket
-    attributes:
-      owner: az-us-east-1a
-    spec:
-      versioning: true
-
-  - id: lambda-processor
-    kind: aws.lambda_function
-    name: Processor
-    attributes:
-      owner: acct-01
-    spec:
-      runtime: python3.12
-
-  - id: sns-events
-    kind: aws.sns_topic
-    name: Events Topic
-    attributes:
-      owner: acct-01
-      status: active
-
-  - id: sqs-jobs
-    kind: aws.sqs_queue
-    name: Job Queue
-    attributes:
-      owner: acct-01
-      status: active
-
-  # Relations
-  - id: rel-ec2-subnet
-    type: belongs_to
     participants:
-      source: ec2-web-01
-      target: subnet-01
+      source: asset-sado-goldmine
+      target: sado-island
 
-  - id: rel-subscribe-sqs
-    type: aws.subscribes
+  # The festival depends on the scenic village landscape.
+  - id: rel-event-depends-spot
+    type: depends_on
+    attributes:
+      description: Earth Celebration relies on the village setting.
+      status: planned
+      labels:
+        dependency: landscape
     participants:
-      source: sns-events
-      target: sqs-jobs
+      source: event-earth-celebration
+      target: spot-shukunegi
+    spec:
+      dependency_type: landscape
+      critical: false
 ```

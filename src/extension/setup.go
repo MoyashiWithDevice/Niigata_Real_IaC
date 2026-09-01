@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"IACForge/src/schema"
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 // Setup bundles the Schema, Validation engine, and Extension Manager for a runtime.
@@ -18,10 +18,10 @@ type Setup struct {
 	Manager    *Manager
 }
 
-// DefaultExtensionDir returns the extension directory from the IACFORGE_EXTENSIONS
+// DefaultExtensionDir returns the extension directory from the NIIGATA_EXTENSIONS
 // environment variable, or "" if it is not set.
 func DefaultExtensionDir() string {
-	return os.Getenv("IACFORGE_EXTENSIONS")
+	return os.Getenv("NIIGATA_EXTENSIONS")
 }
 
 // NewSetup constructs the default core schema, validation engine, and extension manager.
@@ -83,7 +83,7 @@ func BuiltinExtensions() []*Extension {
 }
 
 // RegisterBuiltin makes an extension available as a built-in extension.
-// It is intended for extensions compiled into the binary (e.g. the AWS extension)
+// It is intended for extensions compiled into the binary (e.g. a domain-specific builtin)
 // so they are available in every CLI and MCP session without a plugin build.
 // Registering an extension with an already-registered ID is a no-op.
 func RegisterBuiltin(ext *Extension) {

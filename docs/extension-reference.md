@@ -1,12 +1,12 @@
 # Extension Development Reference
 
-This guide explains how to create plugins (extensions) for IACForge.
+This guide explains how to create plugins (extensions) for Niigata Real Model.
 
 ## Overview
 
-IACForge supports runtime plugin loading via Go's `plugin` package.
+Niigata Real Model supports runtime plugin loading via Go's `plugin` package.
 Plugins are `.so` files built with `-buildmode=plugin`. They are loaded from
-the directory given by the `IACFORGE_EXTENSIONS` environment variable (and by
+the directory given by the `NIIGATA_EXTENSIONS` environment variable (and by
 the `--extensions` flag of the `validate` command). There is no automatic
 startup scan of a fixed directory.
 
@@ -28,43 +28,43 @@ go mod init my-plugin
 package main
 
 import (
-	"IACForge/src/core"
-	"IACForge/src/extension"
-	"IACForge/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/extension"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
 )
 
 func Extension() *extension.Extension {
 	return &extension.Extension{
 		Manifest: &extension.Manifest{
-			ID:              "my-organization.my-plugin",
-			Name:            "My Custom Plugin",
+			ID:              "jp.niigata.museum-plugin",
+			Name:            "Niigata Museum Plugin",
 			Version:         "1.0.0",
-			Description:     "Adds custom entity kinds for our infrastructure",
-			Namespace:       "myorg",
+			Description:     "Adds museum-related entity kinds for Niigata tourism resources",
+			Namespace:       "niigata",
 			ExtensionPoints: []string{
 				string(extension.ExtensionPointEntityKinds),
 			},
 		},
 		EntityKinds: []extension.EntityKindContribution{
 			{
-				Kind: core.EntityKind("custom_database"),
+				Kind: core.EntityKind("museum"),
 				Definition: &schema.EntityKindDefinition{
-					Description: "Custom database server",
+					Description: "Museum facility within a Niigata tourism area",
 					Properties: []schema.PropertyDefinition{
 						{
-							Name:     "engine",
-							Type:     schema.PropertyTypeString,
+							Name:     "exhibit_count",
+							Type:     schema.PropertyTypeInteger,
 							Required: true,
-							Description: "Database engine (e.g., postgres, mysql)",
+							Description: "Number of exhibits on display",
 							Constraints: &schema.Constraint{
-								Enum: []string{"postgres", "mysql", "mariadb", "sqlite"},
+								Min: f64Ptr(0),
 							},
 						},
 						{
-							Name:     "version",
+							Name:     "curator",
 							Type:     schema.PropertyTypeString,
 							Required: false,
-							Description: "Database version",
+							Description: "Curator name",
 						},
 					},
 				},
@@ -84,15 +84,15 @@ go build -buildmode=plugin -o my-plugin.so .
 
 ### 4. Deploy
 
-Point `IACFORGE_EXTENSIONS` at a directory containing the built `.so` files.
+Point `NIIGATA_EXTENSIONS` at a directory containing the built `.so` files.
 The directory is scanned for `.so` files on startup; subdirectories and other
 files are ignored.
 
 ```bash
 mkdir -p /path/to/my-extensions
 cp my-plugin.so /path/to/my-extensions/
-export IACFORGE_EXTENSIONS=/path/to/my-extensions
-iacforge validate infra.yaml
+export NIIGATA_EXTENSIONS=/path/to/my-extensions
+niigata validate model.yaml
 ```
 
 ## Manifest
@@ -123,7 +123,7 @@ type Manifest struct {
 
 ## Extension Points
 
-IACForge supports 4 extension point types:
+Niigata Real Model supports 4 extension point types:
 
 ### entity_kinds
 
@@ -132,18 +132,18 @@ Add custom entity types to the schema.
 ```go
 EntityKinds: []extension.EntityKindContribution{
 	{
-		Kind: core.EntityKind("my_custom_vm"),
+		Kind: core.EntityKind("museum"),
 		Definition: &schema.EntityKindDefinition{
-			Description: "Description of this entity kind",
+			Description: "Museum facility in a tourism area",
 			Properties: []schema.PropertyDefinition{
 				{
-					Name:     "cpu_count",
+					Name:     "exhibit_count",
 					Type:     schema.PropertyTypeInteger,
 					Required: true,
-					Description: "Number of CPU cores",
+					Description: "Number of exhibits on display",
 					Constraints: &schema.Constraint{
-						Min: f64Ptr(1),
-						Max: f64Ptr(128),
+						Min: f64Ptr(0),
+						Max: f64Ptr(10000),
 					},
 				},
 			},
@@ -160,7 +160,7 @@ func f64Ptr(v float64) *float64 { return &v }
 ```
 
 **Core entity kinds that CANNOT be redefined:**
-`region`, `rack`, `server`, `interface`, `cable`, `power_distribution`, `network`, `vlan`, `switch`, `router`, `firewall`, `acl`, `acl_rule`, `vm`, `container`, `application`, `open_port`, `storage`, `volume`, `cluster`, `availability_zone`
+`area`, `ground`, `terrain`, `water_body`, `forest`, `species`, `population`, `tourism_spot`, `hot_spring`, `cultural_asset`, `event`
 
 ### relation_types
 
@@ -169,13 +169,13 @@ Add custom relation types.
 ```go
 RelationTypes: []extension.RelationTypeContribution{
 	{
-		Type: core.RelationType("custom_manages"),
+		Type: core.RelationType("curates"),
 		Definition: &schema.RelationTypeDefinition{
 			Direction: schema.DirectionDirected,
-			Description: "Custom management relation",
+			Description: "Curator manages a museum exhibit",
 			Participants: &schema.ParticipantConstraints{
-				SourceKinds: []core.EntityKind{"server", "vm"},
-				TargetKinds: []core.EntityKind{"application"},
+				SourceKinds: []core.EntityKind{"museum"},
+				TargetKinds: []core.EntityKind{"cultural_asset"},
 			},
 		},
 	},
@@ -187,7 +187,7 @@ RelationTypes: []extension.RelationTypeContribution{
 - `symmetric` - Same meaning in both directions
 
 **Core relation types that CANNOT be redefined:**
-`connects`, `hosts`, `depends_on`, `belongs_to`, `replicates_to`, `backs_up`, `monitors`, `managed_by`, `mounted_on`, `applies_to`, `listens_on`
+`located_in`, `inhabits`, `near`, `depends_on`, `belongs_to`, `flows_into`
 
 ### validation_rules
 
@@ -197,9 +197,9 @@ Add custom validation rules.
 ValidationRules: []extension.ValidationRuleContribution{
 	{
 		Rule: &validation.Rule{
-			ID:          "my-custom-rule",
-			Name:        "Custom Validation Rule",
-			Description: "Ensures custom business logic",
+			ID:          "niigata-museum-requires-area",
+			Name:        "Museum Requires Area",
+			Description: "Ensures museum entities belong to a Niigata area",
 			Severity:    validation.SeverityWarning,
 		},
 		Fn: func(ctx *validation.Context) []validation.Finding {
@@ -207,7 +207,7 @@ ValidationRules: []extension.ValidationRuleContribution{
 			var findings []validation.Finding
 
 			for _, e := range g.Entities() {
-				if e.Kind == "my_custom_vm" {
+				if e.Kind == "museum" {
 					// Your validation logic here
 				}
 			}

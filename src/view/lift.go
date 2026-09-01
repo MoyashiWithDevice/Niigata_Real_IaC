@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // Lifted group marker values.

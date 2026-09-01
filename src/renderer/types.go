@@ -3,7 +3,7 @@ package renderer
 import (
 	"time"
 
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 // Renderer is the interface that all renderers must implement.
@@ -41,6 +41,16 @@ type Theme struct {
 	Colors     *ColorPalette `yaml:"colors,omitempty"`
 	Typography *Typography   `yaml:"typography,omitempty"`
 	Lines      *LineStyles   `yaml:"lines,omitempty"`
+	// KindIcons maps an entity kind (e.g. "species") to a short glyph used by
+	// icon-capable renderers. The glyph may be a Unicode/emoji character or a
+	// small label. Renderers that cannot show glyphs simply ignore it.
+	KindIcons map[string]string `yaml:"kind_icons,omitempty"`
+	// RelColors maps a relation type (e.g. "belongs_to") to a stroke color used
+	// when drawing the corresponding edges.
+	RelColors map[string]string `yaml:"rel_colors,omitempty"`
+	// RelStyles maps a relation type to a line style ("solid", "dashed",
+	// "dotted"). Unspecified types fall back to the default line style.
+	RelStyles map[string]string `yaml:"rel_styles,omitempty"`
 }
 
 // ColorPalette defines color definitions.
@@ -55,6 +65,54 @@ type ColorPalette struct {
 	Warning    string `yaml:"warning,omitempty"`
 	Error      string `yaml:"error,omitempty"`
 	Info       string `yaml:"info,omitempty"`
+	// KindColors maps an entity kind (e.g. "forest") to its accent color used to
+	// fill node backgrounds and containers.
+	KindColors map[string]string `yaml:"kind_colors,omitempty"`
+}
+
+// KindColor returns the accent color for an entity kind, falling back to the
+// ColorPalette.Primary color when the kind has no explicit color.
+func (cp *ColorPalette) KindColor(kind string) string {
+	if cp == nil {
+		return ""
+	}
+	if c, ok := cp.KindColors[kind]; ok && c != "" {
+		return c
+	}
+	return cp.Primary
+}
+
+// KindIcon returns the glyph for an entity kind, returning "" when the kind has
+// no icon and the theme has no glyphs at all.
+func (t *Theme) KindIcon(kind string) string {
+	if t == nil || t.KindIcons == nil {
+		return ""
+	}
+	return t.KindIcons[kind]
+}
+
+// RelColor returns the stroke color for a relation type, falling back to the
+// default line color when no specific color is set.
+func (t *Theme) RelColor(relType string, defaultColor string) string {
+	if t == nil || t.RelColors == nil {
+		return defaultColor
+	}
+	if c, ok := t.RelColors[relType]; ok && c != "" {
+		return c
+	}
+	return defaultColor
+}
+
+// RelStyle returns the line style name for a relation type ("solid", "dashed",
+// "dotted"), falling back to "solid".
+func (t *Theme) RelStyle(relType string) string {
+	if t == nil || t.RelStyles == nil {
+		return "solid"
+	}
+	if s, ok := t.RelStyles[relType]; ok && s != "" {
+		return s
+	}
+	return "solid"
 }
 
 // Typography defines font definitions.
@@ -118,6 +176,9 @@ type LayoutResult struct {
 	Edges  []EdgePosition
 	Width  float64
 	Height float64
+	// Meta carries layout-specific auxiliary data (e.g. the geographic frame of
+	// a map layout) that renderers may use for decorations such as axis labels.
+	Meta map[string]string
 }
 
 // NewArtifact creates a new Artifact.

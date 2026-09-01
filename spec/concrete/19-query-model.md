@@ -37,8 +37,8 @@ The Select clause defines what Objects to select.
 ```yaml
 select:
   entities:
-    - kind: server
-    - kind: vm
+    - kind: tourism_spot
+    - kind: hot_spring
       where:
         status: active
 ```
@@ -48,9 +48,9 @@ select:
 ```yaml
 select:
   relations:
-    - type: connects
+    - type: near
       where:
-        connection_type: physical
+        walking_minutes: {le: 10}
 ```
 
 ### Combined Selection
@@ -58,10 +58,10 @@ select:
 ```yaml
 select:
   entities:
-    - kind: server
-    - kind: vm
+    - kind: species
+    - kind: population
   relations:
-    - type: hosts
+    - type: inhabits
 ```
 
 ---
@@ -76,29 +76,29 @@ The Where clause filters Objects based on conditions.
 |----------|-------------|---------|
 | eq | Equals | `status: active` |
 | ne | Not equals | `status: {ne: offline}` |
-| in | In list | `kind: [server, vm]` |
-| nin | Not in list | `kind: {nin: [cable]}` |
-| gt | Greater than | `cpu.cores: {gt: 8}` |
-| ge | Greater than or equal | `memory.size_gb: {gte: 16}` |
-| lt | Less than | `storage.size_gb: {lt: 1000}` |
-| le | Less than or equal | `storage.size_gb: {lte: 2000}` |
-| contains | String contains | `name: {contains: web}` |
-| starts_with | String starts with | `name: {starts_with: srv}` |
+| in | In list | `kind: [species, population]` |
+| nin | Not in list | `kind: {nin: [event]}` |
+| gt | Greater than | `population: {gt: 10000}` |
+| ge | Greater than or equal | `count: {ge: 16}` |
+| lt | Less than | `area_ha: {lt: 1000}` |
+| le | Less than or equal | `elevation_m: {le: 2000}` |
+| contains | String contains | `name: {contains: 温泉}` |
+| starts_with | String starts with | `name: {starts_with: spot}` |
 | ends_with | String ends with | `name: {ends_with: 01}` |
-| matches | Regex match | `ip_address: {matches: "10\\.0\\..*"}` |
+| matches | Regex match | `scientific_name: {matches: "Nipponia.*"}` |
 | defined | Property exists | `description: {defined: true}` |
-| undefined | Property does not exist | `description: {defined: false}` |
+| undefined | Property does not exist | `survey_date: {defined: false}` |
 
 ### Condition Examples
 
 ```yaml
 where:
   status: active
-  kind: server
-  cpu.cores: {ge: 16}
-  tags: {contains: production}
+  kind: tourism_spot
+  annual_visitors: {ge: 100000}
+  tags: {contains: tourism}
   labels:
-    region: ap-northeast-1
+    area: niigata-city
 ```
 
 ### Logical Operators
@@ -114,13 +114,13 @@ where:
 ```yaml
 where:
   or:
-    - kind: server
-    - kind: vm
+    - kind: forest
+    - kind: water_body
   and:
     - status: active
-    - tags: {contains: production}
+    - tags: {contains: conservation}
   not:
-    kind: cable
+    kind: event
 ```
 
 ---
@@ -154,27 +154,27 @@ The Traverse clause defines how to navigate the Graph.
 ### Traversal Examples
 
 ```yaml
-# Get all children of a region
+# Get all children of an area
 traverse:
-  from: region-ap-northeast-1
+  from: area-niigata-city
   operation: children
 
-# Get all descendants of a region
+# Get all descendants of an area
 traverse:
-  from: region-ap-northeast-1
+  from: area-niigata-city
   operation: descendants
 
-# Get all VMs hosted by a server
+# Get all populations surveyed for a species
 traverse:
-  from: srv-proxmox-01
+  from: species-japanese-crested-ibis
   operation: outgoing
-  relation_type: hosts
+  relation_type: belongs_to
 
-# Get all servers hosting a VM
+# Get the species a population belongs to
 traverse:
-  from: vm-web-01
+  from: pop-toki-2025
   operation: incoming
-  relation_type: hosts
+  relation_type: belongs_to
 ```
 
 ### Traversal Depth
@@ -186,7 +186,7 @@ traverse:
 
 ```yaml
 traverse:
-  from: region-ap-northeast-1
+  from: area-niigata-city
   operation: descendants
   depth: 3
 ```
@@ -220,8 +220,8 @@ project:
   properties:
     - name
     - status
-    - cpu.cores
-    - memory.size_gb
+    - count
+    - survey_date
 
 # Return paths
 project:
@@ -254,10 +254,10 @@ project:
 | Function | Description | Example |
 |----------|-------------|---------|
 | count | Count Objects | `{count: true}` |
-| sum | Sum numeric property | `{sum: cpu.cores}` |
-| avg | Average numeric property | `{avg: memory.size_gb}` |
-| min | Minimum value | `{min: storage.size_gb}` |
-| max | Maximum value | `{max: storage.size_gb}` |
+| sum | Sum numeric property | `{sum: count}` |
+| avg | Average numeric property | `{avg: count}` |
+| min | Minimum value | `{min: elevation_m}` |
+| max | Maximum value | `{max: elevation_m}` |
 | group_by | Group results | `{group_by: kind}` |
 
 ```yaml
@@ -266,8 +266,8 @@ project:
   aggregation:
     count: true
     group_by: kind
-    sum: cpu.cores
-    avg: memory.size_gb
+    sum: annual_visitors
+    avg: count
 ```
 
 ---
@@ -283,52 +283,50 @@ The output of one query MAY become the input of another.
 ```yaml
 # Chain queries
 queries:
-  - id: active-servers
+  - id: active-spots
     select:
       entities:
-        - kind: server
+        - kind: tourism_spot
     where:
       status: active
 
-  - id: vms-on-active-servers
+  - id: springs-of-active-spots
     select:
       entities:
-        - kind: vm
+        - kind: hot_spring
     traverse:
-      from: query.active-servers
-      operation: outgoing
-      relation_type: hosts
+      from: query.active-spots
+      operation: descendants
 ```
 
 ### Named Queries
 
 ```yaml
 queries:
-  - id: prod-servers
+  - id: endangered-species
     select:
       entities:
-        - kind: server
+        - kind: species
     where:
-      status: active
-      tags: {contains: production}
+      red_list_status: {in: [critically_endangered, endangered, vulnerable]}
 
-  - id: prod-vms
+  - id: populations-of-endangered
     select:
       entities:
-        - kind: vm
+        - kind: population
     traverse:
-      from: query.prod-servers
-      operation: outgoing
-      relation_type: hosts
+      from: query.endangered-species
+      operation: descendants
 
-  - id: prod-apps
+  - id: habitats-of-endangered
     select:
       entities:
-        - kind: application
+        - kind: forest
+        - kind: water_body
     traverse:
-      from: query.prod-vms
+      from: query.endangered-species
       operation: outgoing
-      relation_type: hosts
+      relation_type: inhabits
 ```
 
 ---
@@ -358,16 +356,16 @@ queries:
 
 ```json
 {
-  "query_id": "active-servers",
+  "query_id": "active-spots",
   "results": [
     {
-      "id": "srv-proxmox-01",
+      "id": "spot-yahiko-shrine",
       "type": "entity",
-      "path": "/region-ap-northeast-1/rack-a01/srv-proxmox-01",
+      "path": "/area-niigata-city/spot-yahiko-shrine",
       "object": {
-        "id": "srv-proxmox-01",
-        "kind": "server",
-        "name": "Proxmox Node 01",
+        "id": "spot-yahiko-shrine",
+        "kind": "tourism_spot",
+        "name": "弥彦神社",
         "status": "active"
       }
     }
@@ -381,42 +379,42 @@ queries:
 
 ## Query Examples
 
-### Select All Servers
+### Select All Tourism Spots
 
 ```yaml
 select:
   entities:
-    - kind: server
+    - kind: tourism_spot
 ```
 
-### Select Active VMs with Filters
+### Select Active Hot Springs with Filters
 
 ```yaml
 select:
   entities:
-    - kind: vm
+    - kind: hot_spring
 where:
   status: active
-  cpu.cores: {ge: 4}
-  memory.size_gb: {ge: 8}
+  temperature_c: {ge: 40}
+  source_count: {ge: 1}
 ```
 
-### Select All Connections
+### Select All Habitat Relations
 
 ```yaml
 select:
   relations:
-    - type: connects
+    - type: inhabits
 ```
 
-### Traverse to Find VMs
+### Traverse to Find Populations
 
 ```yaml
 select:
   entities:
-    - kind: vm
+    - kind: population
 traverse:
-  from: srv-proxmox-01
+  from: species-japanese-crested-ibis
   operation: descendants
 ```
 
@@ -426,20 +424,20 @@ traverse:
 id: complex-query
 select:
   entities:
-    - kind: server
-    - kind: vm
-    - kind: application
+    - kind: area
+    - kind: tourism_spot
+    - kind: cultural_asset
   relations:
-    - type: hosts
+    - type: located_in
     - type: depends_on
 where:
   or:
-    - kind: server
+    - kind: area
     - and:
-      - kind: vm
+      - kind: tourism_spot
       - status: active
 traverse:
-  from: region-ap-northeast-1
+  from: area-niigata-city
   operation: descendants
   depth: 4
 project:

@@ -1,28 +1,28 @@
-# Entity Kinds
+# Entity Kinds（エンティティ種別）
 
-## Overview
+## 概要
 
-Entity Kinds define the categories of objects that may exist in an infrastructure model.
+Entity Kind は、モデル内に存在しうるオブジェクトのカテゴリを定義する。
 
-Every Entity MUST define a kind.
+すべての Entity は kind を定義しなければならない（MUST）。
 
-The core specification defines the following Entity Kinds.
+本仕様（Niigata Nature and Tourism Resource Schema）は、新潟県の自然・観光資源管理のための次の Entity Kind を定義する。
 
-Implementations MAY introduce additional kinds through extensions.
+実装は拡張（extension）を通じて追加の kind を導入してもよい（MAY）。
 
 ---
 
-## Common Properties
+## 共通プロパティ
 
-Every Entity shares the following common properties regardless of kind.
+すべての Entity は kind によらず次の共通プロパティを持つ。
 
-### Required
+### 必須
 
 - id
 - kind
 - name
 
-### Optional
+### 任意
 
 - description
 - status
@@ -30,1144 +30,510 @@ Every Entity shares the following common properties regardless of kind.
 - labels
 - extensions
 
-Individual Entity Kinds MAY define additional properties.
+個々の Entity Kind は追加のプロパティを定義してよい（MAY）。
 
 ---
 
-## Physical Infrastructure
+## 地理・自然環境
 
-### region
+### area
 
-A geographic region where infrastructure is deployed.
+市町村・地区・島などの地理的領域。
 
-#### Properties
+#### プロパティ
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| address | string | no | - | Physical address |
-| latitude | number | no | - | Geographic latitude |
-| longitude | number | no | - | Geographic longitude |
-| timezone | string | no | - | Timezone identifier |
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| area_type | string | no | - | 行政区分（prefecture, city, town, village, district, island） |
+| population | integer | no | - | 人口（0 以上） |
+| address | string | no | - | 住所 |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
+| timezone | string | no | - | タイムゾーン識別子 |
 
-#### Typical Ownership
+#### 典型的な所有関係
 
-- owned by: root (no owner specified)
+- owned by: root（owner 未指定）
 
-#### Nestable Children
+#### ネスト可能な子
 
 | Nest Key | Child Kind |
 |----------|------------|
-| racks | rack |
-| clusters | cluster |
-| availability_zones | availability_zone |
+| grounds | ground |
+| terrains | terrain |
+| water_bodies | water_body |
+| forests | forest |
+| tourism_spots | tourism_spot |
+| species | species |
+| cultural_assets | cultural_asset |
 
-#### Typical Relations
+ネストされた子は `belongs_to` 関係（子 → 親）を自動的に受け取る。
 
-- (none)
+#### 典型的な Relation
 
-#### Example
+- located_in → terrain
+- near ↔ area / terrain / 自然資源 / 観光資源（対称）
+
+#### 例
 
 ```yaml
-- id: region-ap-northeast-1
-  kind: region
-  name: Tokyo Datacenter 1
+- id: area-niigata-city
+  kind: area
+  name: 新潟市
   status: active
+  area_type: city
+  population: 800000
+  latitude: 37.9161
+  longitude: 139.0364
+  timezone: Asia/Tokyo
   tags:
-    - production
-    - ap-northeast-1
-  labels:
-    region: asia-pacific
-    tier: primary
+    - prefecture-capital
+    - joetsu-shinkansen
 ```
 
 ---
 
-### rack
+### ground
 
-A physical rack enclosure within a region.
+特定地点の地盤・土壌状態。
 
-#### Properties
+#### プロパティ
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| height_units | integer | no | 42 | Rack height in rack units (U) |
-| power_capacity_watts | integer | no | - | Total power capacity in watts |
-| max_load_kg | number | no | - | Maximum weight capacity in kg |
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| soil_type | string | no | - | 優占土壌型（loam, sand, clay, gravel, rock, volcanic_ash, peat） |
+| elevation_m | number | no | - | 海抜高度（m、-10 以上） |
+| slope_deg | number | no | - | 斜面角度（度、0〜90） |
+| stability | string | no | - | 地盤安定度分類（stable, watch, unstable, landslide_prone, subsidence） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
 
-#### Typical Ownership
+#### 典型的な所有関係
 
-- owned by: region
+- owned by: area, terrain, forest
 
-#### Nestable Children
+#### 典型的な Relation
+
+- belongs_to → area / terrain / forest（ネスト時に自動生成）
+
+#### 例
+
+```yaml
+- id: ground-yahiko-hill
+  kind: ground
+  name: 弥彦丘陵の地盤
+  soil_type: loam
+  elevation_m: 120.5
+  slope_deg: 15.0
+  stability: stable
+```
+
+---
+
+### terrain
+
+山・平野・海岸・谷などの地形。
+
+#### プロパティ
+
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| terrain_type | string | no | - | 地形タイプ（mountain, hill, plain, coast, valley, plateau, cave） |
+| elevation_m | number | no | - | 最高標高（m、0 以上） |
+| prominence_m | number | no | - | 地形突出度（m、0 以上） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
+
+#### 典型的な所有関係
+
+- owned by: area
+
+#### ネスト可能な子
 
 | Nest Key | Child Kind |
 |----------|------------|
-| servers | server |
-| switches | switch |
-| routers | router |
-| firewalls | firewall |
+| grounds | ground |
 
-#### Typical Relations
+#### 典型的な Relation
 
-- belongs_to → region
+- belongs_to → area（ネスト時に自動生成）
+- located_in ← 自然資源 / 観光資源
 
-#### Example
+#### 例
 
 ```yaml
-- id: rack-a01
-  kind: rack
-  name: Rack A01
+- id: terrain-mt-yahiko
+  kind: terrain
+  name: 弥彦山
   status: active
-  labels:
-    row: A
-    zone: dc-1
+  terrain_type: mountain
+  elevation_m: 634
+  prominence_m: 587
 ```
 
 ---
 
-### server
+### water_body
 
-A physical or virtual compute host.
+河川・湖・海域・池・沼などの水域。
 
-#### Properties
+#### プロパティ
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| manufacturer | string | no | - | Hardware manufacturer |
-| model | string | no | - | Hardware model |
-| serial_number | string | no | - | Serial number |
-| cpu | list[object] | no | - | CPU configurations |
-| memory | list[object] | no | - | Memory modules |
-| storage | list[object] | no | - | Local storage devices |
-| platform | string | no | - | Virtualization platform (e.g., proxmox, vmware, kubernetes) |
-| bios_version | string | no | - | BIOS/UEFI version |
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| water_type | string | no | - | 水域タイプ（river, lake, sea, pond, marsh, waterfall） |
+| length_km | number | no | - | 長さ（km、0 以上。河川向け） |
+| max_depth_m | number | no | - | 最大深度（m、0 以上） |
+| catchment_area_km2 | number | no | - | 流域面積（km²、0 以上） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
 
-##### cpu Properties
+#### 典型的な所有関係
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| cores | integer | no | - | Number of CPU cores |
-| architecture | string | no | - | CPU architecture (x86_64, arm64) |
+- owned by: area
 
-##### memory Properties
+#### 典型的な Relation
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| size_gb | number | yes | - | Memory module size in GB |
-| speed | integer | no | - | Memory speed in MHz |
-| type | string | no | - | Memory type (ddr4, ddr5, lpddr4, lpddr5) |
+- flows_into → water_body
+- inhabits ← species / population
 
-##### storage Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| size_gb | number | no | - | Storage size in GB |
-| type | string | no | - | Storage type (ssd, hdd, nvme) |
-
-#### Typical Ownership
-
-- owned by: rack, region
-
-#### Nestable Children
-
-| Nest Key | Child Kind |
-|----------|------------|
-| networks | network |
-| vms | vm |
-
-#### Typical Relations
-
-- belongs_to → rack
-- belongs_to → region
-- hosts → vm
-- hosts → container
-
-#### Example
+#### 例
 
 ```yaml
-- id: srv-proxmox-01
-  kind: server
-  name: Proxmox Node 01
+- id: waterbody-shinano-river
+  kind: water_body
+  name: 信濃川
   status: active
-  platform: proxmox
-  cpu:
-    - cores: 16
-      architecture: x86_64
-    - cores: 16
-      architecture: x86_64
-  memory:
-    - size_gb: 64
-      speed: 3200
-      type: ddr4
-    - size_gb: 64
-      speed: 3200
-      type: ddr4
-  storage:
-    - size_gb: 500
-      type: ssd
-    - size_gb: 500
-      type: ssd
-```
-
-**Note:** IP addresses are not direct properties of server. Use interface entities to assign IP addresses.
-
----
-
-### cable
-
-A physical cable connecting two or more interfaces.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| cable_type | string | no | copper | Cable type (copper, fiber, dac) |
-| length_meters | number | no | - | Cable length in meters |
-| connector_a | string | no | - | Connector type at end A |
-| connector_b | string | no | - | Connector type at end B |
-
-#### Typical Relations
-
-- connects → interface (symmetric)
-
-#### Example
-
-```yaml
-- id: cable-001
-  kind: cable
-  name: Patch Cable A01-01 to Switch-01-Port24
-  cable_type: cat6a
-  length_meters: 3.0
+  water_type: river
+  length_km: 367
+  catchment_area_km2: 11900
 ```
 
 ---
 
-### interface
+### forest
 
-A network interface (physical or virtual).
+森林・林地。
 
-#### Properties
+#### プロパティ
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| type | string | no | ethernet | Interface type (ethernet, fiber, wireless, virtual, bond, vlan, bridge, loopback) |
-| mode | string | no | none | Interface mode (access, trunk, hybrid, none) |
-| speed_mbps | integer | no | - | Interface speed in Mbps |
-| mac_address | string | no | - | MAC address |
-| ip_address | list[string] | no | - | IP addresses if configured |
-| network | reference | no | - | Reference to the network this interface belongs to (e.g., `@mgmt-network`) |
-| vlan_id | integer | no | - | VLAN identifier (1-4094) for a VLAN sub-interface |
-| mtu | integer | no | 1500 | Maximum transmission unit |
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| forest_type | string | no | - | 優占林型（natural, beech, cedar_plantation, pine, bamboo, mixed） |
+| area_ha | number | no | - | 面積（ha、0 以上） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
 
-> **Note:** An interface that carries IP addresses SHOULD reference a network, either via the `network` property or a `belongs_to` relation to a `network` entity. IP addresses are validated against the referenced network's `cidr`.
+#### 典型的な所有関係
 
-#### Typical Ownership
+- owned by: area
 
-- owned by: server, switch, router, firewall, network, vm, container
-
-#### Typical Relations
-
-- connects → interface (symmetric, via cable)
-- belongs_to → server, switch, router, firewall
-
-#### Nestable Children
+#### ネスト可能な子
 
 | Nest Key | Child Kind |
 |----------|------------|
-| vlans | vlan |
-| cables | cable |
-| interfaces | interface |
+| grounds | ground |
 
-#### Examples
+#### 典型的な Relation
 
-Physical interface:
+- belongs_to → area（ネスト時に自動生成）
+- inhabits ← species / population
 
-```yaml
-- id: eth0
-  kind: interface
-  name: Management Interface
-  type: ethernet
-  speed_mbps: 1000
-  mac_address: "00:1a:2b:3c:4d:5e"
-  network: "@mgmt-network"
-  ip_address:
-    - 10.0.1.10
-```
-
-VRRP virtual interface with physical members:
+#### 例
 
 ```yaml
-- id: eth0-vrrp
-  kind: interface
-  name: VRRP Virtual Interface
+- id: forest-myoko-beech
+  kind: forest
+  name: 妙高ブナ林
   status: active
-  spec:
-    type: virtual
-    ip_address:
-      - 10.0.0.1
-    interfaces:
-      - id: eth0
-        kind: interface
-        name: eth0 - Primary
-        status: active
-        spec:
-          type: ethernet
-          ip_address:
-            - 10.0.0.2
-      - id: eth1
-        kind: interface
-        name: eth1 - Secondary
-        status: standby
-        spec:
-          type: ethernet
-          ip_address:
-            - 10.0.0.3
-```
-
-LACP/teaming bond interface:
-
-```yaml
-- id: bond0
-  kind: interface
-  name: LAG Bundle
-  spec:
-    type: bond
-    interfaces:
-      - id: eth0
-        kind: interface
-        status: active
-        spec:
-          type: ethernet
-          ip_address:
-            - 192.168.1.1
-      - id: eth1
-        kind: interface
-        status: standby
-        spec:
-          type: ethernet
-          ip_address:
-            - 192.168.1.2
-```
-
-Trunk port carrying multiple VLANs:
-
-```yaml
-- id: trunk-port1
-  kind: interface
-  name: Trunk Port to Access Switch
-  spec:
-    type: ethernet
-    mode: trunk
-    vlans:
-      - id: trunk-port1-vlan10
-        kind: vlan
-        name: VLAN 10 - Management
-        spec:
-          vlan_id: 10
-          tagged: false
-          associated_network: "@mgmt-network"
-      - id: trunk-port1-vlan100
-        kind: vlan
-        name: VLAN 100 - Production
-        spec:
-          vlan_id: 100
-          tagged: true
-          associated_network: "@prod-network"
-      - id: trunk-port1-vlan200
-        kind: vlan
-        name: VLAN 200 - Storage
-        spec:
-          vlan_id: 200
-          tagged: true
-          associated_network: "@storage-network"
-```
-
-VLAN sub-interface (e.g., `vmbr.20`):
-
-```yaml
-- id: vmbr0
-  kind: interface
-  name: Linux Bridge vmbr0
-  spec:
-    type: bridge
-    interfaces:
-      - id: vmbr0.20
-        kind: interface
-        name: VLAN 20 on vmbr0
-        spec:
-          type: vlan
-          vlan_id: 20
-          ip_address:
-            - 10.0.20.1/24
-      - id: vmbr0.100
-        kind: interface
-        name: VLAN 100 on vmbr0
-        spec:
-          type: vlan
-          vlan_id: 100
-          ip_address:
-            - 10.0.100.1/24
-```
-
-Loopback interface:
-
-```yaml
-- id: lo0
-  kind: interface
-  name: Loopback 0
-  spec:
-    type: loopback
-    ip_address:
-      - 10.255.255.1/32
+  forest_type: beech
+  area_ha: 250.0
 ```
 
 ---
 
-### power_distribution
+## 生態系
 
-A power distribution unit (PDU) or power feed.
+### species
 
-#### Properties
+地域に生息する動植物種。
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| capacity_amps | integer | no | - | Total amperage capacity |
-| voltage | number | no | 240 | Operating voltage |
-| phases | integer | no | 1 | Number of phases |
+#### プロパティ
 
-#### Typical Relations
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| scientific_name | string | no | - | 学名（ラテン語名） |
+| category | string | no | - | 生物分類（mammal, bird, reptile, amphibian, fish, insect, plant, other） |
+| red_list_status | string | no | - | レッドリスト評価（extinct, extinct_in_wild, critically_endangered, endangered, vulnerable, near_threatened, least_concern, data_deficient） |
 
-- belongs_to → rack
-- connects → server
-- connects → storage
-- connects → switch
+#### 典型的な所有関係
 
----
+- owned by: area
 
-## Network
-
-### network
-
-A logical network or broadcast domain.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| cidr | string | no | - | Network CIDR notation |
-| gateway | string | no | - | Default gateway address |
-| dns_servers | list[string] | no | - | DNS server addresses |
-| vlan_id | integer | no | - | Associated VLAN ID |
-| network_type | string | no | - | Network type (management, storage, vm, public) |
-
-#### Typical Relations
-
-- belongs_to → region
-- belongs_to → cluster
-
-#### Nestable Children
-
-| Nest Key | Child Kind | Description |
-|----------|------------|-------------|
-| interfaces | interface | Network interfaces belonging to this network |
-
-#### Interface Properties
-
-When defining interfaces as nested children of a network, the following properties are available:
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| type | string | no | ethernet | Interface type (ethernet, fiber, wireless) |
-| speed_mbps | integer | no | - | Interface speed in Mbps |
-| mac_address | string | no | - | MAC address |
-| ip_address | list[string] | no | - | IP addresses if configured |
-| mtu | integer | no | 1500 | Maximum transmission unit |
-
-#### Interface Nestable Children
+#### ネスト可能な子
 
 | Nest Key | Child Kind |
 |----------|------------|
-| vlans | vlan |
-| cables | cable |
+| populations | population |
 
-#### Example
+**注意:** population は必ず species を owner としなければならない（MUST）。この制約は検証ルール `population-requires-species` により強制される。
 
-```yaml
-- id: mgmt-network-01
-  kind: network
-  name: Management Network
-  spec:
-    cidr: 10.0.0.0/24
-    gateway: 10.0.0.1
-    network_type: management
-    interfaces:
-      - id: eth0
-        spec:
-          ip_address: 10.0.0.10
-          type: ethernet
-          speed_mbps: 10000
-          mac_address: "aa:bb:cc:dd:ee:f0"
-```
+#### 典型的な Relation
 
----
+- inhabits → water_body / forest / terrain / ground / area
 
-### vlan
-
-A virtual LAN configuration.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| vlan_id | integer | yes | - | VLAN identifier (1-4094) |
-| tagged | boolean | no | false | Whether this VLAN carries tagged traffic on a trunk port |
-| associated_network | string | no | - | Reference to parent network |
-
-#### Typical Relations
-
-- belongs_to → network
-- belongs_to → region
-
----
-
-### switch
-
-A network switch.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| manufacturer | string | no | - | Hardware manufacturer |
-| model | string | no | - | Hardware model |
-| serial_number | string | no | - | Serial number |
-| port_count | integer | no | - | Total port count |
-| managed | boolean | no | true | Whether switch is managed |
-| stackable | boolean | no | false | Whether switch supports stacking |
-
-#### Typical Ownership
-
-- owned by: rack
-
-#### Nestable Children
-
-| Nest Key | Child Kind |
-|----------|------------|
-| ports | interface |
-| interfaces | interface |
-
-Each entry under `ports` is an `interface` entity representing a physical or logical port.
-
-Switch ports are referenced using path notation: `sw-core-01/port1`.
-
-#### Typical Relations
-
-- belongs_to → rack
-- connects → server (via cable)
-- connects → switch (via cable)
-- connects → router (via cable)
-
-#### Example
+#### 例
 
 ```yaml
-- id: sw-core-01
-  kind: switch
-  name: Core Switch 01
-  spec:
-    manufacturer: cisco
-    model: Catalyst 9300
-    port_count: 48
-    managed: true
-    ports:
-      - id: port1
-        name: Port 1 (Uplink)
-        spec:
-          type: ethernet
-          speed_mbps: 10000
-          mode: trunk
-      - id: port2
-        name: Port 2
-        spec:
-          type: ethernet
-          speed_mbps: 1000
-          mode: access
-```
-
----
-
-### router
-
-A network router.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| manufacturer | string | no | - | Hardware manufacturer |
-| model | string | no | - | Hardware model |
-| serial_number | string | no | - | Serial number |
-
-#### Typical Ownership
-
-- owned by: rack
-
-#### Nestable Children
-
-| Nest Key | Child Kind |
-|----------|------------|
-| ports | interface |
-| interfaces | interface |
-
-Each entry under `ports` is an `interface` entity representing a physical or logical port.
-
-Router ports are referenced using path notation: `rt-core-01/ge0/0`.
-
-#### Typical Relations
-
-- belongs_to → rack
-- connects → switch (via cable)
-- connects → firewall (via cable)
-
-#### Example
-
-```yaml
-- id: rt-core-01
-  kind: router
-  name: Core Router 01
-  spec:
-    manufacturer: mikrotik
-    model: CCR1036
-    ports:
-      - id: ge0/0
-        name: GigabitEthernet0/0
-        spec:
-          type: ethernet
-          speed_mbps: 1000
-```
-
----
-
-### firewall
-
-A network firewall.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| manufacturer | string | no | - | Hardware manufacturer |
-| model | string | no | - | Hardware model |
-| serial_number | string | no | - | Serial number |
-| throughput_gbps | number | no | - | Maximum throughput in Gbps |
-
-#### Typical Ownership
-
-- owned by: rack
-
-#### Nestable Children
-
-| Nest Key | Child Kind |
-|----------|------------|
-| interfaces | interface |
-| acls | acl |
-
-#### Typical Relations
-
-- belongs_to → rack
-- connects → router (via cable)
-
----
-
-### acl
-
-An Access Control List containing ordered rules for filtering network traffic.
-
-An ACL is a container entity that holds `acl_rule` children in evaluation order.
-
-Rules are evaluated top-to-bottom; the first matching rule determines the action.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| default_action | string | no | deny | Default action when no rule matches (allow, deny) |
-| direction | string | no | - | Traffic direction this ACL applies to (inbound, outbound, both) |
-| protocol | string | no | any | Protocol filter (tcp, udp, icmp, any) |
-
-#### Typical Ownership
-
-- owned by: firewall, interface, server, vm, container
-
-#### Nestable Children
-
-| Nest Key | Child Kind |
-|----------|------------|
-| acl_rules | acl_rule |
-
-#### Typical Relations
-
-- belongs_to → firewall
-- belongs_to → interface
-- belongs_to → server
-- belongs_to → vm
-- belongs_to → container
-- applies_to → interface (via applies_to)
-- applies_to → firewall (via applies_to)
-
-#### Example
-
-```yaml
-- id: acl-web-ingress
-  kind: acl
-  name: Web Server Ingress ACL
+- id: species-japanese-crested-ibis
+  kind: species
+  name: トキ
   status: active
-  direction: inbound
-  default_action: deny
-  labels:
-    environment: production
-    tier: web
+  scientific_name: Nipponia nippon
+  category: bird
+  red_list_status: endangered
 ```
 
 ---
 
-### acl_rule
+### population
 
-A single rule within an Access Control List.
+調査由来の種別個体群記録。
 
-ACL rules are evaluated in order within their parent ACL.
+#### プロパティ
 
-The first matching rule determines whether traffic is allowed or denied.
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| count | integer | yes | - | 観測または推定された個体数（0 以上） |
+| survey_date | string | no | - | 調査日（YYYY-MM-DD） |
+| survey_method | string | no | - | 調査手法（visual_count, transect, drone, camera_trap, interview, estimate） |
 
-#### Properties
+#### 典型的な所有関係
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| action | string | yes | - | Rule action (allow, deny) |
-| protocol | string | no | any | Protocol (tcp, udp, icmp, any) |
-| source_address | string | no | any | Source IP address or CIDR |
-| source_port | string | no | any | Source port or range (e.g., "80", "1024-65535") |
-| destination_address | string | no | any | Destination IP address or CIDR |
-| destination_port | string | no | any | Destination port or range (e.g., "443", "8080-8090") |
-| enabled | boolean | no | true | Whether this rule is active |
+- owned by: species（必須）
 
-#### Typical Ownership
+#### 典型的な Relation
 
-- owned by: acl
+- inhabits → 生息地
+- located_in → area / terrain
 
-#### Typical Relations
-
-- (none)
-
-#### Example
+#### 例
 
 ```yaml
-- id: acl-rule-allow-https
-  kind: acl_rule
-  name: Allow HTTPS
-  action: allow
-  protocol: tcp
-  source_address: 0.0.0.0/0
-  destination_port: "443"
-  enabled: true
-
-- id: acl-rule-allow-ssh
-  kind: acl_rule
-  name: Allow SSH from Management
-  action: allow
-  protocol: tcp
-  source_address: 10.0.0.0/24
-  destination_port: "22"
-  enabled: true
+- id: pop-toki-sado-2025
+  kind: population
+  name: トキ個体群調査 2025
+  count: 190
+  survey_date: "2025-11-15"
+  survey_method: visual_count
 ```
 
 ---
 
-## Compute
+## 観光・文化
 
-### vm
+### tourism_spot
 
-A virtual machine.
+景勝地・公園・神社仏閣・博物館などの観光スポット。
 
-#### Properties
+#### プロパティ
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| cpu | list[object] | no | - | Virtual CPU configurations |
-| memory | list[object] | no | - | Memory modules |
-| storage | list[object] | no | - | Virtual disk configurations |
-| os | string | no | - | Operating system |
-| os_version | string | no | - | Operating system version |
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| spot_type | string | no | - | スポット種別（scenic, viewpoint, park, historic, shrine_temple, museum, market, ski_resort, beach） |
+| description | string | no | - | 簡単な説明 |
+| annual_visitors | integer | no | - | 年間来場者数（0 以上） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
 
-##### cpu Properties
+#### 典型的な所有関係
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| cores | integer | no | - | Number of virtual CPU cores |
-| architecture | string | no | - | CPU architecture (x86_64, arm64) |
+- owned by: area
 
-##### memory Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| size_gb | number | yes | - | Memory module size in GB |
-| speed | integer | no | - | Memory speed in MHz |
-| type | string | no | - | Memory type (ddr4, ddr5, lpddr4, lpddr5) |
-
-##### storage Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| size_gb | number | no | - | Disk size in GB |
-| type | string | no | - | Disk type (ssd, hdd, nvme) |
-
-#### Typical Ownership
-
-- owned by: server
-
-#### Nestable Children
+#### ネスト可能な子
 
 | Nest Key | Child Kind |
 |----------|------------|
-| networks | network |
-| applications | application |
+| hot_springs | hot_spring |
+| events | event |
 
-#### Typical Relations
+#### 典型的な Relation
 
-- belongs_to → server
-- belongs_to → cluster
-- hosts → application
+- located_in → area / terrain
+- near ↔ 他の観光資源 / 自然的資源 / area（対称）
+- depends_on → 自然環境
 
-#### Example
+#### 例
 
 ```yaml
-- id: vm-web-01
-  kind: vm
-  name: Web Server 01
-  cpu:
-    - cores: 4
-      architecture: x86_64
-  memory:
-    - size_gb: 8
-      speed: 3200
-      type: ddr4
-  storage:
-    - size_gb: 100
-      type: ssd
-  os: ubuntu
-  os_version: "22.04"
+- id: spot-yahiko-shrine
+  kind: tourism_spot
+  name: 弥彦神社
+  status: active
+  spot_type: shrine_temple
+  description: 越後一宮。弥彦山の麓に鎮座する。
+  annual_visitors: 2000000
 ```
 
-**Note:** IP addresses are not direct properties of vm. Use interface entities to assign IP addresses.
-
 ---
 
-### container
+### hot_spring
 
-A containerized workload.
+温泉源または入浴施設。
 
-#### Properties
+#### プロパティ
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| image | string | no | - | Container image |
-| image_tag | string | no | latest | Image tag |
-| cpu_limit | string | no | - | CPU limit (e.g., "2.0") |
-| memory_limit | string | no | - | Memory limit (e.g., "512Mi") |
-| ports | list[integer] | no | - | Exposed ports |
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| spring_quality | string | no | - | 泉質（sulfur, chloride, simple, carbonated, iron, alum, sulfate） |
+| temperature_c | number | no | - | 源泉温度（摂氏） |
+| source_count | integer | no | - | 湧出数（0 以上） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
 
-#### Typical Relations
+#### 典型的な所有関係
 
-- belongs_to → vm
-- belongs_to → server (direct)
-- hosts → application
+- owned by: tourism_spot
 
----
-
-### application
-
-A software application or service.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| version | string | no | - | Application version |
-| port | integer | no | - | Primary listening port |
-| protocol | string | no | - | Network protocol (http, https, tcp, udp) |
-| url | string | no | - | Application URL if applicable |
-
-#### Typical Relations
-
-- belongs_to → vm
-- belongs_to → container
-- depends_on → vm
-- depends_on → application
-
-#### Nestable Children
+#### ネスト可能な子
 
 | Nest Key | Child Kind |
 |----------|------------|
-| open_ports | open_port |
+| events | event |
 
-#### Example
+#### 典型的な Relation
+
+- depends_on → ground / terrain（源泉・地盤への依存）
+
+#### 例
 
 ```yaml
-- id: app-web-server
-  kind: application
-  name: Nginx Web Server
-  version: "1.24.0"
-  port: 443
-  protocol: https
+- id: onsen-tsukioka
+  kind: hot_spring
+  name: 月岡温泉
+  status: active
+  spring_quality: sulfur
+  temperature_c: 78.0
+  source_count: 1
 ```
 
 ---
 
-### open_port
+### cultural_asset
 
-A listening or open network port on a host, VM, container, or application.
+史跡・文化財。
 
-Represents a discovered or declared port that is accepting connections.
+#### プロパティ
 
-#### Properties
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| asset_type | string | no | - | 文化財種別（historic_site, treasure, building, monument, archaeological, folk_property） |
+| designated_level | string | no | - | 指定階層（national, prefectural, municipal, unesco） |
+| designated_date | string | no | - | 指定日（YYYY-MM-DD） |
+| latitude | number | no | - | 緯度（10 進度数、-90〜90） |
+| longitude | number | no | - | 経度（10 進度数、-180〜180） |
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| port | integer | yes | - | Port number (1-65535) |
-| protocol | string | yes | - | Transport protocol (tcp, udp) |
-| state | string | no | listening | Port state (listening, established, closed) |
-| address | string | no | 0.0.0.0 | Listening IP address |
-| process | string | no | - | Process or service name using this port |
-| pid | integer | no | - | Process ID if known |
+#### 典型的な所有関係
 
-#### Typical Relations
+- owned by: area
 
-- belongs_to → server
-- belongs_to → vm
-- belongs_to → container
-- belongs_to → application
-- listens_on → interface (via listens_on)
+#### 典型的な Relation
 
-#### Example
+- located_in → area / terrain
+- near ↔ 観光資源
+
+#### 例
 
 ```yaml
-- id: port-443-nginx
-  kind: open_port
-  name: Nginx HTTPS
-  port: 443
-  protocol: tcp
-  state: listening
-  address: 0.0.0.0
-  process: nginx
-
-- id: port-5432-postgres
-  kind: open_port
-  name: PostgreSQL
-  port: 5432
-  protocol: tcp
-  state: listening
-  address: 10.0.2.10
-  process: postgres
+- id: cultural-asset-iwamuro-tanada
+  kind: cultural_asset
+  name: 山北棚田群
+  status: active
+  asset_type: historic_site
+  designated_level: national
 ```
 
 ---
 
-## Storage
+### event
 
-### storage
+祭り・恒例行事などのイベント。
 
-A storage system or array.
+#### プロパティ
 
-#### Properties
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| season | string | no | - | 開催季節（spring, summer, autumn, winter, all） |
+| held_month | integer | no | - | 開催月（1〜12） |
+| visitor_count | integer | no | - | 1 回あたり来場者数（0 以上） |
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| manufacturer | string | no | - | Hardware manufacturer |
-| model | string | no | - | Hardware model |
-| total_capacity_gb | number | no | - | Total raw capacity in GB |
-| usable_capacity_gb | number | no | - | Usable capacity after redundancy |
-| raid_level | string | no | - | RAID level if applicable |
-| protocol | string | no | - | Storage protocol (nfs, iscsi, fc, local) |
+#### 典型的な所有関係
 
-#### Typical Ownership
+- owned by: tourism_spot, hot_spring
 
-- owned by: rack
+#### 典型的な Relation
 
-#### Typical Relations
+- belongs_to → tourism_spot / hot_spring（ネスト時に自動生成）
+- near ↔ 観光資源
 
-- belongs_to → rack
-- hosts → vm (for boot storage)
-
----
-
-### volume
-
-A logical storage volume.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| capacity_gb | number | no | - | Volume capacity in GB |
-| filesystem | string | no | - | Filesystem type if mounted |
-| mount_point | string | no | - | Mount point if applicable |
-| thin_provisioned | boolean | no | false | Whether volume is thin provisioned |
-
-#### Typical Relations
-
-- belongs_to → storage
-- belongs_to → server (local disks)
-- hosts → vm
-
----
-
-## Logical
-
-### cluster
-
-A logical grouping of compute resources.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| cluster_type | string | no | - | Cluster type (compute, storage, hyperconverged) |
-| ha_enabled | boolean | no | false | Whether HA is enabled |
-| drs_enabled | boolean | no | false | Whether DRS is enabled |
-
-#### Typical Ownership
-
-- owned by: region
-
-#### Nestable Children
-
-| Nest Key | Child Kind | Description |
-|----------|------------|-------------|
-| vms | vm | VM nodes that compose the cluster |
-| servers | server | Bare-metal nodes that compose the cluster |
-
-Nested nodes receive the cluster as their `owner` and an auto-generated `belongs_to` relation (member → cluster) is created.
-
-#### Typical Relations
-
-- belongs_to → region
-- belongs_to → network
-- belongs_to ← server (nodes)
-- belongs_to ← vm (nodes)
-
-#### Example
+#### 例
 
 ```yaml
-- id: cluster-prod-01
-  kind: cluster
-  name: Production Cluster 01
-  cluster_type: hyperconverged
-  ha_enabled: true
-  drs_enabled: true
-```
-
-Kubernetes cluster with nested node machines:
-
-```yaml
-- id: k8s-prod
-  kind: cluster
-  name: Production Kubernetes Cluster
-  attributes:
-    owner: region-ap-northeast-1
-  spec:
-    cluster_type: compute
-    ha_enabled: true
-    vms:
-      - id: vm-k8s-node-01
-        name: K8s Node 01
-        spec:
-          cpu:
-            - cores: 4
-          memory:
-            - size_gb: 16
-      - id: vm-k8s-node-02
-        name: K8s Node 02
-        spec:
-          cpu:
-            - cores: 4
-          memory:
-            - size_gb: 16
-    servers:
-      - id: srv-k8s-node-01
-        name: K8s Bare-metal Node 01
+- id: event-nagaoka-hanabi
+  kind: event
+  name: 長岡まつり大花火大会
+  status: active
+  season: summer
+  held_month: 8
+  visitor_count: 1000000
 ```
 
 ---
 
-### availability_zone
+## ベンダー Kind
 
-A logical availability zone within a region.
+ベンダー固有の Entity Kind はコア kind を置き換えてはならない（MUST NOT）。
 
-#### Properties
+ベンダーは拡張を通じて追加の kind を導入してよい（MAY）。
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| state | string | no | available | Availability zone state (available, impaired, unavailable) |
+### 拡張の命名規約
 
-#### Typical Ownership
+拡張 kind は名前空間プレフィックスを使用しなければならない（MUST）。
 
-- owned by: region
+形式: `<vendor>.<kind>`
 
-#### Typical Relations
+例:
 
-- belongs_to → region
-
----
-
-## Vendor Kinds
-
-Vendor-specific Entity Kinds MUST NOT replace core kinds.
-
-Vendors MAY introduce additional kinds through extensions.
-
-### Extension Naming Convention
-
-Extension kinds MUST use namespace prefixes.
-
-Examples:
-
-- `proxmox.vm` - Proxmox-specific VM extension
-- `kubernetes.pod` - Kubernetes pod
-- `aws.vpc` - AWS Virtual Private Cloud
-- `network.switch` - Extended switch properties
-
-### Built-in AWS Extension
-
-The AWS extension (`iacforge.aws`) defines vendor kinds under the `aws` namespace (e.g. `aws.vpc`, `aws.ec2`, `aws.s3_bucket`).
-
-The extension also defines new relation types (e.g. `aws.subscribes`, `aws.grants`) and augments core relation participant constraints.
-
-See [AWS Extension](22-aws-extension.md) for the full kind definitions, ownership tree, and relation types.
+- `sado.ferry` - 佐渡航路固有の拡張
+- `nagaoka.fireworks` - 長岡花火固有の拡張
+- `ecotour.tour` - エコツアー事業者固有の拡張
+- `geo.survey_point` - 測量ポイントの拡張プロパティを持つ kind
 
 ---
 
-## Status Values
+## Status 値
 
-Every Entity MAY have a status.
+すべての Entity は status を持ってよい（MAY）。
 
-The core specification defines the following statuses:
+コア仕様が定義する status は次の通り。
 
-| Status | Description |
-|--------|-------------|
-| planned | Entity is planned but not yet deployed |
-| active | Entity is operational |
-| maintenance | Entity is under maintenance |
-| deprecated | Entity is scheduled for removal |
-| offline | Entity is not operational |
-| standby | Entity is in standby state (e.g. redundant member) |
+| Status | 説明 |
+|--------|------|
+| planned | 計画済みだが未整備 |
+| active | 利用可能・運用中 |
+| maintenance | 保全・メンテナンス中 |
+| deprecated | 提供終了が予定されている |
+| offline | 利用不可 |
+| standby | 待機状態（例：冗長構成の待機メンバー） |
 
-Implementations MAY introduce additional statuses.
+実装は追加の status を導入してよい（MAY）。
 
 ---
 
-## Equality
+## 同一性
 
-Two Entities are considered different if their identifiers differ.
+2 つの Entity は、識別子が異なる場合に異なるものとみなされる。
 
-Changing properties does not create a new Entity.
+プロパティの変更は新しい Entity を作らない。
 
-Changing an identifier creates a different Entity.
+識別子の変更は異なる Entity の作成を意味する。

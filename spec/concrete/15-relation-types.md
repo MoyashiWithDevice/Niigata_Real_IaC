@@ -1,28 +1,28 @@
-# Relation Types
+# Relation Types（リレーション種別）
 
-## Overview
+## 概要
 
-Relation Types define the semantics of connections between Entities.
+Relation Type は Entity 間の接続の意味論を定義する。
 
-Every Relation MUST define a type.
+すべての Relation は type を定義しなければならない（MUST）。
 
-The core specification defines the following Relation Types.
+本仕様は次の Relation Type を定義する。
 
-Implementations MAY introduce additional types through extensions.
+実装は拡張を通じて追加の型を導入してよい（MAY）。
 
 ---
 
-## Common Properties
+## 共通プロパティ
 
-Every Relation shares the following properties regardless of type.
+すべての Relation は type によらず次のプロパティを持つ。
 
-### Required
+### 必須
 
 - id
 - type
 - participants
 
-### Optional
+### 任意
 
 - description
 - status
@@ -30,151 +30,200 @@ Every Relation shares the following properties regardless of type.
 - labels
 - extensions
 
-Individual Relation Types MAY define additional properties.
+個々の Relation Type は追加のプロパティを定義してよい（MAY）。
 
 ---
 
-## Directionality
+## 方向性
 
-Relations are classified by directionality.
+Relation は方向性により分類される。
 
-| Type | Description |
-|------|-------------|
-| directed | Has a source and target participant |
-| symmetric | All participants are equal |
-
----
-
-## Core Relation Types
-
-### connects
-
-Represents a physical or logical connection between Entities.
-
-| Property | Value |
-|----------|-------|
-| Direction | symmetric |
-| Participants | Two or more Entities |
-| Cardinality | N:N |
-
-#### Constraints
-
-- Connects is symmetric; order of participants does not matter.
-- Typically connects interfaces via cables.
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| connection_type | string | no | - | Type of connection (physical, logical, virtual) |
-| bandwidth_mbps | integer | no | - | Connection bandwidth in Mbps |
-
-#### Examples
-
-```yaml
-- id: rel-connects-srv-sw
-  type: connects
-  participants:
-    - srv-proxmox-01/eno1
-    - sw-core-01/port1
-  connection_type: physical
-  bandwidth_mbps: 10000
-  status: active
-
-- id: rel-connects-sw-sw
-  type: connects
-  participants:
-    - sw-core-01/port24
-    - sw-access-01/port24
-  connection_type: physical
-  bandwidth_mbps: 10000
-```
+| Type | 説明 |
+|------|------|
+| directed | source と target の参加者を持つ |
+| symmetric | すべての参加者が対等 |
 
 ---
 
-### hosts
+## コア Relation Types
 
-Represents an execution or hosting relationship.
+### located_in
+
+Entity が area または terrain の中に位置することを表す。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Hosting Entity |
-| Target | Hosted Entity |
-| Cardinality | 1:N |
+| Source | 位置する Entity |
+| Target | area / terrain |
+| Cardinality | N:N |
 
-#### Constraints
+#### 参加者制約
 
-- Source provides resources to target.
-- Target executes or runs on source.
+| Role | 許可される Kind |
+|------|----------------|
+| source | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event, species, population |
+| target | area, terrain |
 
-#### Properties
+参加者数は 2（min 2 / max 2）。
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| (none) | - | - | - | Uses only common relation properties |
+#### プロパティ
 
-#### Examples
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| distance_km | number | no | - | 対象からの距離（km、0 以上） |
+
+#### 例
 
 ```yaml
-- id: rel-hosts-server-vm
-  type: hosts
+- id: rel-locatedin-spot-yahiko
+  type: located_in
   participants:
-    source: srv-proxmox-01
-    target: vm-web-01
+    source: spot-yahiko-shrine
+    target: terrain-mt-yahiko
   status: active
 
-- id: rel-hosts-vm-app
-  type: hosts
+- id: rel-locatedin-toki-sado
+  type: located_in
   participants:
-    source: vm-web-01
-    target: app-web-server
-  status: active
+    source: species-japanese-crested-ibis
+    target: area-sado-city
+```
+
+---
+
+### inhabits
+
+種が生息地に生息することを表す。
+
+| Property | Value |
+|----------|-------|
+| Direction | directed |
+| Source | 種 / 個体群 |
+| Target | 生息地 |
+| Cardinality | N:N |
+
+#### 参加者制約
+
+| Role | 許可される Kind |
+|------|----------------|
+| source | species, population |
+| target | ground, terrain, water_body, forest, area |
+
+参加者数は 2（min 2 / max 2）。
+
+#### プロパティ
+
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| habitat_note | string | no | - | 生息利用に関する備考 |
+
+#### 例
+
+```yaml
+- id: rel-inhabits-toki-forest
+  type: inhabits
+  participants:
+    source: species-japanese-crested-ibis
+    target: forest-sado-cedar
+  habitat_note: 巣はスギ・ヒノキの高木に作られる。
+```
+
+---
+
+### near
+
+2 つの資源が地理的に近接していることを表す対称関係。
+
+| Property | Value |
+|----------|-------|
+| Direction | symmetric |
+| Participants | 対等な 2 参加者 |
+| Cardinality | N:N |
+
+#### 参加者制約
+
+両参加者とも次の kind が許可される:
+
+- tourism_spot, hot_spring, cultural_asset, event
+- ground, terrain, water_body, forest
+- area
+
+参加者数は 2（min 2 / max 2）。
+
+#### 制約
+
+- near は対称である。参加者の順序は意味を持たない。
+- 片方向のみの定義でも双方向の近接性を表す。
+
+#### プロパティ
+
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| walking_minutes | integer | no | - | 2 地点間の徒歩時間（分、0 以上） |
+
+#### 例
+
+```yaml
+- id: rel-near-onsen-spot
+  type: near
+  participants:
+    - onsen-tsukioka
+    - spot-yahiko-shrine
+  walking_minutes: 15
 ```
 
 ---
 
 ### depends_on
 
-Represents a directional dependency between Entities.
+Entity 間の方向的依存を表す。例えば温泉が源泉や地形に依存する関係など。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Dependent Entity |
-| Target | Dependency Entity |
+| Source | 依存する Entity |
+| Target | 依存先の Entity |
 | Cardinality | N:N |
 
-#### Constraints
+#### 参加者制約
 
-- If A depends_on B, A requires B but B does not require A.
-- Dependencies may be cyclic (A → B → A is valid).
+| Role | 許可される Kind |
+|------|----------------|
+| source | hot_spring, tourism_spot, cultural_asset, event |
+| target | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event |
 
-#### Properties
+参加者数は 2（min 2 / max 2）。
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| dependency_type | string | no | - | Type of dependency (runtime, build, network, storage) |
-| critical | boolean | no | false | Whether failure causes cascading failure |
+#### 制約
 
-#### Examples
+- A が B に depends_on する場合、A は B を必要とするが、B は A を必要としない。
+- 依存関係は循環してよい（A → B → A は有効）。所有関係（ownership）の循環とは異なる。
+
+#### プロパティ
+
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| dependency_type | string | no | - | 依存の性質（source, landscape, access, ecosystem, event） |
+| critical | boolean | no | false | 対象の喪失が依存元の価値を失わせるか |
+
+#### 例
 
 ```yaml
-- id: rel-depends-app-db
+- id: rel-depends-onsen-ground
   type: depends_on
   participants:
-    source: app-web-server
-    target: app-database
-  dependency_type: runtime
+    source: onsen-tsukioka
+    target: ground-yahiko-hill
+  dependency_type: source
   critical: true
-  status: active
 
-- id: rel-depends-vm-storage
+- id: rel-depends-event-landscape
   type: depends_on
   participants:
-    source: vm-web-01
-    target: vol-web-data
-  dependency_type: storage
+    source: event-nagaoka-hanabi
+    target: waterbody-shinano-river
+  dependency_type: landscape
   critical: true
 ```
 
@@ -182,374 +231,162 @@ Represents a directional dependency between Entities.
 
 ### belongs_to
 
-Represents logical membership or association.
+論理的な所属・帰属を表す。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Member Entity |
-| Target | Group Entity |
+| Source | 所属する Entity（メンバー） |
+| Target | 所属先の Entity（グループ） |
 | Cardinality | N:N |
 
-#### Constraints
+#### 参加者制約
 
-- Membership does not imply ownership.
-- An Entity may belong to multiple groups.
+| Role | 許可される Kind |
+|------|----------------|
+| source | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event, species, population |
+| target | area, ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event |
 
-#### Properties
+参加者数は 2（min 2 / max 2）。
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| (none) | - | - | - | Uses only common relation properties |
+#### 制約
 
-#### Examples
+- 所属は所有（ownership）を意味しない。ネスト定義から自動生成される belongs_to も、owner ツリーとは独立した Relation である。
+- Entity は複数のグループに属してよい。
+- ネストキーで子を定義すると、子 → 親の belongs_to 関係が自動生成される。
+
+#### プロパティ
+
+| Property | Type | Required | Default | 説明 |
+|----------|------|----------|---------|------|
+| (none) | - | - | - | 共通 relation プロパティのみ使用 |
+
+#### 例
 
 ```yaml
-- id: rel-belongsto-vm-cluster
+- id: rel-belongsto-forest-area
   type: belongs_to
   participants:
-    source: vm-web-01
-    target: cluster-prod-01
+    source: forest-myoko-beech
+    target: area-myoko-city
   status: active
 
-- id: rel-belongsto-intf-network
+- id: rel-belongsto-population-species
   type: belongs_to
   participants:
-    source: vm-web-01/eth0
-    target: mgmt-network-01
+    source: pop-toki-sado-2025
+    target: species-japanese-crested-ibis
   status: active
 ```
 
 ---
 
-## Extended Relation Types
+### flows_into
 
-The following relation types are defined by the core specification for common use cases.
-
-### replicates_to
-
-Represents data replication between Entities.
+河川などの水の流れの行き先を表す。
 
 | Property | Value |
 |----------|-------|
 | Direction | directed |
-| Source | Primary Entity |
-| Target | Replica Entity |
-| Cardinality | 1:N |
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| replication_type | string | no | synchronous | Replication type (synchronous, asynchronous) |
-| lag_seconds | number | no | - | Replication lag in seconds |
-
-#### Examples
-
-```yaml
-- id: rel-replicates-db
-  type: replicates_to
-  participants:
-    source: app-database-primary
-    target: app-database-replica
-  replication_type: asynchronous
-  lag_seconds: 0.5
-```
-
----
-
-### backs_up
-
-Represents a backup relationship.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Source Entity |
-| Target | Backup Entity |
-| Cardinality | 1:N |
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| backup_type | string | no | - | Backup type (full, incremental, differential) |
-| schedule | string | no | - | Backup schedule (cron expression) |
-| retention_days | integer | no | - | Backup retention in days |
-
-#### Examples
-
-```yaml
-- id: rel-backup-vm
-  type: backs_up
-  participants:
-    source: vm-web-01
-    target: vol-web-backup
-  backup_type: incremental
-  schedule: "0 2 * * *"
-  retention_days: 30
-```
-
----
-
-### monitors
-
-Represents a monitoring relationship.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Monitoring Entity |
-| Target | Monitored Entity |
-| Cardinality | 1:N |
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| monitor_type | string | no | - | Monitor type (agent, agentless, snmp, api) |
-| interval_seconds | integer | no | 60 | Monitoring interval in seconds |
-
-#### Examples
-
-```yaml
-- id: rel-monitor-prometheus
-  type: monitors
-  participants:
-    source: app-prometheus
-    target: srv-proxmox-01
-  monitor_type: snmp
-  interval_seconds: 30
-```
-
----
-
-### managed_by
-
-Represents a management relationship.
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Managed Entity |
-| Target | Management Entity |
-| Cardinality | N:1 |
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| management_type | string | no | - | Management type (configuration, orchestration, monitoring) |
-
-#### Examples
-
-```yaml
-- id: rel-managed-vm
-  type: managed_by
-  participants:
-    source: vm-web-01
-    target: app-ansible
-  management_type: configuration
-```
-
----
-
-### mounted_on
-
-Represents a mounting relationship (storage).
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Volume Entity |
-| Target | Compute Entity |
-| Cardinality | N:1 |
-
-#### Properties
-
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| mount_point | string | no | - | Mount point path |
-| filesystem | string | no | - | Filesystem type |
-| options | string | no | - | Mount options |
-
-#### Examples
-
-```yaml
-- id: rel-mounted-data
-  type: mounted_on
-  participants:
-    source: vol-web-data
-    target: vm-web-01
-  mount_point: /data
-  filesystem: ext4
-  options: "rw,noatime"
-```
-
----
-
-### applies_to
-
-Represents that an ACL is applied to a network target (interface, firewall, host).
-
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | ACL Entity |
-| Target | Network Target Entity |
+| Source | 流れる水域 |
+| Target | 流れ先の水域 |
 | Cardinality | N:N |
 
-#### Properties
+#### 参加者制約
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| (none) | - | - | - | Uses only common relation properties |
+| Role | 許可される Kind |
+|------|----------------|
+| source | water_body |
+| target | water_body |
 
-#### Examples
+参加者数は 2（min 2 / max 2）。
+
+#### 制約
+
+- 水系の合流・注入手順を表す。サイクルを持ってはならない（SHOULD NOT）。
+
+#### プロパティ
+
+| Property | Type | Required | Default | 説明 |
+|----------|-------|----------|---------|------|
+| (none) | - | - | - | 共通 relation プロパティのみ使用 |
+
+#### 例
 
 ```yaml
-- id: rel-applies-web-acl
-  type: applies_to
+- id: rel-flows-shinano-sea
+  type: flows_into
   participants:
-    source: acl-web-ingress
-    target: srv-web-01/eth0
-  status: active
-
-- id: rel-applies-fw-acl
-  type: applies_to
-  participants:
-    source: acl-web-ingress
-    target: fw-core-01
-  status: active
+    source: waterbody-shinano-river
+    target: waterbody-sea-of-japan
 ```
 
 ---
 
-### listens_on
+## 参加者制約
 
-Represents that an open port is listening on a network interface or address.
+### 許可される参加者 Kind
 
-| Property | Value |
-|----------|-------|
-| Direction | directed |
-| Source | Open Port Entity |
-| Target | Interface or Host Entity |
-| Cardinality | N:1 |
+各 Relation Type はどの Entity Kind が参加できるかを定義してよい（MAY）。
 
-#### Properties
+#### コア型の制約一覧
 
-| Property | Type | Required | Default | Description |
-|----------|------|----------|---------|-------------|
-| (none) | - | - | - | Uses only common relation properties |
+| Relation Type | Direction | Source Kinds | Target Kinds |
+|---------------|-----------|--------------|--------------|
+| located_in | directed | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event, species, population | area, terrain |
+| inhabits | directed | species, population | ground, terrain, water_body, forest, area |
+| near | symmetric | tourism_spot, hot_spring, cultural_asset, event, ground, terrain, water_body, forest, area | （同左） |
+| depends_on | directed | hot_spring, tourism_spot, cultural_asset, event | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event |
+| belongs_to | directed | ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event, species, population | area, ground, terrain, water_body, forest, tourism_spot, hot_spring, cultural_asset, event |
+| flows_into | directed | water_body | water_body |
 
-#### Examples
+すべてのコア型は min_participants = 2 / max_participants = 2 である。
 
-```yaml
-- id: rel-listens-nginx
-  type: listens_on
-  participants:
-    source: port-443-nginx
-    target: vm-web-01/eth0
-  status: active
+### 拡張 Relation Types
 
-- id: rel-listens-postgres
-  type: listens_on
-  participants:
-    source: port-5432-postgres
-    target: vm-web-01/eth0
-  status: active
-```
+拡張は `namespace.type` 形式で追加の relation type を定義してよい（MAY）。
 
----
+例:
 
-## Participant Constraints
+- `sado.docks_at` - 佐渡航路と埠頭の係留関係
+- `ecotour.guided_by` - エコツアーとガイドの関係
 
-### Allowed Participant Kinds
+### カーディナリティ
 
-Each Relation Type MAY define which Entity Kinds may participate.
+カーディナリティは参加者間にいくつのリレーションが存在しうるかを定義する。
 
-#### Core Type Constraints
-
-| Relation Type | Source Kinds | Target Kinds |
-|---------------|--------------|--------------|
-| connects | interface | interface |
-| hosts | server, vm, container | vm, container, application |
-| depends_on | vm, container, application | vm, container, application, storage, network |
-| belongs_to | vm, container, interface, server, switch, router, firewall, storage, acl, acl_rule, open_port, availability_zone | cluster, network, region, firewall, interface, server, vm, container, application |
-| applies_to | acl | interface, firewall, server, vm, container |
-| listens_on | open_port | interface, server, vm, container |
-
-#### AWS Extension Augmentations
-
-The AWS extension augments core relation types by adding AWS participant kinds. Only participant kinds are merged; direction and semantics are unchanged.
-
-| Relation Type | Added Source Kinds | Added Target Kinds |
-|---------------|--------------------|--------------------|
-| belongs_to | All `aws.*` kinds | All `aws.*` kinds |
-| depends_on | aws.ec2, aws.lambda_function, aws.rds, aws.load_balancer, aws.api_gateway, aws.auto_scaling_group, aws.sqs_queue | aws.ec2, aws.rds, aws.dynamodb_table, aws.s3_bucket, aws.sqs_queue, aws.lambda_function, aws.elasticache, aws.efs, aws.api_gateway, aws.cloudwatch_log_group |
-| hosts | aws.ec2, aws.lambda_function | aws.ec2, aws.lambda_function |
-| monitors | aws.cloudwatch_alarm | aws.ec2, aws.rds, aws.load_balancer, aws.lambda_function, aws.dynamodb_table, aws.s3_bucket, aws.elasticache, aws.efs, aws.sqs_queue, aws.api_gateway |
-| backs_up | aws.rds, aws.ebs_volume, aws.dynamodb_table, aws.efs, aws.s3_bucket | aws.ebs_snapshot, aws.s3_bucket, aws.efs |
-| mounted_on | aws.ebs_volume, aws.efs | aws.ec2 |
-
-### Extension Relation Types
-
-Extensions MAY define additional relation types using the `namespace.type` convention.
-
-The AWS extension (`iacforge.aws`) defines the following new relation types, all directed:
-
-| Type | Source Kinds | Target Kinds |
-|------|--------------|--------------|
-| aws.associates | aws.security_group, aws.route_table, aws.network_acl, aws.elastic_ip | aws.vpc, aws.subnet |
-| aws.attaches | aws.ebs_volume, aws.internet_gateway, aws.elastic_ip, aws.efs, aws.vpc_peering_connection | aws.ec2, aws.vpc, aws.transit_gateway |
-| aws.launches | aws.auto_scaling_group, aws.launch_template | aws.ec2 |
-| aws.routes | aws.route_table | aws.route |
-| aws.serves | aws.load_balancer | aws.target_group |
-| aws.forwards | aws.listener | aws.target_group |
-| aws.triggers | aws.eventbridge_rule, aws.cloudwatch_alarm | aws.lambda_function, aws.sns_topic, aws.sqs_queue |
-| aws.subscribes | aws.sns_topic | aws.sqs_queue, aws.lambda_function, aws.sns_topic |
-| aws.invokes | aws.api_gateway | aws.lambda_function |
-| aws.grants | aws.iam_policy | aws.iam_user, aws.iam_group, aws.iam_role |
-| aws.assumes | aws.iam_role, aws.iam_user | aws.iam_role |
-
-See [AWS Extension](22-aws-extension.md) for the full definitions.
-
-### Cardinality
-
-Cardinality defines how many instances of a relation may exist between participants.
-
-| Type | Cardinality | Description |
-|------|-------------|-------------|
-| connects | N:N | Many-to-many connections |
-| hosts | 1:N | One host, many guests |
-| depends_on | N:N | Many-to-many dependencies |
-| belongs_to | N:N | Many members, many groups |
-| applies_to | N:N | One ACL, many targets |
-| listens_on | N:1 | Many ports, one interface |
+| Type | Cardinality | 説明 |
+|------|-------------|------|
+| located_in | N:N | 多対多の位置関係 |
+| inhabits | N:N | 一種が複数生息地、一生息地に多種 |
+| near | N:N | 多対多の近接関係 |
+| depends_on | N:N | 多対多の依存関係 |
+| belongs_to | N:N | 多メンバー、多グループ |
+| flows_into | N:N | 多対多の流路 |
 
 ---
 
-## Status Values
+## Status 値
 
-Every Relation MAY have a status.
+すべての Relation は status を持ってよい（MAY）。
 
-The core specification defines the following statuses:
+コア仕様が定義する status は次の通り。
 
-| Status | Description |
-|--------|-------------|
-| planned | Relation is planned but not yet active |
-| active | Relation is operational |
-| maintenance | Relation is under maintenance |
-| deprecated | Relation is scheduled for removal |
-| offline | Relation is not operational |
-| standby | Relation is in standby state |
+| Status | 説明 |
+|--------|------|
+| planned | 計画されているが未活性 |
+| active | 有効 |
+| maintenance | 保全中 |
+| deprecated | 廃止予定 |
+| offline | 無効 |
+| standby | 待機状態 |
 
 ---
 
-## Equality
+## 同一性
 
-Relations are uniquely identified by their identifier.
+Relation はその識別子によって一意に識別される。
 
-Changing participants modifies an existing Relation.
+participants を変更すると既存の Relation を変更したことになる。
 
-Changing the identifier creates a different Relation.
+識別子を変更すると別の Relation を作成したことになる。

@@ -10,8 +10,8 @@ import (
 	mcpserver "github.com/mark3labs/mcp-go/server"
 	"gopkg.in/yaml.v3"
 
-	"IACForge/src/core"
-	"IACForge/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
 )
 
 func registerSchemaMCPTools(s *mcpserver.MCPServer, sm *SessionManager) {

@@ -1,7 +1,7 @@
 package extension
 
 import (
-	"IACForge/src/renderer"
+	"github.com/bababa/Niigata_Real_IaC/src/renderer"
 )
 
 // RendererRegistry provides access to registered renderers.

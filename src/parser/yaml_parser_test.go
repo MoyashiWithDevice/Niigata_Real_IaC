@@ -6,19 +6,19 @@ import (
 	"strings"
 	"testing"
 
-	"IACForge/src/core"
-	"IACForge/src/core/kinds"
-	"IACForge/src/core/types"
-	"IACForge/src/schema"
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core/kinds"
+	"github.com/bababa/Niigata_Real_IaC/src/core/types"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 func TestParseBasicEntity(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: area-niigata-prefecture
+    kind: area
+    name: Niigata Prefecture
 `
 
 	parser := NewParser()
@@ -31,48 +31,43 @@ objects:
 		t.Fatalf("expected 1 entity, got %d", g.EntityCount())
 	}
 
-	e, ok := g.GetEntity("region-ap-northeast-1")
+	e, ok := g.GetEntity("area-niigata-prefecture")
 	if !ok {
-		t.Fatal("entity region-ap-northeast-1 not found")
+		t.Fatal("entity area-niigata-prefecture not found")
 	}
 
-	if e.ID != "region-ap-northeast-1" {
-		t.Errorf("expected ID region-ap-northeast-1, got %s", e.ID)
+	if e.ID != "area-niigata-prefecture" {
+		t.Errorf("expected ID area-niigata-prefecture, got %s", e.ID)
 	}
-	if e.Kind != kinds.Region {
-		t.Errorf("expected kind region, got %s", e.Kind)
+	if e.Kind != kinds.Area {
+		t.Errorf("expected kind area, got %s", e.Kind)
 	}
-	if e.Name != "Tokyo Datacenter 1" {
-		t.Errorf("expected name 'Tokyo Datacenter 1', got %s", e.Name)
+	if e.Name != "Niigata Prefecture" {
+		t.Errorf("expected name 'Niigata Prefecture', got %s", e.Name)
 	}
 }
 
 func TestParseEntityWithAllProperties(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: spot-yahiko-shrine
+    kind: tourism_spot
+    name: Yahiko Shrine
     attributes:
-      description: "Primary Proxmox server"
+      description: "Historic shrine at the foot of Mount Yahiko"
       status: active
       tags:
-        - production
-        - compute
+        - culture
+        - landmark
       labels:
-        region: ap-northeast-1
-        environment: production
+        area: chuetsu
+        category: heritage
       extensions:
-        vendor: dell
-        model: r740xd
+        operator: yahiko-jinja
+        founded_year: 753
     spec:
-      platform: proxmox
-      cpu_cores: 32
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage_gb: 2000
+      spot_type: shrine_temple
+      annual_visitors: 1200000
 `
 
 	parser := NewParser()
@@ -81,13 +76,13 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	e, ok := g.GetEntity("srv-proxmox-01")
+	e, ok := g.GetEntity("spot-yahiko-shrine")
 	if !ok {
-		t.Fatal("entity srv-proxmox-01 not found")
+		t.Fatal("entity spot-yahiko-shrine not found")
 	}
 
-	if e.Description != "Primary Proxmox server" {
-		t.Errorf("expected description 'Primary Proxmox server', got %s", e.Description)
+	if e.Description != "Historic shrine at the foot of Mount Yahiko" {
+		t.Errorf("expected description 'Historic shrine at the foot of Mount Yahiko', got %s", e.Description)
 	}
 	if e.Status != core.StatusActive {
 		t.Errorf("expected status active, got %s", e.Status)
@@ -95,40 +90,40 @@ objects:
 	if len(e.Tags) != 2 {
 		t.Errorf("expected 2 tags, got %d", len(e.Tags))
 	}
-	if e.Labels["region"] != "ap-northeast-1" {
-		t.Errorf("expected label region=ap-northeast-1, got %s", e.Labels["region"])
+	if e.Labels["area"] != "chuetsu" {
+		t.Errorf("expected label area=chuetsu, got %s", e.Labels["area"])
 	}
-	if e.Extensions["vendor"] != "dell" {
-		t.Errorf("expected extensions vendor=dell, got %v", e.Extensions["vendor"])
+	if e.Extensions["operator"] != "yahiko-jinja" {
+		t.Errorf("expected extensions operator=yahiko-jinja, got %v", e.Extensions["operator"])
 	}
 
 	// Check kind-specific properties
-	if platform, ok := e.GetProperty("platform"); !ok || platform != "proxmox" {
-		t.Errorf("expected property platform=proxmox, got %v", platform)
+	if spotType, ok := e.GetProperty("spot_type"); !ok || spotType != "shrine_temple" {
+		t.Errorf("expected property spot_type=shrine_temple, got %v", spotType)
 	}
-	if cpuCores, ok := e.GetProperty("cpu_cores"); !ok || cpuCores != 32 {
-		t.Errorf("expected property cpu_cores=32, got %v", cpuCores)
+	if visitors, ok := e.GetProperty("annual_visitors"); !ok || visitors != 1200000 {
+		t.Errorf("expected property annual_visitors=1200000, got %v", visitors)
 	}
 }
 
 func TestParseEntityWithOwnership(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: area-sado-island
+    kind: area
+    name: Sado Island
 
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  - id: fst-beech-hill
+    kind: forest
+    name: Beech Hill Forest
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado-island
 
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: grnd-valley-floor
+    kind: ground
+    name: Valley Floor Ground
     attributes:
-      owner: rack-a01
+      owner: fst-beech-hill
 `
 
 	parser := NewParser()
@@ -142,49 +137,49 @@ objects:
 	}
 
 	// Check ownership hierarchy
-	region, _ := g.GetEntity("region-ap-northeast-1")
-	if !region.IsRoot() {
-		t.Error("region should be root")
+	area, _ := g.GetEntity("area-sado-island")
+	if !area.IsRoot() {
+		t.Error("area should be root")
 	}
 
-	rack, _ := g.GetEntity("rack-a01")
-	if rack.Owner != "region-ap-northeast-1" {
-		t.Errorf("expected rack owner region-ap-northeast-1, got %s", rack.Owner)
+	forest, _ := g.GetEntity("fst-beech-hill")
+	if forest.Owner != "area-sado-island" {
+		t.Errorf("expected forest owner area-sado-island, got %s", forest.Owner)
 	}
 
-	server, _ := g.GetEntity("srv-proxmox-01")
-	if server.Owner != "rack-a01" {
-		t.Errorf("expected server owner rack-a01, got %s", server.Owner)
+	ground, _ := g.GetEntity("grnd-valley-floor")
+	if ground.Owner != "fst-beech-hill" {
+		t.Errorf("expected ground owner fst-beech-hill, got %s", ground.Owner)
 	}
 
 	// Check paths were built
-	if region.Path() != "/region-ap-northeast-1" {
-		t.Errorf("expected region path /region-ap-northeast-1, got %s", region.Path())
+	if area.Path() != "/area-sado-island" {
+		t.Errorf("expected area path /area-sado-island, got %s", area.Path())
 	}
-	if rack.Path() != "/region-ap-northeast-1/rack-a01" {
-		t.Errorf("expected rack path /region-ap-northeast-1/rack-a01, got %s", rack.Path())
+	if forest.Path() != "/area-sado-island/fst-beech-hill" {
+		t.Errorf("expected forest path /area-sado-island/fst-beech-hill, got %s", forest.Path())
 	}
-	if server.Path() != "/region-ap-northeast-1/rack-a01/srv-proxmox-01" {
-		t.Errorf("expected server path /region-ap-northeast-1/rack-a01/srv-proxmox-01, got %s", server.Path())
+	if ground.Path() != "/area-sado-island/fst-beech-hill/grnd-valley-floor" {
+		t.Errorf("expected ground path /area-sado-island/fst-beech-hill/grnd-valley-floor, got %s", ground.Path())
 	}
 }
 
 func TestParseDirectedRelation(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: spx-ayu
+    kind: species
+    name: Ayu Sweetfish
 
-  - id: vm-web-01
-    kind: vm
-    name: Web Server 01
+  - id: wb-shinano-river
+    kind: water_body
+    name: Shinano River
 
-  - id: rel-hosts-server-vm
-    type: hosts
+  - id: rel-inhabits-ayu-river
+    type: inhabits
     participants:
-      source: srv-proxmox-01
-      target: vm-web-01
+      source: spx-ayu
+      target: wb-shinano-river
 `
 
 	parser := NewParser()
@@ -197,53 +192,41 @@ objects:
 		t.Fatalf("expected 1 relation, got %d", g.RelationCount())
 	}
 
-	r, ok := g.GetRelation("rel-hosts-server-vm")
+	r, ok := g.GetRelation("rel-inhabits-ayu-river")
 	if !ok {
-		t.Fatal("relation rel-hosts-server-vm not found")
+		t.Fatal("relation rel-inhabits-ayu-river not found")
 	}
 
-	if r.Type != types.Hosts {
-		t.Errorf("expected type hosts, got %s", r.Type)
+	if r.Type != types.Inhabits {
+		t.Errorf("expected type inhabits, got %s", r.Type)
 	}
 	if r.Direction != core.DirectionDirected {
 		t.Errorf("expected direction directed, got %s", r.Direction)
 	}
-	if r.Source() != "srv-proxmox-01" {
-		t.Errorf("expected source srv-proxmox-01, got %s", r.Source())
+	if r.Source() != "spx-ayu" {
+		t.Errorf("expected source spx-ayu, got %s", r.Source())
 	}
-	if r.Target() != "vm-web-01" {
-		t.Errorf("expected target vm-web-01, got %s", r.Target())
+	if r.Target() != "wb-shinano-river" {
+		t.Errorf("expected target wb-shinano-river, got %s", r.Target())
 	}
 }
 
 func TestParseSymmetricRelation(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: spot-tsukioka
+    kind: tourism_spot
+    name: Tsukioka Onsen
 
-  - id: eno1
-    kind: interface
-    name: eno1
-    attributes:
-      owner: srv-proxmox-01
+  - id: spot-hyoso
+    kind: tourism_spot
+    name: Hyoso Hot Spring
 
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
-
-  - id: sw-port1
-    kind: interface
-    name: port1
-    attributes:
-      owner: sw-core-01
-
-  - id: rel-connects-srv-sw
-    type: connects
+  - id: rel-near-spots
+    type: near
     participants:
-      - srv-proxmox-01/eno1
-      - sw-core-01/port1
+      - spot-tsukioka
+      - spot-hyoso
 `
 
 	parser := NewParser()
@@ -252,13 +235,13 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	r, ok := g.GetRelation("rel-connects-srv-sw")
+	r, ok := g.GetRelation("rel-near-spots")
 	if !ok {
-		t.Fatal("relation rel-connects-srv-sw not found")
+		t.Fatal("relation rel-near-spots not found")
 	}
 
-	if r.Type != types.Connects {
-		t.Errorf("expected type connects, got %s", r.Type)
+	if r.Type != types.Near {
+		t.Errorf("expected type near, got %s", r.Type)
 	}
 	if r.Direction != core.DirectionSymmetric {
 		t.Errorf("expected direction symmetric, got %s", r.Direction)
@@ -271,27 +254,27 @@ objects:
 func TestParseRelationWithAllProperties(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: spring-tsukioka
+    kind: hot_spring
+    name: Tsukioka Spring
 
-  - id: vm-01
-    kind: vm
-    name: VM 01
+  - id: wb-sabiura-river
+    kind: water_body
+    name: Sabiura River
 
-  - id: rel-hosts-vm
-    type: hosts
+  - id: rel-depends-source
+    type: depends_on
     participants:
-      source: srv-01
-      target: vm-01
+      source: spring-tsukioka
+      target: wb-sabiura-river
     attributes:
-      description: "Server hosts VM"
+      description: "Hot spring draws from the river aquifer"
       status: active
       tags:
-        - hosting
+        - water_source
       labels:
-        source_type: server
-        target_type: vm
+        source_type: hot_spring
+        target_type: water_body
 `
 
 	parser := NewParser()
@@ -300,106 +283,96 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	r, ok := g.GetRelation("rel-hosts-vm")
+	r, ok := g.GetRelation("rel-depends-source")
 	if !ok {
-		t.Fatal("relation rel-hosts-vm not found")
+		t.Fatal("relation rel-depends-source not found")
 	}
 
-	if r.Description != "Server hosts VM" {
-		t.Errorf("expected description 'Server hosts VM', got %s", r.Description)
+	if r.Description != "Hot spring draws from the river aquifer" {
+		t.Errorf("expected description 'Hot spring draws from the river aquifer', got %s", r.Description)
 	}
 	if r.Status != core.StatusActive {
 		t.Errorf("expected status active, got %s", r.Status)
 	}
-	if len(r.Tags) != 1 || r.Tags[0] != "hosting" {
-		t.Errorf("expected tags [hosting], got %v", r.Tags)
+	if len(r.Tags) != 1 || r.Tags[0] != "water_source" {
+		t.Errorf("expected tags [water_source], got %v", r.Tags)
 	}
-	if r.Labels["source_type"] != "server" {
-		t.Errorf("expected label source_type=server, got %s", r.Labels["source_type"])
+	if r.Labels["source_type"] != "hot_spring" {
+		t.Errorf("expected label source_type=hot_spring, got %s", r.Labels["source_type"])
 	}
 }
 
 func TestParseCompleteExample(t *testing.T) {
 	yaml := `
 objects:
-  # Regions
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  # Areas
+  - id: area-sado
+    kind: area
+    name: Sado Island
     attributes:
       status: active
       labels:
-        region: ap-northeast-1
+        area_type: island
 
-  # Racks
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  # Tourism Spots
+  - id: spot-tsukioka
+    kind: tourism_spot
+    name: Tsukioka Onsen
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado
       status: active
       labels:
-        row: A
+        zone: onsen
     spec:
-      height_units: 42
+      spot_type: scenic
+      annual_visitors: 450000
 
-  # Servers
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  # Hot Springs
+  - id: spring-tsukioka-main
+    kind: hot_spring
+    name: Tsukioka Main Spring
     attributes:
-      owner: rack-a01
+      owner: spot-tsukioka
       status: active
     spec:
-      platform: proxmox
-      cpu_cores: 32
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage_gb: 2000
+      spring_quality: sulfur
+      temperature_c: 96.0
+      source_count: 3
 
-  # VMs
-  - id: vm-web-01
-    kind: vm
-    name: Web Server 01
+  # Events
+  - id: evt-yukake
+    kind: event
+    name: Yukake Festival
     attributes:
-      owner: srv-proxmox-01
+      owner: spring-tsukioka-main
       status: active
     spec:
-      cpu_cores: 4
-      memory:
-        - size_gb: 8
-          speed: 3200
-          type: ddr4
-      storage_gb: 100
-      os: ubuntu
-      os_version: "22.04"
+      season: summer
+      held_month: 8
+      visitor_count: 12000
 
-  # Applications
-  - id: app-web-server
-    kind: application
-    name: Nginx Web Server
+  # Water Bodies
+  - id: wb-sabiura
+    kind: water_body
+    name: Sabiura River
     attributes:
-      owner: vm-web-01
       status: active
     spec:
-      version: "1.24.0"
-      port: 443
-      protocol: https
+      water_type: river
+      length_km: 52.4
 
-  # Hosting Relations
-  - id: rel-hosts-server-vm
-    type: hosts
+  # Dependency Relations
+  - id: rel-depends-spring-water
+    type: depends_on
     participants:
-      source: srv-proxmox-01
-      target: vm-web-01
+      source: spring-tsukioka-main
+      target: wb-sabiura
 
-  - id: rel-hosts-vm-app
-    type: hosts
+  - id: rel-depends-event-spring
+    type: depends_on
     participants:
-      source: vm-web-01
-      target: app-web-server
+      source: evt-yukake
+      target: spring-tsukioka-main
 `
 
 	parser := NewParser()
@@ -416,14 +389,14 @@ objects:
 	}
 
 	// Verify ownership hierarchy
-	server, _ := g.GetEntity("srv-proxmox-01")
-	if server.Owner != "rack-a01" {
-		t.Errorf("expected server owner rack-a01, got %s", server.Owner)
+	spring, _ := g.GetEntity("spring-tsukioka-main")
+	if spring.Owner != "spot-tsukioka" {
+		t.Errorf("expected spring owner spot-tsukioka, got %s", spring.Owner)
 	}
 
-	vm, _ := g.GetEntity("vm-web-01")
-	if vm.Owner != "srv-proxmox-01" {
-		t.Errorf("expected vm owner srv-proxmox-01, got %s", vm.Owner)
+	event, _ := g.GetEntity("evt-yukake")
+	if event.Owner != "spring-tsukioka-main" {
+		t.Errorf("expected event owner spring-tsukioka-main, got %s", event.Owner)
 	}
 }
 
@@ -431,7 +404,7 @@ func TestParseInvalidEntity(t *testing.T) {
 	yaml := `
 objects:
   - id: test-entity
-    kind: server
+    kind: species
 `
 
 	parser := NewParser()
@@ -444,12 +417,12 @@ objects:
 func TestParseInvalidRelation(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: spx-01
+    kind: species
+    name: Species 01
 
   - id: test-relation
-    type: hosts
+    type: inhabits
 `
 
 	parser := NewParser()
@@ -463,7 +436,7 @@ func TestParseInvalidYAML(t *testing.T) {
 	yaml := `
 objects:
   - id: test
-    kind: server
+    kind: area
     name: Test
     invalid: [unclosed
 `
@@ -497,36 +470,27 @@ objects: []
 func TestParseNestedEntities(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: area-sado
+    kind: area
+    name: Sado Island
     spec:
-      cpu_cores: 32
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      networks:
-        - id: net-private
-          name: private
+      species:
+        - id: spx-ibis
+          name: Crested Ibis
           spec:
-            cidr: 172.31.0.0/24
-            gateway: 172.31.0.254
-          interfaces:
-            - id: eth1
-              name: proxmox/eth1
-              spec:
-                ip_address: 172.31.0.15
-                type: ethernet
-      vms:
-        - id: vm-web-01
-          name: Web Server 01
+            scientific_name: Nipponia nippon
+            red_list_status: endangered
+            populations:
+              - id: pop-wild
+                name: Wild Population
+                spec:
+                  count: 190
+                  survey_method: drone
+      tourism_spots:
+        - id: spot-shukunegi
+          name: Shukunegi Village
           spec:
-            cpu_cores: 4
-            memory:
-              - size_gb: 8
-                speed: 3200
-                type: ddr4
+            spot_type: historic
 `
 
 	parser := NewParser()
@@ -535,76 +499,78 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 server + 1 network + 1 interface + 1 vm = 4
+	// 1 area + 1 species + 1 population + 1 tourism_spot = 4
 	if g.EntityCount() != 4 {
 		t.Fatalf("expected 4 entities, got %d", g.EntityCount())
 	}
 
-	// Check parent server
-	server, ok := g.GetEntity("srv-proxmox-01")
+	// Check parent area
+	area, ok := g.GetEntity("area-sado")
 	if !ok {
-		t.Fatal("entity srv-proxmox-01 not found")
+		t.Fatal("entity area-sado not found")
 	}
-	if server.Owner != "" {
-		t.Errorf("server should be root, got owner %s", server.Owner)
+	if area.Owner != "" {
+		t.Errorf("area should be root, got owner %s", area.Owner)
 	}
 
-	// Check nested network
-	net, ok := g.GetEntity("net-private")
+	// Check nested species
+	species, ok := g.GetEntity("spx-ibis")
 	if !ok {
-		t.Fatal("entity net-private not found")
+		t.Fatal("entity spx-ibis not found")
 	}
-	if net.Owner != "srv-proxmox-01" {
-		t.Errorf("expected network owner srv-proxmox-01, got %s", net.Owner)
+	if species.Owner != "area-sado" {
+		t.Errorf("expected species owner area-sado, got %s", species.Owner)
 	}
-	if net.Kind != kinds.Network {
-		t.Errorf("expected kind network, got %s", net.Kind)
+	if species.Kind != kinds.Species {
+		t.Errorf("expected kind species, got %s", species.Kind)
 	}
 
-	// Check nested interface - owned by network, not server
-	iface, ok := g.GetEntity("eth1")
+	// Check nested population - owned by species, not area
+	pop, ok := g.GetEntity("pop-wild")
 	if !ok {
-		t.Fatal("entity eth1 not found")
+		t.Fatal("entity pop-wild not found")
 	}
-	if iface.Owner != "net-private" {
-		t.Errorf("expected interface owner net-private, got %s", iface.Owner)
+	if pop.Owner != "spx-ibis" {
+		t.Errorf("expected population owner spx-ibis, got %s", pop.Owner)
 	}
-	if iface.Kind != kinds.Interface {
-		t.Errorf("expected kind interface, got %s", iface.Kind)
+	if pop.Kind != kinds.Population {
+		t.Errorf("expected kind population, got %s", pop.Kind)
 	}
 
-	// Check nested vm
-	vm, ok := g.GetEntity("vm-web-01")
+	// Check nested tourism spot
+	spot, ok := g.GetEntity("spot-shukunegi")
 	if !ok {
-		t.Fatal("entity vm-web-01 not found")
+		t.Fatal("entity spot-shukunegi not found")
 	}
-	if vm.Owner != "srv-proxmox-01" {
-		t.Errorf("expected vm owner srv-proxmox-01, got %s", vm.Owner)
+	if spot.Owner != "area-sado" {
+		t.Errorf("expected tourism spot owner area-sado, got %s", spot.Owner)
 	}
 
-	// Check network properties
-	cidr, ok := net.GetProperty("cidr")
-	if !ok || cidr != "172.31.0.0/24" {
-		t.Errorf("expected cidr 172.31.0.0/24, got %v", cidr)
+	// Check population properties
+	count, ok := pop.GetProperty("count")
+	if !ok || count != 190 {
+		t.Errorf("expected count 190, got %v", count)
 	}
 }
 
-func TestParseNestedEntityAutoID(t *testing.T) {
+func TestParseNestedChildrenExplicitIDs(t *testing.T) {
 	yaml := `
 objects:
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  - id: fst-cedar-stand
+    kind: forest
+    name: Cedar Stand
     spec:
-      servers:
-        - id: srv-01
-          name: Server 01
+      grounds:
+        - id: grnd-upper
+          name: Upper Terrace
           spec:
-            cpu_cores: 16
-        - id: srv-02
-          name: Server 02
+            soil_type: volcanic_ash
+            slope_deg: 15
+        - id: grnd-lower
+          name: Lower Terrace
           spec:
-            cpu_cores: 32
+            soil_type: loam
+            slope_deg: 5
 `
 
 	parser := NewParser()
@@ -613,53 +579,52 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 rack + 2 servers = 3
+	// 1 forest + 2 grounds = 3
 	if g.EntityCount() != 3 {
 		t.Fatalf("expected 3 entities, got %d", g.EntityCount())
 	}
 
 	// Check explicit IDs
-	s1, ok := g.GetEntity("srv-01")
+	g1, ok := g.GetEntity("grnd-upper")
 	if !ok {
-		t.Fatal("entity srv-01 not found")
+		t.Fatal("entity grnd-upper not found")
 	}
-	if s1.Owner != "rack-a01" {
-		t.Errorf("expected owner rack-a01, got %s", s1.Owner)
+	if g1.Owner != "fst-cedar-stand" {
+		t.Errorf("expected owner fst-cedar-stand, got %s", g1.Owner)
 	}
-	if s1.Name != "Server 01" {
-		t.Errorf("expected name Server 01, got %s", s1.Name)
+	if g1.Name != "Upper Terrace" {
+		t.Errorf("expected name Upper Terrace, got %s", g1.Name)
 	}
 
-	s2, ok := g.GetEntity("srv-02")
+	g2, ok := g.GetEntity("grnd-lower")
 	if !ok {
-		t.Fatal("entity srv-02 not found")
+		t.Fatal("entity grnd-lower not found")
 	}
-	if s2.Owner != "rack-a01" {
-		t.Errorf("expected owner rack-a01, got %s", s2.Owner)
+	if g2.Owner != "fst-cedar-stand" {
+		t.Errorf("expected owner fst-cedar-stand, got %s", g2.Owner)
 	}
 }
 
-func TestParseNestedEntitiesWithoutID(t *testing.T) {
+func TestParseNestedPopulationKindInference(t *testing.T) {
 	yaml := `
 objects:
-  - id: acl-web
-    kind: acl
-    name: Web ACL
+  - id: spx-japanese-cedar
+    kind: species
+    name: Japanese Cedar
     spec:
-      default_action: deny
-      acl_rules:
-        - id: rule-https
-          name: Allow HTTPS
+      category: plant
+      survey_policy: annual
+      populations:
+        - id: pop-2024
+          name: 2024 Survey
           spec:
-            action: allow
-            protocol: tcp
-            destination_port: "443"
-        - id: rule-ssh
-          name: Allow SSH
+            count: 4200
+            survey_date: "2024-10-01"
+        - id: pop-2023
+          name: 2023 Survey
           spec:
-            action: allow
-            protocol: tcp
-            destination_port: "22"
+            count: 4100
+            survey_date: "2023-10-01"
 `
 
 	parser := NewParser()
@@ -668,21 +633,21 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 acl + 2 acl_rules = 3
+	// 1 species + 2 populations = 3
 	if g.EntityCount() != 3 {
 		t.Fatalf("expected 3 entities, got %d", g.EntityCount())
 	}
 
-	// Check first rule
-	r1, ok := g.GetEntity("rule-https")
+	// Check first population
+	p1, ok := g.GetEntity("pop-2024")
 	if !ok {
-		t.Fatal("entity rule-https not found")
+		t.Fatal("entity pop-2024 not found")
 	}
-	if r1.Owner != "acl-web" {
-		t.Errorf("expected owner acl-web, got %s", r1.Owner)
+	if p1.Owner != "spx-japanese-cedar" {
+		t.Errorf("expected owner spx-japanese-cedar, got %s", p1.Owner)
 	}
-	if r1.Kind != kinds.ACLRule {
-		t.Errorf("expected kind acl_rule, got %s", r1.Kind)
+	if p1.Kind != kinds.Population {
+		t.Errorf("expected kind population, got %s", p1.Kind)
 	}
 }
 
@@ -690,27 +655,27 @@ func TestParseFlatAndNestedMixed(t *testing.T) {
 	yaml := `
 objects:
   # Flat definition
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  - id: fst-cedar
+    kind: forest
+    name: Cedar Forest
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-myoko
 
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter
+  - id: area-myoko
+    kind: area
+    name: Myoko Area
 
   # Nested definition
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: spot-myoko
+    kind: tourism_spot
+    name: Myoko Ski Resort
     attributes:
-      owner: rack-a01
+      owner: area-myoko
     spec:
-      cpu_cores: 32
-      vms:
-        - id: vm-web-01
-          name: Web Server 01
+      spot_type: ski_resort
+      events:
+        - id: evt-ski-opening
+          name: Ski Season Opening
 `
 
 	parser := NewParser()
@@ -719,55 +684,54 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// region + rack + server + vm = 4
+	// area + forest + spot + event = 4
 	if g.EntityCount() != 4 {
 		t.Fatalf("expected 4 entities, got %d", g.EntityCount())
 	}
 
 	// Check flat ownership
-	rack, ok := g.GetEntity("rack-a01")
+	forest, ok := g.GetEntity("fst-cedar")
 	if !ok {
-		t.Fatal("rack not found")
+		t.Fatal("forest not found")
 	}
-	if rack.Owner != "region-ap-northeast-1" {
-		t.Errorf("expected rack owner region-ap-northeast-1, got %s", rack.Owner)
+	if forest.Owner != "area-myoko" {
+		t.Errorf("expected forest owner area-myoko, got %s", forest.Owner)
 	}
 
 	// Check nested ownership
-	vm, ok := g.GetEntity("vm-web-01")
+	event, ok := g.GetEntity("evt-ski-opening")
 	if !ok {
-		t.Fatal("vm not found")
+		t.Fatal("event not found")
 	}
-	if vm.Owner != "srv-proxmox-01" {
-		t.Errorf("expected vm owner srv-proxmox-01, got %s", vm.Owner)
+	if event.Owner != "spot-myoko" {
+		t.Errorf("expected event owner spot-myoko, got %s", event.Owner)
 	}
 }
 
-func TestParseNestedServerNetworkInterface(t *testing.T) {
+func TestParseNestedSpeciesWithAndWithoutID(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: area-sado
+    kind: area
+    name: Sado Island
     spec:
-      cpu_cores: 32
-      networks:
-        - id: net-private
-          name: private
+      species:
+        - id: spx-ibis
+          name: Crested Ibis
           spec:
-            cidr: 172.31.0.0/24
-          interfaces:
-            - id: eth1
-              name: proxmox/eth1
-              spec:
-                ip_address: 172.31.0.15
-        - name: mgmt
+            scientific_name: Nipponia nippon
+            populations:
+              - id: pop-wild
+                name: Wild Population
+                spec:
+                  count: 190
+        - name: Sika Deer
           spec:
-            cidr: 10.0.0.0/24
-          interfaces:
-            - name: eth0
-              spec:
-                ip_address: 10.0.0.10
+            category: mammal
+            populations:
+              - name: 2025 Survey
+                spec:
+                  count: 3200
 `
 
 	parser := NewParser()
@@ -776,131 +740,126 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 server + 2 networks + 2 interfaces = 5
+	// 1 area + 2 species + 2 populations = 5
 	if g.EntityCount() != 5 {
 		t.Fatalf("expected 5 entities, got %d", g.EntityCount())
 	}
 
-	// Both networks should be owned by the server
-	for _, id := range []string{"net-private", "_srv-proxmox-01-network"} {
+	// Both species should be owned by the area
+	for _, id := range []string{"spx-ibis", "_area-sado-species"} {
 		e, ok := g.GetEntity(id)
 		if !ok {
 			t.Fatalf("entity %s not found", id)
 		}
-		if e.Owner != "srv-proxmox-01" {
-			t.Errorf("entity %s expected owner srv-proxmox-01, got %s", id, e.Owner)
+		if e.Owner != "area-sado" {
+			t.Errorf("entity %s expected owner area-sado, got %s", id, e.Owner)
 		}
 	}
 
-	// eth1 should be owned by net-private (network nests interfaces)
-	eth1, ok := g.GetEntity("eth1")
+	// pop-wild should be owned by spx-ibis
+	popWild, ok := g.GetEntity("pop-wild")
 	if !ok {
-		t.Fatal("entity eth1 not found")
+		t.Fatal("entity pop-wild not found")
 	}
-	if eth1.Owner != "net-private" {
-		t.Errorf("expected eth1 owner net-private, got %s", eth1.Owner)
+	if popWild.Owner != "spx-ibis" {
+		t.Errorf("expected pop-wild owner spx-ibis, got %s", popWild.Owner)
 	}
 
-	// eth0 should be owned by _srv-proxmox-01-network (the auto-ID'd network)
-	eth0, ok := g.GetEntity("_srv-proxmox-01-network-interface")
+	// The auto-ID'd population should be owned by the auto-ID'd species
+	autoPop, ok := g.GetEntity("_area-sado-species-population")
 	if !ok {
-		t.Fatal("entity _srv-proxmox-01-network-interface not found")
+		t.Fatal("entity _area-sado-species-population not found")
 	}
-	if eth0.Owner != "_srv-proxmox-01-network" {
-		t.Errorf("expected eth0 owner _srv-proxmox-01-network, got %s", eth0.Owner)
+	if autoPop.Owner != "_area-sado-species" {
+		t.Errorf("expected owner _area-sado-species, got %s", autoPop.Owner)
 	}
 }
 
 func TestSchemaNestingDefinitions(t *testing.T) {
 	s := schema.CoreSchema()
 
-	// Global nesting defs should exist
-	if len(s.NestingDefs) != 6 {
-		t.Fatalf("expected 6 global nesting defs, got %d", len(s.NestingDefs))
+	// Global nesting defs should be empty in the Niigata schema
+	if len(s.NestingDefs) != 0 {
+		t.Fatalf("expected 0 global nesting defs, got %d", len(s.NestingDefs))
 	}
 
-	// Region: 6 global + 3 per-kind (racks, clusters, availability_zones) = 9
-	regionNesting := s.GetNestingDefs(kinds.Region)
-	if len(regionNesting) != 9 {
-		t.Fatalf("expected 9 nesting defs for region, got %d", len(regionNesting))
+	// Area: 0 global + 7 per-kind (grounds, terrains, water_bodies, forests, tourism_spots, species, cultural_assets) = 7
+	areaNesting := s.GetNestingDefs(kinds.Area)
+	if len(areaNesting) != 7 {
+		t.Fatalf("expected 7 nesting defs for area, got %d", len(areaNesting))
 	}
 
-	// Rack: 6 global + 0 per-kind = 6
-	rackNesting := s.GetNestingDefs(kinds.Rack)
-	if len(rackNesting) != 6 {
-		t.Fatalf("expected 6 nesting defs for rack, got %d", len(rackNesting))
+	// Ground: 0 global + 0 per-kind = 0
+	groundNesting := s.GetNestingDefs(kinds.Ground)
+	if len(groundNesting) != 0 {
+		t.Fatalf("expected 0 nesting defs for ground, got %d", len(groundNesting))
 	}
 
-	// Server: 6 global + 2 per-kind (vms, containers) = 8
-	serverNesting := s.GetNestingDefs(kinds.Server)
-	if len(serverNesting) != 8 {
-		t.Fatalf("expected 8 nesting defs for server, got %d", len(serverNesting))
+	// Species: 0 global + 1 per-kind (populations) = 1
+	speciesNesting := s.GetNestingDefs(kinds.Species)
+	if len(speciesNesting) != 1 {
+		t.Fatalf("expected 1 nesting def for species, got %d", len(speciesNesting))
 	}
 
-	// Find network nesting under server (now from global)
-	nd, ok := s.FindNestingByNestKey(kinds.Server, "networks")
+	// Find tourism_spots nesting under area
+	nd, ok := s.FindNestingByNestKey(kinds.Area, "tourism_spots")
 	if !ok {
-		t.Fatal("networks nesting not found for server")
+		t.Fatal("tourism_spots nesting not found for area")
 	}
-	if nd.ChildKind != kinds.Network {
-		t.Errorf("expected child kind network, got %s", nd.ChildKind)
+	if nd.ChildKind != kinds.TourismSpot {
+		t.Errorf("expected child kind tourism_spot, got %s", nd.ChildKind)
 	}
 }
 
-func TestInterfaceNestingDefinitions(t *testing.T) {
+func TestTourismSpotNestingDefinitions(t *testing.T) {
 	s := schema.CoreSchema()
 
-	// Interface: 6 global + 2 per-kind (vlans, cables) = 8
-	ifaceNesting := s.GetNestingDefs(kinds.Interface)
-	if len(ifaceNesting) != 8 {
-		t.Fatalf("expected 8 nesting defs for interface, got %d", len(ifaceNesting))
+	// TourismSpot: 2 per-kind (hot_springs, events)
+	spotNesting := s.GetNestingDefs(kinds.TourismSpot)
+	if len(spotNesting) != 2 {
+		t.Fatalf("expected 2 nesting defs for tourism_spot, got %d", len(spotNesting))
 	}
 
-	nd, ok := s.FindNestingByNestKey(kinds.Interface, "interfaces")
+	nd, ok := s.FindNestingByNestKey(kinds.TourismSpot, "hot_springs")
 	if !ok {
-		t.Fatal("interfaces nesting not found for interface")
+		t.Fatal("hot_springs nesting not found for tourism_spot")
 	}
-	if nd.ChildKind != kinds.Interface {
-		t.Errorf("expected child kind interface, got %s", nd.ChildKind)
+	if nd.ChildKind != kinds.HotSpring {
+		t.Errorf("expected child kind hot_spring, got %s", nd.ChildKind)
 	}
 }
 
-func TestParseNestedInterfaceVRRP(t *testing.T) {
+func TestParseNestedHotSpringEvents(t *testing.T) {
 	yaml := `
 objects:
-  - id: router-01
-    kind: router
-    name: Router 01
+  - id: spot-tsukioka
+    kind: tourism_spot
+    name: Tsukioka Onsen
     spec:
-      interfaces:
-        - id: eth0-vrrp
-          kind: interface
-          name: VRRP Virtual Interface
+      hot_springs:
+        - id: spring-grand
+          kind: hot_spring
+          name: Grand Bath House
           attributes:
             status: active
           spec:
-            type: virtual
-            ip_address:
-              - 10.0.0.1
-            interfaces:
-              - id: eth0
-                kind: interface
-                name: eth0 - Primary
+            spring_quality: sulfur
+            temperature_c: 96.5
+            events:
+              - id: evt-morning-bath
+                kind: event
+                name: Morning Bath Session
                 attributes:
                   status: active
                 spec:
-                  type: ethernet
-                  ip_address:
-                    - 10.0.0.2
-              - id: eth1
-                kind: interface
-                name: eth1 - Secondary
+                  season: all
+              - id: evt-evening-bath
+                kind: event
+                name: Evening Bath Session
                 attributes:
                   status: standby
                 spec:
-                  type: ethernet
-                  ip_address:
-                    - 10.0.0.3
+                  season: winter
 `
 
 	parser := NewParser()
@@ -909,96 +868,99 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 router + 1 virtual interface + 2 physical interfaces = 4
+	// 1 tourism spot + 1 hot spring + 2 events = 4
 	if g.EntityCount() != 4 {
 		t.Fatalf("expected 4 entities, got %d", g.EntityCount())
 	}
 
-	// Check parent router
-	router, ok := g.GetEntity("router-01")
+	// Check parent tourism spot
+	spot, ok := g.GetEntity("spot-tsukioka")
 	if !ok {
-		t.Fatal("entity router-01 not found")
+		t.Fatal("entity spot-tsukioka not found")
 	}
-	if router.Owner != "" {
-		t.Errorf("router should be root, got owner %s", router.Owner)
+	if spot.Owner != "" {
+		t.Errorf("tourism spot should be root, got owner %s", spot.Owner)
 	}
 
-	// Check virtual interface
-	viface, ok := g.GetEntity("eth0-vrrp")
+	// Check hot spring
+	spring, ok := g.GetEntity("spring-grand")
 	if !ok {
-		t.Fatal("entity eth0-vrrp not found")
+		t.Fatal("entity spring-grand not found")
 	}
-	if viface.Owner != "router-01" {
-		t.Errorf("expected owner router-01, got %s", viface.Owner)
+	if spring.Owner != "spot-tsukioka" {
+		t.Errorf("expected owner spot-tsukioka, got %s", spring.Owner)
 	}
-	if viface.Kind != kinds.Interface {
-		t.Errorf("expected kind interface, got %s", viface.Kind)
+	if spring.Kind != kinds.HotSpring {
+		t.Errorf("expected kind hot_spring, got %s", spring.Kind)
 	}
-	if viface.Status != core.StatusActive {
-		t.Errorf("expected status active, got %s", viface.Status)
+	if spring.Status != core.StatusActive {
+		t.Errorf("expected status active, got %s", spring.Status)
 	}
-	if vtype, ok := viface.GetProperty("type"); !ok || vtype != "virtual" {
-		t.Errorf("expected type virtual, got %v", vtype)
+	if quality, ok := spring.GetProperty("spring_quality"); !ok || quality != "sulfur" {
+		t.Errorf("expected spring_quality sulfur, got %v", quality)
 	}
 
-	// Check primary physical interface
-	eth0, ok := g.GetEntity("eth0")
+	// Check morning event
+	morning, ok := g.GetEntity("evt-morning-bath")
 	if !ok {
-		t.Fatal("entity eth0 not found")
+		t.Fatal("entity evt-morning-bath not found")
 	}
-	if eth0.Owner != "eth0-vrrp" {
-		t.Errorf("expected owner eth0-vrrp, got %s", eth0.Owner)
+	if morning.Owner != "spring-grand" {
+		t.Errorf("expected owner spring-grand, got %s", morning.Owner)
 	}
-	if eth0.Kind != kinds.Interface {
-		t.Errorf("expected kind interface, got %s", eth0.Kind)
+	if morning.Kind != kinds.Event {
+		t.Errorf("expected kind event, got %s", morning.Kind)
 	}
-	if eth0.Status != core.StatusActive {
-		t.Errorf("expected status active, got %s", eth0.Status)
+	if morning.Status != core.StatusActive {
+		t.Errorf("expected status active, got %s", morning.Status)
 	}
 
-	// Check secondary physical interface
-	eth1, ok := g.GetEntity("eth1")
+	// Check evening event
+	evening, ok := g.GetEntity("evt-evening-bath")
 	if !ok {
-		t.Fatal("entity eth1 not found")
+		t.Fatal("entity evt-evening-bath not found")
 	}
-	if eth1.Owner != "eth0-vrrp" {
-		t.Errorf("expected owner eth0-vrrp, got %s", eth1.Owner)
+	if evening.Owner != "spring-grand" {
+		t.Errorf("expected owner spring-grand, got %s", evening.Owner)
 	}
-	if eth1.Status != core.StatusStandby {
-		t.Errorf("expected status standby, got %s", eth1.Status)
+	if evening.Status != core.StatusStandby {
+		t.Errorf("expected status standby, got %s", evening.Status)
 	}
 }
 
-func TestParseNestedInterfaceLACP(t *testing.T) {
+func TestParseNestedTerrainGrounds(t *testing.T) {
 	yaml := `
 objects:
-  - id: router-01
-    kind: router
-    name: Router 01
+  - id: area-myoko
+    kind: area
+    name: Myoko Area
     spec:
-      interfaces:
-        - id: bond0
-          kind: interface
-          name: LAG Bundle
+      terrains:
+        - id: ter-myoko
+          kind: terrain
+          name: Mount Myoko
           spec:
-            type: bond
-            interfaces:
-              - id: eth0
-                kind: interface
+            terrain_type: mountain
+            elevation_m: 2459
+            grounds:
+              - id: grnd-summit
+                kind: ground
+                name: Summit Slope
                 attributes:
                   status: active
                 spec:
-                  type: ethernet
-                  ip_address:
-                    - 192.168.1.1
-              - id: eth1
-                kind: interface
+                  slope_deg: 35
+                  stability: stable
+                  soil_type: rock
+              - id: grnd-scree
+                kind: ground
+                name: Scree Field
                 attributes:
                   status: standby
                 spec:
-                  type: ethernet
-                  ip_address:
-                    - 192.168.1.2
+                  slope_deg: 55
+                  stability: watch
+                  soil_type: gravel
 `
 
 	parser := NewParser()
@@ -1007,63 +969,64 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 router + 1 bond interface + 2 physical interfaces = 4
+	// 1 area + 1 terrain + 2 grounds = 4
 	if g.EntityCount() != 4 {
 		t.Fatalf("expected 4 entities, got %d", g.EntityCount())
 	}
 
-	// Check bond interface
-	bond, ok := g.GetEntity("bond0")
+	// Check terrain
+	terrain, ok := g.GetEntity("ter-myoko")
 	if !ok {
-		t.Fatal("entity bond0 not found")
+		t.Fatal("entity ter-myoko not found")
 	}
-	if bond.Owner != "router-01" {
-		t.Errorf("expected owner router-01, got %s", bond.Owner)
+	if terrain.Owner != "area-myoko" {
+		t.Errorf("expected owner area-myoko, got %s", terrain.Owner)
 	}
-	if btype, ok := bond.GetProperty("type"); !ok || btype != "bond" {
-		t.Errorf("expected type bond, got %v", btype)
+	if ttype, ok := terrain.GetProperty("terrain_type"); !ok || ttype != "mountain" {
+		t.Errorf("expected terrain_type mountain, got %v", ttype)
 	}
 
-	// Check that physical interfaces have no virtual IP
-	eth0, ok := g.GetEntity("eth0")
+	// Check summit ground
+	summit, ok := g.GetEntity("grnd-summit")
 	if !ok {
-		t.Fatal("entity eth0 not found")
+		t.Fatal("entity grnd-summit not found")
 	}
-	if eth0.Owner != "bond0" {
-		t.Errorf("expected owner bond0, got %s", eth0.Owner)
+	if summit.Owner != "ter-myoko" {
+		t.Errorf("expected owner ter-myoko, got %s", summit.Owner)
 	}
 }
 
-func TestParseNestedInterfaceVLANSubinterface(t *testing.T) {
+func TestParseNestedGroundSlopeElevation(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: area-sado
+    kind: area
+    name: Sado Island
     spec:
-      interfaces:
-        - id: vmbr0
-          kind: interface
-          name: Linux Bridge vmbr0
+      terrains:
+        - id: ter-kosado
+          kind: terrain
+          name: Kosado Ridge
           spec:
-            type: bridge
-            interfaces:
-              - id: vmbr0.20
-                kind: interface
-                name: VLAN 20 on vmbr0
+            terrain_type: hill
+            elevation_m: 440
+            trails:
+              - Kosado Traverse
+            grounds:
+              - id: grnd-north
+                kind: ground
+                name: North Slope
                 spec:
-                  type: vlan
-                  vlan_id: 20
-                  ip_address:
-                    - 10.0.20.1/24
-              - id: vmbr0.100
-                kind: interface
-                name: VLAN 100 on vmbr0
+                  slope_deg: 25
+                  elevation_m: 180
+                  soil_type: loam
+              - id: grnd-south
+                kind: ground
+                name: South Slope
                 spec:
-                  type: vlan
-                  vlan_id: 100
-                  ip_address:
-                    - 10.0.100.1/24
+                  slope_deg: 40
+                  elevation_m: 210
+                  soil_type: clay
 `
 
 	parser := NewParser()
@@ -1072,87 +1035,88 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 server + 1 bridge + 2 VLAN sub-interfaces = 4
+	// 1 area + 1 terrain + 2 grounds = 4
 	if g.EntityCount() != 4 {
 		t.Fatalf("expected 4 entities, got %d", g.EntityCount())
 	}
 
-	// Check bridge interface
-	vmbr0, ok := g.GetEntity("vmbr0")
+	// Check terrain
+	terrain, ok := g.GetEntity("ter-kosado")
 	if !ok {
-		t.Fatal("entity vmbr0 not found")
+		t.Fatal("entity ter-kosado not found")
 	}
-	if vmbr0.Owner != "srv-proxmox-01" {
-		t.Errorf("expected owner srv-proxmox-01, got %s", vmbr0.Owner)
+	if terrain.Owner != "area-sado" {
+		t.Errorf("expected owner area-sado, got %s", terrain.Owner)
 	}
-	if vtype, ok := vmbr0.GetProperty("type"); !ok || vtype != "bridge" {
-		t.Errorf("expected type bridge, got %v", vtype)
+	if ttype, ok := terrain.GetProperty("terrain_type"); !ok || ttype != "hill" {
+		t.Errorf("expected terrain_type hill, got %v", ttype)
+	}
+	if trails, ok := terrain.GetProperty("trails"); !ok || len(trails.([]interface{})) != 1 {
+		t.Errorf("expected 1 trail, got %v", trails)
 	}
 
-	// Check VLAN sub-interface 20
-	vlan20, ok := g.GetEntity("vmbr0.20")
+	// Check north slope ground
+	north, ok := g.GetEntity("grnd-north")
 	if !ok {
-		t.Fatal("entity vmbr0.20 not found")
+		t.Fatal("entity grnd-north not found")
 	}
-	if vlan20.Owner != "vmbr0" {
-		t.Errorf("expected owner vmbr0, got %s", vlan20.Owner)
+	if north.Owner != "ter-kosado" {
+		t.Errorf("expected owner ter-kosado, got %s", north.Owner)
 	}
-	if vlan20.Kind != kinds.Interface {
-		t.Errorf("expected kind interface, got %s", vlan20.Kind)
+	if north.Kind != kinds.Ground {
+		t.Errorf("expected kind ground, got %s", north.Kind)
 	}
-	if vtype, ok := vlan20.GetProperty("type"); !ok || vtype != "vlan" {
-		t.Errorf("expected type vlan, got %v", vtype)
+	if slope, ok := north.GetProperty("slope_deg"); !ok || slope != 25 {
+		t.Errorf("expected slope_deg 25, got %v", slope)
 	}
-	if vlanID, ok := vlan20.GetProperty("vlan_id"); !ok || vlanID != 20 {
-		t.Errorf("expected vlan_id 20, got %v", vlanID)
-	}
-	if ips, ok := vlan20.GetProperty("ip_address"); !ok || len(ips.([]interface{})) != 1 {
-		t.Errorf("expected 1 ip_address, got %v", ips)
+	if soil, ok := north.GetProperty("soil_type"); !ok || soil != "loam" {
+		t.Errorf("expected soil_type loam, got %v", soil)
 	}
 
-	// Check VLAN sub-interface 100
-	vlan100, ok := g.GetEntity("vmbr0.100")
+	// Check south slope ground
+	south, ok := g.GetEntity("grnd-south")
 	if !ok {
-		t.Fatal("entity vmbr0.100 not found")
+		t.Fatal("entity grnd-south not found")
 	}
-	if vlan100.Owner != "vmbr0" {
-		t.Errorf("expected owner vmbr0, got %s", vlan100.Owner)
+	if south.Owner != "ter-kosado" {
+		t.Errorf("expected owner ter-kosado, got %s", south.Owner)
 	}
-	if vlanID, ok := vlan100.GetProperty("vlan_id"); !ok || vlanID != 100 {
-		t.Errorf("expected vlan_id 100, got %v", vlanID)
+	if slope, ok := south.GetProperty("slope_deg"); !ok || slope != 40 {
+		t.Errorf("expected slope_deg 40, got %v", slope)
 	}
 
-	// Auto-generated belongs_to relations for nested interfaces
+	// Auto-generated belongs_to relations for nested entities
 	if g.RelationCount() != 3 {
 		t.Fatalf("expected 3 auto-generated belongs_to relations, got %d", g.RelationCount())
 	}
 	found := false
 	for _, r := range g.Relations() {
-		if r.Type == types.BelongsTo && r.Participants.Source == "vmbr0.20" && r.Participants.Target == "vmbr0" {
+		if r.Type == types.BelongsTo && r.Participants.Source == "grnd-north" && r.Participants.Target == "ter-kosado" {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Error("expected belongs_to relation from vmbr0.20 to vmbr0")
+		t.Error("expected belongs_to relation from grnd-north to ter-kosado")
 	}
 }
 
-func TestParseLoopbackInterface(t *testing.T) {
+func TestParseSinglePondWaterBody(t *testing.T) {
 	yaml := `
 objects:
-  - id: rt-core-01
-    kind: router
-    name: Core Router 01
+  - id: area-yuzawa
+    kind: area
+    name: Yuzawa Town
     spec:
-      interfaces:
-        - id: lo0
-          kind: interface
-          name: Loopback 0
+      water_bodies:
+        - id: wb-kotobiki-pond
+          kind: water_body
+          name: Kotobiki Pond
           spec:
-            type: loopback
-            ip_address:
-              - 10.255.255.1/32
+            water_type: pond
+            max_depth_m: 8
+            inflows:
+              - Kiyotsu River
 `
 
 	parser := NewParser()
@@ -1161,26 +1125,26 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 router + 1 loopback interface = 2
+	// 1 area + 1 pond = 2
 	if g.EntityCount() != 2 {
 		t.Fatalf("expected 2 entities, got %d", g.EntityCount())
 	}
 
-	lo0, ok := g.GetEntity("lo0")
+	pond, ok := g.GetEntity("wb-kotobiki-pond")
 	if !ok {
-		t.Fatal("entity lo0 not found")
+		t.Fatal("entity wb-kotobiki-pond not found")
 	}
-	if lo0.Owner != "rt-core-01" {
-		t.Errorf("expected owner rt-core-01, got %s", lo0.Owner)
+	if pond.Owner != "area-yuzawa" {
+		t.Errorf("expected owner area-yuzawa, got %s", pond.Owner)
 	}
-	if ltype, ok := lo0.GetProperty("type"); !ok || ltype != "loopback" {
-		t.Errorf("expected type loopback, got %v", ltype)
+	if wtype, ok := pond.GetProperty("water_type"); !ok || wtype != "pond" {
+		t.Errorf("expected water_type pond, got %v", wtype)
 	}
-	if ips, ok := lo0.GetProperty("ip_address"); !ok || len(ips.([]interface{})) != 1 {
-		t.Errorf("expected 1 ip_address, got %v", ips)
+	if inflows, ok := pond.GetProperty("inflows"); !ok || len(inflows.([]interface{})) != 1 {
+		t.Errorf("expected 1 inflow, got %v", inflows)
 	}
 
-	// Auto-generated belongs_to relation from lo0 to router
+	// Auto-generated belongs_to relation from pond to area
 	if g.RelationCount() != 1 {
 		t.Fatalf("expected 1 auto-generated belongs_to relation, got %d", g.RelationCount())
 	}
@@ -1189,19 +1153,21 @@ objects:
 func TestRoundTripNestedEntities(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: area-niigata
+    kind: area
+    name: Niigata City Area
     spec:
-      racks:
-        - id: rack-a01
-          name: Rack A01
+      tourism_spots:
+        - id: spot-toki-messe
+          name: Toki Messe
           spec:
-            servers:
-              - id: srv-01
-                name: Server 01
+            spot_type: scenic
+            events:
+              - id: evt-fireworks-nm
+                name: Nishimonai Fireworks
                 spec:
-                  cpu_cores: 16
+                  season: summer
+                  held_month: 7
 `
 
 	// Parse original
@@ -1253,7 +1219,7 @@ func TestValidationNoSlashInID(t *testing.T) {
 	yaml := `
 objects:
   - id: bad/entity
-    kind: server
+    kind: species
     name: Bad Entity
 `
 
@@ -1283,15 +1249,15 @@ objects:
 func TestValidationNestingParent(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-01
-    kind: region
-    name: Region 01
+  - id: area-01
+    kind: area
+    name: Area 01
 
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: spx-01
+    kind: species
+    name: Species 01
     attributes:
-      owner: region-01
+      owner: area-01
 `
 
 	parser := NewParser()
@@ -1307,7 +1273,7 @@ objects:
 
 	for _, f := range result.Findings {
 		if f.RuleID == "valid-nesting-parent" {
-			t.Error("valid-nesting-parent warning should not be emitted for server owned by region (server is a valid child of region)")
+			t.Error("valid-nesting-parent warning should not be emitted for species owned by area (species is a valid child of area)")
 		}
 	}
 }
@@ -1315,32 +1281,31 @@ objects:
 func TestPathReferenceResolution(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-aga
+    kind: area
+    name: Aga Town
     spec:
-      networks:
-        - id: net-mgmt
-          name: Management
-          interfaces:
-            - id: eth0
-              name: eth0
-              spec:
-                ip_address: 10.0.0.1
+      tourism_spots:
+        - id: spot-ohide
+          name: Ohide Beach
+          spec:
+            spot_type: beach
 
-  - id: sw-01
-    kind: switch
-    name: Switch 01
+  - id: area-yuzawa
+    kind: area
+    name: Yuzawa Town
     spec:
-      interfaces:
-        - id: port1
-          name: port1
+      tourism_spots:
+        - id: spot-naeba
+          name: Naeba Ski Resort
+          spec:
+            spot_type: ski_resort
 
-  - id: rel-connects
-    type: connects
+  - id: rel-near
+    type: near
     participants:
-      - srv-01/eth0
-      - sw-01/port1
+      - area-aga/spot-ohide
+      - area-yuzawa/spot-naeba
 `
 
 	parser := NewParser()
@@ -1358,18 +1323,19 @@ objects:
 func TestParseEntityPropertyReference(t *testing.T) {
 	yaml := `
 objects:
-  - id: net-mgmt
-    kind: network
-    name: Management Network
+  - id: wb-lake-kamo
+    kind: water_body
+    name: Lake Kamo
     spec:
-      cidr: 10.0.0.0/24
+      water_type: lake
+      max_depth_m: 7
 
-  - id: vlan-100
-    kind: vlan
-    name: VLAN 100
+  - id: spx-crucian-carp
+    kind: species
+    name: Crucian Carp
     spec:
-      vlan_id: 100
-      associated_network: "@net-mgmt"
+      category: fish
+      spawning_ground: "@wb-lake-kamo"
 `
 
 	parser := NewParser()
@@ -1378,21 +1344,21 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	vlan, ok := g.GetEntity("vlan-100")
+	species, ok := g.GetEntity("spx-crucian-carp")
 	if !ok {
-		t.Fatal("expected entity vlan-100")
+		t.Fatal("expected entity spx-crucian-carp")
 	}
 
-	v, ok := vlan.GetProperty("associated_network")
+	v, ok := species.GetProperty("spawning_ground")
 	if !ok {
-		t.Fatal("expected property associated_network")
+		t.Fatal("expected property spawning_ground")
 	}
 	ref, ok := v.(core.ReferenceValue)
 	if !ok {
 		t.Fatalf("expected ReferenceValue, got %T", v)
 	}
-	if ref.RefTargetID() != "net-mgmt" {
-		t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+	if ref.RefTargetID() != "wb-lake-kamo" {
+		t.Errorf("expected reference target wb-lake-kamo, got %s", ref.RefTargetID())
 	}
 
 	// Verify reference resolution
@@ -1405,12 +1371,12 @@ objects:
 func TestParseEntityPropertyReferenceNotFound(t *testing.T) {
 	yaml := `
 objects:
-  - id: vlan-100
-    kind: vlan
-    name: VLAN 100
+  - id: spx-crucian-carp
+    kind: species
+    name: Crucian Carp
     spec:
-      vlan_id: 100
-      associated_network: "@nonexistent"
+      category: fish
+      spawning_ground: "@nonexistent"
 `
 
 	parser := NewParser()
@@ -1438,30 +1404,30 @@ objects:
 func TestResolveReferencesListProperty(t *testing.T) {
 	yaml := `
 objects:
-  - id: net-mgmt
-    kind: network
-    name: Management Network
+  - id: wb-pond
+    kind: water_body
+    name: Irrigation Pond
     spec:
-      cidr: 10.0.0.0/24
+      water_type: pond
 
-  - id: sg-01
-    kind: acl
-    name: Web SG
+  - id: fst-beech
+    kind: forest
+    name: Beech Forest
 
-  - id: ec2-01
-    kind: server
-    name: Web Server
+  - id: spx-ayu
+    kind: species
+    name: Ayu
     spec:
-      security_groups:
-        - "@sg-01"
+      habitats:
+        - "@fst-beech"
         - "@ghost"
 
-  - id: lb-01
-    kind: server
-    name: Load Balancer
+  - id: spot-ohide
+    kind: tourism_spot
+    name: Ohide Beach
     spec:
-      subnets:
-        - "@net-mgmt"
+      nearby_nature:
+        - "@wb-pond"
 `
 
 	parser := NewParser()
@@ -1485,31 +1451,31 @@ objects:
 		t.Errorf("expected error about dangling list element @ghost, got %v", errs)
 	}
 
-	// lb-01's valid list reference must not produce an error mentioning it.
+	// spot-ohide's valid list reference must not produce an error mentioning it.
 	for _, e := range errs {
-		if strings.Contains(e.Error(), "lb-01") {
-			t.Errorf("lb-01 should not have a reference error, got: %v", e)
+		if strings.Contains(e.Error(), "spot-ohide") {
+			t.Errorf("spot-ohide should not have a reference error, got: %v", e)
 		}
 	}
 }
 
-func TestParseRegionNestingAvailabilityZones(t *testing.T) {
+func TestParseAreaNestingSpecies(t *testing.T) {
 	yaml := `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Region
-    availability_zones:
-      - id: az-ap-northeast-1a
-        kind: availability_zone
-        name: Tokyo Zone A
+  - id: area-sado
+    kind: area
+    name: Sado Island
+    species:
+      - id: spx-ibis
+        kind: species
+        name: Crested Ibis
         spec:
-          state: available
-      - id: az-ap-northeast-1b
-        kind: availability_zone
-        name: Tokyo Zone B
+          red_list_status: endangered
+      - id: spx-deer
+        kind: species
+        name: Sika Deer
         spec:
-          state: available
+          red_list_status: least_concern
 `
 	parser := NewParser()
 	g, err := parser.Parse([]byte(yaml))
@@ -1517,26 +1483,26 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// Verify nested AZs are owned by the region
-	for _, id := range []string{"az-ap-northeast-1a", "az-ap-northeast-1b"} {
+	// Verify nested species are owned by the area
+	for _, id := range []string{"spx-ibis", "spx-deer"} {
 		e, ok := g.GetEntity(id)
 		if !ok {
 			t.Fatalf("entity %s not found", id)
 		}
-		if e.Kind != kinds.AvailabilityZone {
-			t.Errorf("entity %s kind should be availability_zone, got %s", id, e.Kind)
+		if e.Kind != kinds.Species {
+			t.Errorf("entity %s kind should be species, got %s", id, e.Kind)
 		}
-		if e.Owner != "region-ap-northeast-1" {
-			t.Errorf("entity %s owner should be region-ap-northeast-1, got %s", id, e.Owner)
+		if e.Owner != "area-sado" {
+			t.Errorf("entity %s owner should be area-sado, got %s", id, e.Owner)
 		}
-		if v, ok := e.GetProperty("state"); !ok || v != "available" {
-			t.Errorf("entity %s state should be available, got %v", id, v)
+		if v, ok := e.GetProperty("red_list_status"); !ok || v != "endangered" && v != "least_concern" {
+			t.Errorf("entity %s unexpected red_list_status, got %v", id, v)
 		}
 	}
 
-	// Verify auto-generated belongs_to relations (AZ -> region)
-	for _, azID := range []string{"az-ap-northeast-1a", "az-ap-northeast-1b"} {
-		relID := "rel-auto-belongs_to-" + azID + "-region-ap-northeast-1"
+	// Verify auto-generated belongs_to relations (species -> area)
+	for _, spxID := range []string{"spx-ibis", "spx-deer"} {
+		relID := "rel-auto-belongs_to-" + spxID + "-area-sado"
 		rel, ok := g.GetRelation(relID)
 		if !ok {
 			t.Errorf("missing auto relation %s", relID)
@@ -1545,9 +1511,9 @@ objects:
 		if rel.Type != types.BelongsTo {
 			t.Errorf("relation %s: expected belongs_to, got %s", relID, rel.Type)
 		}
-		if rel.Participants.Source != azID || rel.Participants.Target != "region-ap-northeast-1" {
-			t.Errorf("relation %s: expected %s -> region-ap-northeast-1, got %s -> %s",
-				relID, azID, rel.Participants.Source, rel.Participants.Target)
+		if rel.Participants.Source != spxID || rel.Participants.Target != "area-sado" {
+			t.Errorf("relation %s: expected %s -> area-sado, got %s -> %s",
+				relID, spxID, rel.Participants.Source, rel.Participants.Target)
 		}
 	}
 }
@@ -1555,21 +1521,21 @@ objects:
 func TestParseRelationPropertyReference(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: spring-tsukioka
+    kind: hot_spring
+    name: Tsukioka Spring
 
-  - id: net-mgmt
-    kind: network
-    name: Management Network
+  - id: wb-sabiura
+    kind: water_body
+    name: Sabiura River
 
-  - id: rel-uses
+  - id: rel-depends
     type: depends_on
     participants:
-      source: srv-01
-      target: net-mgmt
+      source: spring-tsukioka
+      target: wb-sabiura
     spec:
-      dependency_type: "@net-mgmt"
+      dependency_type: "@wb-sabiura"
 `
 
 	parser := NewParser()
@@ -1578,9 +1544,9 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	rel, ok := g.GetRelation("rel-uses")
+	rel, ok := g.GetRelation("rel-depends")
 	if !ok {
-		t.Fatal("expected relation rel-uses")
+		t.Fatal("expected relation rel-depends")
 	}
 
 	v, ok := rel.GetProperty("dependency_type")
@@ -1601,12 +1567,12 @@ objects:
 func TestParsePropertyPlainTextNotAffected(t *testing.T) {
 	yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: spot-ohide
+    kind: tourism_spot
+    name: Ohide Beach
     spec:
-      platform: proxmox
-      description: "A server without @ prefix"
+      spot_type: beach
+      description: "A spot without @ prefix"
 `
 
 	parser := NewParser()
@@ -1615,22 +1581,22 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	srv, ok := g.GetEntity("srv-01")
+	spot, ok := g.GetEntity("spot-ohide")
 	if !ok {
-		t.Fatal("expected entity srv-01")
+		t.Fatal("expected entity spot-ohide")
 	}
 
 	// Plain string should NOT be converted to ReferenceValue
-	v, ok := srv.GetProperty("platform")
+	v, ok := spot.GetProperty("spot_type")
 	if !ok {
-		t.Fatal("expected property platform")
+		t.Fatal("expected property spot_type")
 	}
 	if _, ok := v.(core.ReferenceValue); ok {
 		t.Error("plain string should not be converted to ReferenceValue")
 	}
 	str, ok := v.(string)
-	if !ok || str != "proxmox" {
-		t.Errorf("expected plain string proxmox, got %v", v)
+	if !ok || str != "beach" {
+		t.Errorf("expected plain string beach, got %v", v)
 	}
 }
 
@@ -1643,7 +1609,7 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 	}{
 		{
 			name:    "simple @ reference",
-			input:   "@net-mgmt",
+			input:   "@wb-lake",
 			wantRef: true,
 		},
 		{
@@ -1654,7 +1620,7 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 		{
 			name: "list with @ reference",
 			input: []interface{}{
-				"@net-mgmt",
+				"@wb-lake",
 				"plain",
 			},
 			wantType: "list-of-strings",
@@ -1662,8 +1628,8 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 		{
 			name: "nested map with @ reference",
 			input: map[string]interface{}{
-				"network": "@net-mgmt",
-				"name":    "mgmt",
+				"river": "@wb-lake",
+				"name":  "mgmt",
 			},
 			wantType: "map",
 		},
@@ -1671,8 +1637,8 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 			name: "list of maps with @ reference",
 			input: []interface{}{
 				map[string]interface{}{
-					"network": "@net-mgmt",
-					"vlan":    float64(100),
+					"river":     "@wb-lake",
+					"max_depth": float64(100),
 				},
 			},
 			wantType: "list-of-maps",
@@ -1688,8 +1654,8 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 				if !ok {
 					t.Errorf("expected ReferenceValue, got %T", result)
 				}
-				if ref.RefTargetID() != "net-mgmt" {
-					t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+				if ref.RefTargetID() != "wb-lake" {
+					t.Errorf("expected reference target wb-lake, got %s", ref.RefTargetID())
 				}
 				return
 			}
@@ -1703,8 +1669,8 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 				if len(list) > 0 {
 					if ref, ok := list[0].(core.ReferenceValue); !ok {
 						t.Errorf("expected list[0] to be ReferenceValue, got %T", list[0])
-					} else if ref.RefTargetID() != "net-mgmt" {
-						t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+					} else if ref.RefTargetID() != "wb-lake" {
+						t.Errorf("expected reference target wb-lake, got %s", ref.RefTargetID())
 					}
 				}
 			case "list-of-maps":
@@ -1717,10 +1683,10 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 					if !ok {
 						t.Fatalf("expected list[0] to be map, got %T", list[0])
 					}
-					if ref, ok := m["network"].(core.ReferenceValue); !ok {
-						t.Errorf("expected network to be ReferenceValue, got %T", m["network"])
-					} else if ref.RefTargetID() != "net-mgmt" {
-						t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+					if ref, ok := m["river"].(core.ReferenceValue); !ok {
+						t.Errorf("expected river to be ReferenceValue, got %T", m["river"])
+					} else if ref.RefTargetID() != "wb-lake" {
+						t.Errorf("expected reference target wb-lake, got %s", ref.RefTargetID())
 					}
 				}
 			case "map":
@@ -1728,10 +1694,10 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 				if !ok {
 					t.Fatalf("expected map[string]interface{}, got %T", result)
 				}
-				if ref, ok := m["network"].(core.ReferenceValue); !ok {
-					t.Errorf("expected network to be ReferenceValue, got %T", m["network"])
-				} else if ref.RefTargetID() != "net-mgmt" {
-					t.Errorf("expected reference target net-mgmt, got %s", ref.RefTargetID())
+				if ref, ok := m["river"].(core.ReferenceValue); !ok {
+					t.Errorf("expected river to be ReferenceValue, got %T", m["river"])
+				} else if ref.RefTargetID() != "wb-lake" {
+					t.Errorf("expected reference target wb-lake, got %s", ref.RefTargetID())
 				}
 			case "string":
 				str, ok := result.(string)
@@ -1744,18 +1710,18 @@ func TestConvertPropertyValueRecursive(t *testing.T) {
 			}
 		})
 
-		t.Run("server nesting container generates hosts relation", func(t *testing.T) {
+		t.Run("area nesting tourism_spot generates belongs_to relation", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      containers:
-        - id: ctr-01
-          name: Container 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
           spec:
-            image: nginx:latest
+            spot_type: park
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -1763,42 +1729,42 @@ objects:
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			srv, ok := g.GetEntity("srv-01")
+			area, ok := g.GetEntity("area-01")
 			if !ok {
-				t.Fatal("server not found")
+				t.Fatal("area not found")
 			}
-			if srv.Owner != "" {
-				t.Errorf("expected server to be root, got owner %s", srv.Owner)
+			if area.Owner != "" {
+				t.Errorf("expected area to be root, got owner %s", area.Owner)
 			}
 
-			ctr, ok := g.GetEntity("ctr-01")
+			spot, ok := g.GetEntity("spot-01")
 			if !ok {
-				t.Fatal("container not found")
+				t.Fatal("tourism spot not found")
 			}
-			if ctr.Owner != "srv-01" {
-				t.Errorf("expected container owner to be srv-01, got %s", ctr.Owner)
+			if spot.Owner != "area-01" {
+				t.Errorf("expected tourism spot owner to be area-01, got %s", spot.Owner)
 			}
 
-			rel, ok := g.GetRelation("rel-auto-hosts-srv-01-ctr-01")
-			if !ok || rel.Type != types.Hosts {
-				t.Error("missing hosts relation from container to server")
+			rel, ok := g.GetRelation("rel-auto-belongs_to-spot-01-area-01")
+			if !ok || rel.Type != types.BelongsTo {
+				t.Error("missing belongs_to relation from tourism spot to area")
 			}
 		})
 
-		t.Run("vm nesting container generates hosts relation", func(t *testing.T) {
+		t.Run("tourism_spot nesting hot_spring generates belongs_to relation", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      vms:
-        - id: vm-01
-          name: VM 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
           spec:
-            containers:
-              - id: ctr-01
-                name: Container 01
+            hot_springs:
+              - id: spring-01
+                name: Hot Spring 01
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -1806,32 +1772,33 @@ objects:
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			ctr, ok := g.GetEntity("ctr-01")
+			spring, ok := g.GetEntity("spring-01")
 			if !ok {
-				t.Fatal("container not found")
+				t.Fatal("hot spring not found")
 			}
-			if ctr.Owner != "vm-01" {
-				t.Errorf("expected container owner to be vm-01, got %s", ctr.Owner)
+			if spring.Owner != "spot-01" {
+				t.Errorf("expected hot spring owner to be spot-01, got %s", spring.Owner)
 			}
 
-			rel, ok := g.GetRelation("rel-auto-hosts-vm-01-ctr-01")
-			if !ok || rel.Type != types.Hosts {
-				t.Error("missing hosts relation from container to vm")
+			rel, ok := g.GetRelation("rel-auto-belongs_to-spring-01-spot-01")
+			if !ok || rel.Type != types.BelongsTo {
+				t.Error("missing belongs_to relation from hot spring to tourism spot")
 			}
 		})
 
-		t.Run("application nesting container generates hosts relation", func(t *testing.T) {
+		t.Run("hot_spring nesting event generates belongs_to relation", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: app-01
-    kind: application
-    name: App 01
+  - id: spring-01
+    kind: hot_spring
+    name: Hot Spring 01
     spec:
-      containers:
-        - id: ctr-01
-          name: Container 01
+      spring_quality: sulfur
+      events:
+        - id: evt-01
+          name: Event 01
           spec:
-            image: nginx:latest
+            season: summer
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -1839,31 +1806,33 @@ objects:
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			ctr, ok := g.GetEntity("ctr-01")
+			evt, ok := g.GetEntity("evt-01")
 			if !ok {
-				t.Fatal("container not found")
+				t.Fatal("event not found")
 			}
-			if ctr.Owner != "app-01" {
-				t.Errorf("expected container owner to be app-01, got %s", ctr.Owner)
+			if evt.Owner != "spring-01" {
+				t.Errorf("expected event owner to be spring-01, got %s", evt.Owner)
 			}
 
-			rel, ok := g.GetRelation("rel-auto-hosts-app-01-ctr-01")
-			if !ok || rel.Type != types.Hosts {
-				t.Error("missing hosts relation from container to application")
+			rel, ok := g.GetRelation("rel-auto-belongs_to-evt-01-spring-01")
+			if !ok || rel.Type != types.BelongsTo {
+				t.Error("missing belongs_to relation from event to hot spring")
 			}
 		})
 
-		t.Run("container nesting application generates hosts relation", func(t *testing.T) {
+		t.Run("species nesting population generates belongs_to relation", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: ctr-01
-    kind: container
-    name: Container 01
+  - id: spx-01
+    kind: species
+    name: Species 01
     spec:
-      image: node:18
-      applications:
-        - id: app-01
-          name: App 01
+      category: bird
+      populations:
+        - id: pop-01
+          name: Population 01
+          spec:
+            count: 150
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -1871,57 +1840,57 @@ objects:
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			app, ok := g.GetEntity("app-01")
+			pop, ok := g.GetEntity("pop-01")
 			if !ok {
-				t.Fatal("application not found")
+				t.Fatal("population not found")
 			}
-			if app.Owner != "ctr-01" {
-				t.Errorf("expected application owner to be ctr-01, got %s", app.Owner)
+			if pop.Owner != "spx-01" {
+				t.Errorf("expected population owner to be spx-01, got %s", pop.Owner)
 			}
 
-			rel, ok := g.GetRelation("rel-auto-hosts-ctr-01-app-01")
-			if !ok || rel.Type != types.Hosts {
-				t.Error("missing hosts relation from application to container")
+			rel, ok := g.GetRelation("rel-auto-belongs_to-pop-01-spx-01")
+			if !ok || rel.Type != types.BelongsTo {
+				t.Error("missing belongs_to relation from population to species")
 			}
 		})
 
-		t.Run("kubernetes multi-node scenario", func(t *testing.T) {
+		t.Run("multi-ground area scenario", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: cluster-prod-k8s
-    kind: cluster
-    name: Production K8s Cluster
-  - id: srv-k8s-01
-    kind: server
-    name: K8s Node 01
+  - id: area-sado
+    kind: area
+    name: Sado Island
+  - id: fst-north
+    kind: forest
+    name: North Forest
     attributes:
-      owner: cluster-prod-k8s
-  - id: srv-k8s-02
-    kind: server
-    name: K8s Node 02
+      owner: area-sado
+  - id: fst-south
+    kind: forest
+    name: South Forest
     attributes:
-      owner: cluster-prod-k8s
-  - id: app-web
-    kind: application
-    name: Web Application
+      owner: area-sado
+  - id: spot-tsukioka
+    kind: tourism_spot
+    name: Tsukioka Onsen
     attributes:
-      owner: cluster-prod-k8s
+      owner: area-sado
     spec:
-      containers:
-        - id: ctr-nginx-01
-          name: nginx-01
+      hot_springs:
+        - id: spring-01
+          name: Spring 01
           spec:
-            image: nginx:latest
-  - id: rel-hosts-01
-    type: hosts
+            spring_quality: chloride
+  - id: rel-located-01
+    type: located_in
     participants:
-      source: srv-k8s-01
-      target: app-web
-  - id: rel-hosts-02
-    type: hosts
+      source: fst-north
+      target: area-sado
+  - id: rel-located-02
+    type: located_in
     participants:
-      source: srv-k8s-02
-      target: app-web
+      source: fst-south
+      target: area-sado
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -1930,65 +1899,59 @@ objects:
 			}
 
 			// Verify entities
-			srv1, ok := g.GetEntity("srv-k8s-01")
-			if !ok || srv1.Owner != "cluster-prod-k8s" {
-				t.Error("server 01 owner mismatch")
+			fst1, ok := g.GetEntity("fst-north")
+			if !ok || fst1.Owner != "area-sado" {
+				t.Error("forest 01 owner mismatch")
 			}
-			srv2, ok := g.GetEntity("srv-k8s-02")
-			if !ok || srv2.Owner != "cluster-prod-k8s" {
-				t.Error("server 02 owner mismatch")
+			fst2, ok := g.GetEntity("fst-south")
+			if !ok || fst2.Owner != "area-sado" {
+				t.Error("forest 02 owner mismatch")
 			}
-			app, ok := g.GetEntity("app-web")
-			if !ok || app.Owner != "cluster-prod-k8s" {
-				t.Error("application owner mismatch")
+			spot, ok := g.GetEntity("spot-tsukioka")
+			if !ok || spot.Owner != "area-sado" {
+				t.Error("tourism spot owner mismatch")
 			}
-			ctr, ok := g.GetEntity("ctr-nginx-01")
-			if !ok || ctr.Owner != "app-web" {
-				t.Error("container owner mismatch")
+			spring, ok := g.GetEntity("spring-01")
+			if !ok || spring.Owner != "spot-tsukioka" {
+				t.Error("hot spring owner mismatch")
 			}
 
-			// Verify explicit hosts relations (multi-node)
-			rel1, ok := g.GetRelation("rel-hosts-01")
-			if !ok || rel1.Type != types.Hosts {
-				t.Error("missing explicit hosts relation 01")
+			// Verify explicit located_in relations (multi-child)
+			rel1, ok := g.GetRelation("rel-located-01")
+			if !ok || rel1.Type != types.LocatedIn {
+				t.Error("missing explicit located_in relation 01")
 			}
-			rel2, ok := g.GetRelation("rel-hosts-02")
-			if !ok || rel2.Type != types.Hosts {
-				t.Error("missing explicit hosts relation 02")
+			rel2, ok := g.GetRelation("rel-located-02")
+			if !ok || rel2.Type != types.LocatedIn {
+				t.Error("missing explicit located_in relation 02")
 			}
 
 			// Verify auto-relation from nesting
-			autoRel, ok := g.GetRelation("rel-auto-hosts-app-web-ctr-nginx-01")
-			if !ok || autoRel.Type != types.Hosts {
-				t.Error("missing auto hosts relation from container to application")
+			autoRel, ok := g.GetRelation("rel-auto-belongs_to-spring-01-spot-tsukioka")
+			if !ok || autoRel.Type != types.BelongsTo {
+				t.Error("missing auto belongs_to relation from hot spring to tourism spot")
 			}
 		})
 
-		t.Run("cluster nesting vms and servers generates belongs_to relations", func(t *testing.T) {
+		t.Run("area nesting forests and species generates belongs_to relations", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: k8s-prod
-    kind: cluster
-    name: Production K8s Cluster
+  - id: area-sado
+    kind: area
+    name: Sado Island
     spec:
-      vms:
-        - id: vm-k8s-node-01
-          name: K8s Node 01
+      species:
+        - id: spx-deer-01
+          name: Sika Deer Herd 01
           spec:
-            cpu:
-              - cores: 4
-            memory:
-              - size_gb: 16
-        - id: vm-k8s-node-02
-          name: K8s Node 02
+            category: mammal
+        - id: spx-deer-02
+          name: Sika Deer Herd 02
           spec:
-            cpu:
-              - cores: 4
-            memory:
-              - size_gb: 16
-      servers:
-        - id: srv-k8s-node-01
-          name: K8s Bare-metal Node 01
+            category: mammal
+      forests:
+        - id: fst-cedar-01
+          name: Cedar Stand 01
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -1996,22 +1959,22 @@ objects:
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			// Verify nested entities are owned by the cluster
-			for _, id := range []string{"vm-k8s-node-01", "vm-k8s-node-02", "srv-k8s-node-01"} {
+			// Verify nested entities are owned by the area
+			for _, id := range []string{"spx-deer-01", "spx-deer-02", "fst-cedar-01"} {
 				e, ok := g.GetEntity(id)
 				if !ok {
 					t.Fatalf("entity %s not found", id)
 				}
-				if e.Owner != "k8s-prod" {
-					t.Errorf("entity %s owner should be k8s-prod, got %s", id, e.Owner)
+				if e.Owner != "area-sado" {
+					t.Errorf("entity %s owner should be area-sado, got %s", id, e.Owner)
 				}
 			}
 
-			// Verify auto-generated belongs_to relations (member -> cluster)
+			// Verify auto-generated belongs_to relations (member -> area)
 			rels := map[string]string{
-				"rel-auto-belongs_to-vm-k8s-node-01-k8s-prod":  "vm-k8s-node-01",
-				"rel-auto-belongs_to-vm-k8s-node-02-k8s-prod":  "vm-k8s-node-02",
-				"rel-auto-belongs_to-srv-k8s-node-01-k8s-prod": "srv-k8s-node-01",
+				"rel-auto-belongs_to-spx-deer-01-area-sado": "spx-deer-01",
+				"rel-auto-belongs_to-spx-deer-02-area-sado": "spx-deer-02",
+				"rel-auto-belongs_to-fst-cedar-01-area-sado": "fst-cedar-01",
 			}
 			for relID, memberID := range rels {
 				rel, ok := g.GetRelation(relID)
@@ -2022,41 +1985,41 @@ objects:
 				if rel.Type != types.BelongsTo {
 					t.Errorf("relation %s: expected belongs_to, got %s", relID, rel.Type)
 				}
-				if rel.Participants.Source != memberID || rel.Participants.Target != "k8s-prod" {
-					t.Errorf("relation %s: expected source %s -> target k8s-prod, got %s -> %s",
+				if rel.Participants.Source != memberID || rel.Participants.Target != "area-sado" {
+					t.Errorf("relation %s: expected source %s -> target area-sado, got %s -> %s",
 						relID, memberID, rel.Participants.Source, rel.Participants.Target)
 				}
 			}
 		})
 
-		t.Run("container on multiple servers via hosts relations", func(t *testing.T) {
+		t.Run("event depending on multiple hot springs via depends_on relations", func(t *testing.T) {
 			yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
-  - id: srv-02
-    kind: server
-    name: Server 02
-  - id: app-web
-    kind: application
-    name: Web Application
+  - id: spring-01
+    kind: hot_spring
+    name: Hot Spring 01
+  - id: spring-02
+    kind: hot_spring
+    name: Hot Spring 02
+  - id: spot-onsen-town
+    kind: tourism_spot
+    name: Onsen Town
     spec:
-      containers:
-        - id: ctr-nginx-01
-          name: nginx-01
+      events:
+        - id: evt-lantern
+          name: Lantern Festival
           spec:
-            image: nginx:latest
-  - id: rel-hosts-01
-    type: hosts
+            season: autumn
+  - id: rel-dep-01
+    type: depends_on
     participants:
-      source: srv-01
-      target: ctr-nginx-01
-  - id: rel-hosts-02
-    type: hosts
+      source: spring-01
+      target: evt-lantern
+  - id: rel-dep-02
+    type: depends_on
     participants:
-      source: srv-02
-      target: ctr-nginx-01
+      source: spring-02
+      target: evt-lantern
 `
 			parser := NewParser()
 			g, err := parser.Parse([]byte(yaml))
@@ -2064,49 +2027,49 @@ objects:
 				t.Fatalf("failed to parse: %v", err)
 			}
 
-			ctr, ok := g.GetEntity("ctr-nginx-01")
+			evt, ok := g.GetEntity("evt-lantern")
 			if !ok {
-				t.Fatal("container not found")
+				t.Fatal("event not found")
 			}
-			if ctr.Owner != "app-web" {
-				t.Errorf("expected container owner to be app-web, got %s", ctr.Owner)
+			if evt.Owner != "spot-onsen-town" {
+				t.Errorf("expected event owner to be spot-onsen-town, got %s", evt.Owner)
 			}
 
-			rel1, ok := g.GetRelation("rel-hosts-01")
-			if !ok || rel1.Type != types.Hosts {
-				t.Error("missing hosts relation from srv-01 to container")
+			rel1, ok := g.GetRelation("rel-dep-01")
+			if !ok || rel1.Type != types.DependsOn {
+				t.Error("missing depends_on relation from spring-01 to event")
 			}
-			if rel1.Participants.Source != "srv-01" || rel1.Participants.Target != "ctr-nginx-01" {
+			if rel1.Participants.Source != "spring-01" || rel1.Participants.Target != "evt-lantern" {
 				t.Errorf("wrong participants: %s -> %s", rel1.Participants.Source, rel1.Participants.Target)
 			}
 
-			rel2, ok := g.GetRelation("rel-hosts-02")
-			if !ok || rel2.Type != types.Hosts {
-				t.Error("missing hosts relation from srv-02 to container")
+			rel2, ok := g.GetRelation("rel-dep-02")
+			if !ok || rel2.Type != types.DependsOn {
+				t.Error("missing depends_on relation from spring-02 to event")
 			}
-			if rel2.Participants.Source != "srv-02" || rel2.Participants.Target != "ctr-nginx-01" {
+			if rel2.Participants.Source != "spring-02" || rel2.Participants.Target != "evt-lantern" {
 				t.Errorf("wrong participants: %s -> %s", rel2.Participants.Source, rel2.Participants.Target)
 			}
 
-			autoRel, ok := g.GetRelation("rel-auto-hosts-app-web-ctr-nginx-01")
-			if !ok || autoRel.Type != types.Hosts {
-				t.Error("missing auto hosts relation from application to container")
+			autoRel, ok := g.GetRelation("rel-auto-belongs_to-evt-lantern-spot-onsen-town")
+			if !ok || autoRel.Type != types.BelongsTo {
+				t.Error("missing auto belongs_to relation from event to tourism spot")
 			}
 		})
 	}
 }
 
 func TestAutoRelationGeneration(t *testing.T) {
-	t.Run("server nesting vm generates hosts relation", func(t *testing.T) {
+	t.Run("area nesting tourism_spot generates belongs_to relation", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      vms:
-        - id: vm-01
-          name: VM 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
 `
 		parser := NewParser()
 		g, err := parser.Parse([]byte(yaml))
@@ -2114,66 +2077,34 @@ objects:
 			t.Fatalf("failed to parse: %v", err)
 		}
 
-		rel, ok := g.GetRelation("rel-auto-hosts-srv-01-vm-01")
-		if !ok {
-			t.Fatal("auto-relation not generated")
-		}
-		if rel.Type != types.Hosts {
-			t.Errorf("expected hosts, got %s", rel.Type)
-		}
-		if rel.Participants.Source != "srv-01" {
-			t.Errorf("expected source srv-01, got %s", rel.Participants.Source)
-		}
-		if rel.Participants.Target != "vm-01" {
-			t.Errorf("expected target vm-01, got %s", rel.Participants.Target)
-		}
-		if val, ok := rel.GetLabel("auto_generated"); !ok || val != "true" {
-			t.Error("expected auto_generated label")
-		}
-	})
-
-	t.Run("server nesting network generates belongs_to relation", func(t *testing.T) {
-		yaml := `
-objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
-    spec:
-      networks:
-        - id: net-01
-          name: Network 01
-`
-		parser := NewParser()
-		g, err := parser.Parse([]byte(yaml))
-		if err != nil {
-			t.Fatalf("failed to parse: %v", err)
-		}
-
-		rel, ok := g.GetRelation("rel-auto-belongs_to-net-01-srv-01")
+		rel, ok := g.GetRelation("rel-auto-belongs_to-spot-01-area-01")
 		if !ok {
 			t.Fatal("auto-relation not generated")
 		}
 		if rel.Type != types.BelongsTo {
 			t.Errorf("expected belongs_to, got %s", rel.Type)
 		}
-		if rel.Participants.Source != "net-01" {
-			t.Errorf("expected source net-01, got %s", rel.Participants.Source)
+		if rel.Participants.Source != "spot-01" {
+			t.Errorf("expected source spot-01, got %s", rel.Participants.Source)
 		}
-		if rel.Participants.Target != "srv-01" {
-			t.Errorf("expected target srv-01, got %s", rel.Participants.Target)
+		if rel.Participants.Target != "area-01" {
+			t.Errorf("expected target area-01, got %s", rel.Participants.Target)
+		}
+		if val, ok := rel.GetLabel("auto_generated"); !ok || val != "true" {
+			t.Error("expected auto_generated label")
 		}
 	})
 
-	t.Run("rack nesting server generates belongs_to relation", func(t *testing.T) {
+	t.Run("area nesting forest generates belongs_to relation", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: rack-01
-    kind: rack
-    name: Rack 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      servers:
-        - id: srv-01
-          name: Server 01
+      forests:
+        - id: fst-01
+          name: Forest 01
 `
 		parser := NewParser()
 		g, err := parser.Parse([]byte(yaml))
@@ -2181,7 +2112,39 @@ objects:
 			t.Fatalf("failed to parse: %v", err)
 		}
 
-		rel, ok := g.GetRelation("rel-auto-belongs_to-srv-01-rack-01")
+		rel, ok := g.GetRelation("rel-auto-belongs_to-fst-01-area-01")
+		if !ok {
+			t.Fatal("auto-relation not generated")
+		}
+		if rel.Type != types.BelongsTo {
+			t.Errorf("expected belongs_to, got %s", rel.Type)
+		}
+		if rel.Participants.Source != "fst-01" {
+			t.Errorf("expected source fst-01, got %s", rel.Participants.Source)
+		}
+		if rel.Participants.Target != "area-01" {
+			t.Errorf("expected target area-01, got %s", rel.Participants.Target)
+		}
+	})
+
+	t.Run("species nesting population generates belongs_to relation", func(t *testing.T) {
+		yaml := `
+objects:
+  - id: spx-01
+    kind: species
+    name: Species 01
+    spec:
+      populations:
+        - id: pop-01
+          name: Population 01
+`
+		parser := NewParser()
+		g, err := parser.Parse([]byte(yaml))
+		if err != nil {
+			t.Fatalf("failed to parse: %v", err)
+		}
+
+		rel, ok := g.GetRelation("rel-auto-belongs_to-pop-01-spx-01")
 		if !ok {
 			t.Fatal("auto-relation not generated")
 		}
@@ -2193,18 +2156,18 @@ objects:
 	t.Run("explicit relation skips auto-relation", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      vms:
-        - id: vm-01
-          name: VM 01
-  - id: rel-hosts-1
-    type: hosts
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
+  - id: rel-member-1
+    type: belongs_to
     participants:
-      source: srv-01
-      target: vm-01
+      source: spot-01
+      target: area-01
 `
 		parser := NewParser()
 		g, err := parser.Parse([]byte(yaml))
@@ -2213,13 +2176,13 @@ objects:
 		}
 
 		// Explicit relation should exist
-		_, ok := g.GetRelation("rel-hosts-1")
+		_, ok := g.GetRelation("rel-member-1")
 		if !ok {
 			t.Fatal("explicit relation not found")
 		}
 
 		// Auto-relation should not be generated (duplicate skipped)
-		autoRel, ok := g.GetRelation("rel-auto-hosts-srv-01-vm-01")
+		autoRel, ok := g.GetRelation("rel-auto-belongs_to-spot-01-area-01")
 		if ok {
 			t.Errorf("auto-relation should have been skipped, but found: %v", autoRel)
 		}
@@ -2228,17 +2191,17 @@ objects:
 	t.Run("multi-level nesting", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      vms:
-        - id: vm-01
-          name: VM 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
           spec:
-            applications:
-              - id: app-01
-                name: App 01
+            hot_springs:
+              - id: spring-01
+                name: Hot Spring 01
 `
 		parser := NewParser()
 		g, err := parser.Parse([]byte(yaml))
@@ -2246,22 +2209,22 @@ objects:
 			t.Fatalf("failed to parse: %v", err)
 		}
 
-		// server -> vm (hosts)
-		rel1, ok := g.GetRelation("rel-auto-hosts-srv-01-vm-01")
+		// tourism_spot -> area (belongs_to)
+		rel1, ok := g.GetRelation("rel-auto-belongs_to-spot-01-area-01")
 		if !ok {
-			t.Fatal("auto-relation server->vm not generated")
+			t.Fatal("auto-relation spot->area not generated")
 		}
-		if rel1.Type != types.Hosts {
-			t.Errorf("expected hosts, got %s", rel1.Type)
+		if rel1.Type != types.BelongsTo {
+			t.Errorf("expected belongs_to, got %s", rel1.Type)
 		}
 
-		// vm -> application (hosts)
-		rel2, ok := g.GetRelation("rel-auto-hosts-vm-01-app-01")
+		// hot_spring -> tourism_spot (belongs_to)
+		rel2, ok := g.GetRelation("rel-auto-belongs_to-spring-01-spot-01")
 		if !ok {
-			t.Fatal("auto-relation vm->app not generated")
+			t.Fatal("auto-relation spring->spot not generated")
 		}
-		if rel2.Type != types.Hosts {
-			t.Errorf("expected hosts, got %s", rel2.Type)
+		if rel2.Type != types.BelongsTo {
+			t.Errorf("expected belongs_to, got %s", rel2.Type)
 		}
 	})
 }
@@ -2270,13 +2233,13 @@ func TestAutoRelationConfig(t *testing.T) {
 	t.Run("disabled auto-relation", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      vms:
-        - id: vm-01
-          name: VM 01
+      forests:
+        - id: fst-01
+          name: Forest 01
 `
 		config := &AutoRelationConfig{
 			Disabled: true,
@@ -2287,7 +2250,7 @@ objects:
 			t.Fatalf("failed to parse: %v", err)
 		}
 
-		_, ok := g.GetRelation("rel-auto-hosts-srv-01-vm-01")
+		_, ok := g.GetRelation("rel-auto-belongs_to-fst-01-area-01")
 		if ok {
 			t.Error("auto-relation should not be generated when disabled")
 		}
@@ -2296,19 +2259,19 @@ objects:
 	t.Run("custom override", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: srv-01
-    kind: server
-    name: Server 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      vms:
-        - id: vm-01
-          name: VM 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
 `
 		config := &AutoRelationConfig{
 			Overrides: map[string]AutoRelationMapping{
-				"server.vms": {
+				"area.tourism_spots": {
 					RelationType: types.DependsOn,
-					Source:       "parent",
+					Source:       "child",
 				},
 			},
 		}
@@ -2318,7 +2281,7 @@ objects:
 			t.Fatalf("failed to parse: %v", err)
 		}
 
-		rel, ok := g.GetRelation("rel-auto-depends_on-srv-01-vm-01")
+		rel, ok := g.GetRelation("rel-auto-depends_on-spot-01-area-01")
 		if !ok {
 			t.Fatal("auto-relation not generated")
 		}
@@ -2332,21 +2295,21 @@ func TestAutoRelationIntegration(t *testing.T) {
 	t.Run("nesting to flat round-trip preserves auto-relations", func(t *testing.T) {
 		nestedYAML := `
 objects:
-  - id: region-01
-    kind: region
-    name: Region 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      racks:
-        - id: rack-01
-          name: Rack 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
           spec:
-            servers:
-              - id: srv-01
-                name: Server 01
+            hot_springs:
+              - id: spring-01
+                name: Hot Spring 01
                 spec:
-                  vms:
-                    - id: vm-01
-                      name: VM 01
+                  events:
+                    - id: evt-01
+                      name: Event 01
 `
 		parser := NewParser()
 		g1, err := parser.Parse([]byte(nestedYAML))
@@ -2362,19 +2325,19 @@ objects:
 		}
 
 		// Verify specific relations
-		rel1, ok := g1.GetRelation("rel-auto-belongs_to-rack-01-region-01")
+		rel1, ok := g1.GetRelation("rel-auto-belongs_to-spot-01-area-01")
 		if !ok || rel1.Type != types.BelongsTo {
-			t.Error("missing belongs_to rack->region")
+			t.Error("missing belongs_to spot->area")
 		}
 
-		rel2, ok := g1.GetRelation("rel-auto-belongs_to-srv-01-rack-01")
+		rel2, ok := g1.GetRelation("rel-auto-belongs_to-spring-01-spot-01")
 		if !ok || rel2.Type != types.BelongsTo {
-			t.Error("missing belongs_to server->rack")
+			t.Error("missing belongs_to spring->spot")
 		}
 
-		rel3, ok := g1.GetRelation("rel-auto-hosts-srv-01-vm-01")
-		if !ok || rel3.Type != types.Hosts {
-			t.Error("missing hosts server->vm")
+		rel3, ok := g1.GetRelation("rel-auto-belongs_to-evt-01-spring-01")
+		if !ok || rel3.Type != types.BelongsTo {
+			t.Error("missing belongs_to event->spring")
 		}
 
 		// Serialize to flat YAML
@@ -2397,43 +2360,45 @@ objects:
 		}
 
 		// Verify ownership preserved
-		rack, _ := g2.GetEntity("rack-01")
-		if rack.Owner != "region-01" {
-			t.Errorf("rack owner should be region-01, got %s", rack.Owner)
+		spot, _ := g2.GetEntity("spot-01")
+		if spot.Owner != "area-01" {
+			t.Errorf("tourism spot owner should be area-01, got %s", spot.Owner)
 		}
-		srv, _ := g2.GetEntity("srv-01")
-		if srv.Owner != "rack-01" {
-			t.Errorf("server owner should be rack-01, got %s", srv.Owner)
+		spring, _ := g2.GetEntity("spring-01")
+		if spring.Owner != "spot-01" {
+			t.Errorf("hot spring owner should be spot-01, got %s", spring.Owner)
 		}
-		vm, _ := g2.GetEntity("vm-01")
-		if vm.Owner != "srv-01" {
-			t.Errorf("vm owner should be srv-01, got %s", vm.Owner)
+		evt, _ := g2.GetEntity("evt-01")
+		if evt.Owner != "spring-01" {
+			t.Errorf("event owner should be spring-01, got %s", evt.Owner)
 		}
 	})
 
 	t.Run("all nesting types generate correct relations", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: region-01
-    kind: region
-    name: Region 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      clusters:
-        - id: cluster-01
-          name: Cluster 01
-      firewalls:
-        - id: fw-01
-          name: Firewall 01
+      tourism_spots:
+        - id: spot-01
+          name: Tourism Spot 01
           spec:
-            acls:
-              - id: acl-01
-                name: ACL 01
+            hot_springs:
+              - id: spring-01
+                name: Hot Spring 01
                 spec:
-                  acl_rules:
-                    - id: rule-01
-                      name: Rule 01
+                  events:
+                    - id: evt-01
+                      name: Event 01
                       spec:
-                        action: allow
+                        season: spring
+      forests:
+        - id: fst-01
+          name: Forest 01
+          spec:
+            forest_type: beech
 `
 		parser := NewParser()
 		g, err := parser.Parse([]byte(yaml))
@@ -2441,49 +2406,49 @@ objects:
 			t.Fatalf("failed to parse: %v", err)
 		}
 
-		// region -> cluster (belongs_to, child source)
-		r1, ok := g.GetRelation("rel-auto-belongs_to-cluster-01-region-01")
+		// area -> tourism_spot (belongs_to, child source)
+		r1, ok := g.GetRelation("rel-auto-belongs_to-spot-01-area-01")
 		if !ok || r1.Type != types.BelongsTo {
-			t.Error("missing belongs_to cluster->region")
+			t.Error("missing belongs_to spot->area")
 		}
-		if r1.Participants.Source != "cluster-01" || r1.Participants.Target != "region-01" {
+		if r1.Participants.Source != "spot-01" || r1.Participants.Target != "area-01" {
 			t.Errorf("wrong participants: %s -> %s", r1.Participants.Source, r1.Participants.Target)
 		}
 
-		// region -> firewall (belongs_to, child source)
-		r2, ok := g.GetRelation("rel-auto-belongs_to-fw-01-region-01")
+		// area -> forest (belongs_to, child source)
+		r2, ok := g.GetRelation("rel-auto-belongs_to-fst-01-area-01")
 		if !ok || r2.Type != types.BelongsTo {
-			t.Error("missing belongs_to firewall->region")
+			t.Error("missing belongs_to forest->area")
 		}
 
-		// firewall -> acl (belongs_to, child source)
-		r3, ok := g.GetRelation("rel-auto-belongs_to-acl-01-fw-01")
+		// tourism_spot -> hot_spring (belongs_to, child source)
+		r3, ok := g.GetRelation("rel-auto-belongs_to-spring-01-spot-01")
 		if !ok || r3.Type != types.BelongsTo {
-			t.Error("missing belongs_to acl->firewall")
+			t.Error("missing belongs_to spring->spot")
 		}
 
-		// acl -> acl_rule (belongs_to, child source)
-		r4, ok := g.GetRelation("rel-auto-belongs_to-rule-01-acl-01")
+		// hot_spring -> event (belongs_to, child source)
+		r4, ok := g.GetRelation("rel-auto-belongs_to-evt-01-spring-01")
 		if !ok || r4.Type != types.BelongsTo {
-			t.Error("missing belongs_to acl_rule->acl")
+			t.Error("missing belongs_to event->spring")
 		}
 	})
 
 	t.Run("explicit relation prevents auto-generation", func(t *testing.T) {
 		yaml := `
 objects:
-  - id: rack-01
-    kind: rack
-    name: Rack 01
+  - id: fst-01
+    kind: forest
+    name: Forest 01
     spec:
-      servers:
-        - id: srv-01
-          name: Server 01
+      grounds:
+        - id: grnd-01
+          name: Ground 01
   - id: rel-custom
     type: belongs_to
     participants:
-      source: srv-01
-      target: rack-01
+      source: grnd-01
+      target: fst-01
 `
 		parser := NewParser()
 		g, err := parser.Parse([]byte(yaml))
@@ -2499,54 +2464,55 @@ objects:
 		if !ok {
 			t.Error("explicit relation not found")
 		}
-		_, ok = g.GetRelation("rel-auto-belongs_to-srv-01-rack-01")
+		_, ok = g.GetRelation("rel-auto-belongs_to-grnd-01-fst-01")
 		if ok {
 			t.Error("auto-relation should not exist when explicit one is present")
 		}
 	})
 }
 
-func TestParseTrunkInterface(t *testing.T) {
+func TestParseResortEventReferences(t *testing.T) {
 	yaml := `
 objects:
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
+  - id: area-yuzawa
+    kind: area
+    name: Yuzawa Town
     spec:
-      interfaces:
-        - id: trunk-port1
-          kind: interface
-          name: Trunk Port 1
+      tourism_spots:
+        - id: spot-naeba
+          kind: tourism_spot
+          name: Naeba Ski Resort
           spec:
-            type: ethernet
-            mode: trunk
-            vlans:
-              - id: trunk-port1-vlan10
-                kind: vlan
-                name: VLAN 10 - Management
+            spot_type: ski_resort
+            events:
+              - id: evt-fireworks
+                kind: event
+                name: Summer Fireworks
                 spec:
-                  vlan_id: 10
-                  tagged: false
-                  associated_network: "@mgmt-network"
-              - id: trunk-port1-vlan100
-                kind: vlan
-                name: VLAN 100 - Production
+                  season: summer
+                  held_month: 7
+                  free_admission: false
+                  partner_event: "@evt-snowboard"
+              - id: evt-snowboard
+                kind: event
+                name: Snowboard Contest
                 spec:
-                  vlan_id: 100
-                  tagged: true
-                  associated_network: "@prod-network"
+                  season: winter
+                  held_month: 2
+                  free_admission: true
+                  partner_event: "@evt-fireworks"
 
-  - id: mgmt-network
-    kind: network
-    name: Management Network
+  - id: spot-gala
+    kind: tourism_spot
+    name: Gala Yuzawa
     spec:
-      cidr: 10.0.0.0/24
+      spot_type: ski_resort
 
-  - id: prod-network
-    kind: network
-    name: Production Network
+  - id: spot-mitsumata
+    kind: tourism_spot
+    name: Mitsumata Ropeway
     spec:
-      cidr: 192.168.0.0/24
+      spot_type: scenic
 `
 
 	parser := NewParser()
@@ -2555,84 +2521,81 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	// 1 switch + 1 trunk interface + 2 VLANs + 2 networks = 6
+	// 1 area + 1 resort + 2 events + 2 spots = 6
 	if g.EntityCount() != 6 {
 		t.Fatalf("expected 6 entities, got %d", g.EntityCount())
 	}
 
-	// Check trunk interface
-	trunk, ok := g.GetEntity("trunk-port1")
+	// Check resort
+	resort, ok := g.GetEntity("spot-naeba")
 	if !ok {
-		t.Fatal("entity trunk-port1 not found")
+		t.Fatal("entity spot-naeba not found")
 	}
-	if trunk.Owner != "sw-core-01" {
-		t.Errorf("expected owner sw-core-01, got %s", trunk.Owner)
+	if resort.Owner != "area-yuzawa" {
+		t.Errorf("expected owner area-yuzawa, got %s", resort.Owner)
 	}
-	mode, ok := trunk.GetProperty("mode")
-	if !ok || mode != "trunk" {
-		t.Errorf("expected mode trunk, got %v", mode)
+	spotType, ok := resort.GetProperty("spot_type")
+	if !ok || spotType != "ski_resort" {
+		t.Errorf("expected spot_type ski_resort, got %v", spotType)
 	}
 
-	// Check VLANs nested under trunk interface
-	vlan10, ok := g.GetEntity("trunk-port1-vlan10")
+	// Check events nested under the resort
+	fireworks, ok := g.GetEntity("evt-fireworks")
 	if !ok {
-		t.Fatal("entity trunk-port1-vlan10 not found")
+		t.Fatal("entity evt-fireworks not found")
 	}
-	if vlan10.Owner != "trunk-port1" {
-		t.Errorf("expected owner trunk-port1, got %s", vlan10.Owner)
+	if fireworks.Owner != "spot-naeba" {
+		t.Errorf("expected owner spot-naeba, got %s", fireworks.Owner)
 	}
-	tagged, ok := vlan10.GetProperty("tagged")
-	if !ok || tagged != false {
-		t.Errorf("expected tagged false for vlan10, got %v", tagged)
+	freeFireworks, ok := fireworks.GetProperty("free_admission")
+	if !ok || freeFireworks != false {
+		t.Errorf("expected free_admission false for evt-fireworks, got %v", freeFireworks)
 	}
 
-	vlan100, ok := g.GetEntity("trunk-port1-vlan100")
+	snowboard, ok := g.GetEntity("evt-snowboard")
 	if !ok {
-		t.Fatal("entity trunk-port1-vlan100 not found")
+		t.Fatal("entity evt-snowboard not found")
 	}
-	tagged100, ok := vlan100.GetProperty("tagged")
-	if !ok || tagged100 != true {
-		t.Errorf("expected tagged true for vlan100, got %v", tagged100)
+	freeSnowboard, ok := snowboard.GetProperty("free_admission")
+	if !ok || freeSnowboard != true {
+		t.Errorf("expected free_admission true for evt-snowboard, got %v", freeSnowboard)
 	}
 
-	// Check auto-generated belongs_to relations for VLANs
+	// Check auto-generated belongs_to relations
 	if g.RelationCount() < 2 {
 		t.Errorf("expected at least 2 auto-generated belongs_to relations, got %d", g.RelationCount())
 	}
 }
 
-func TestParseSwitchRouterPorts(t *testing.T) {
+func TestParseAreasNestedChildren(t *testing.T) {
 	yaml := `
 objects:
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
+  - id: area-niigata-city
+    kind: area
+    name: Niigata City
     spec:
-      port_count: 24
-      ports:
-        - id: port1
-          name: port1
+      population: 810000
+      tourism_spots:
+        - id: spot-minatopia
+          name: Minatopia History Museum
           spec:
-            type: ethernet
-            speed_mbps: 10000
-            mode: trunk
-        - id: port2
-          name: port2
+            spot_type: museum
+            annual_visitors: 300000
+        - id: spot-furumachi
+          name: Furumachi Historic District
           spec:
-            type: ethernet
-            speed_mbps: 1000
-            mode: access
+            spot_type: historic
+            annual_visitors: 150000
 
-  - id: rt-core-01
-    kind: router
-    name: Core Router 01
+  - id: area-aga
+    kind: area
+    name: Aga Town
     spec:
-      ports:
-        - id: ge0/0
-          name: GigabitEthernet0/0
+      forests:
+        - id: fst/2025-survey
+          name: Aga Cedar Stand
           spec:
-            type: ethernet
-            speed_mbps: 1000
+            forest_type: cedar_plantation
 `
 
 	parser := NewParser()
@@ -2641,56 +2604,56 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	sw, ok := g.GetEntity("sw-core-01")
+	city, ok := g.GetEntity("area-niigata-city")
 	if !ok {
-		t.Fatal("entity sw-core-01 not found")
+		t.Fatal("entity area-niigata-city not found")
 	}
-	portCount, ok := sw.GetProperty("port_count")
-	if !ok || portCount != 24 {
-		t.Errorf("expected port_count 24, got %v", portCount)
+	population, ok := city.GetProperty("population")
+	if !ok || population != 810000 {
+		t.Errorf("expected population 810000, got %v", population)
 	}
 
-	// Switch ports are interface entities owned by the switch
-	for _, pid := range []string{"port1", "port2"} {
-		port, ok := g.GetEntity(pid)
+	// Tourism spots are tourism_spot entities owned by the area
+	for _, sid := range []string{"spot-minatopia", "spot-furumachi"} {
+		spot, ok := g.GetEntity(sid)
 		if !ok {
-			t.Fatalf("entity %s not found", pid)
+			t.Fatalf("entity %s not found", sid)
 		}
-		if port.Kind != "interface" {
-			t.Errorf("port %s: expected kind interface, got %s", pid, port.Kind)
+		if spot.Kind != kinds.TourismSpot {
+			t.Errorf("spot %s: expected kind tourism_spot, got %s", sid, spot.Kind)
 		}
-		if port.Owner != "sw-core-01" {
-			t.Errorf("port %s: expected owner sw-core-01, got %s", pid, port.Owner)
+		if spot.Owner != "area-niigata-city" {
+			t.Errorf("spot %s: expected owner area-niigata-city, got %s", sid, spot.Owner)
 		}
 	}
 
-	// Router ports are interface entities owned by the router
-	ge, ok := g.GetEntity("ge0/0")
+	// The surveyed forest is a forest entity owned by the other area
+	fst, ok := g.GetEntity("fst/2025-survey")
 	if !ok {
-		t.Fatal("entity ge0/0 not found")
+		t.Fatal("entity fst/2025-survey not found")
 	}
-	if ge.Kind != "interface" {
-		t.Errorf("router port: expected kind interface, got %s", ge.Kind)
+	if fst.Kind != kinds.Forest {
+		t.Errorf("survey forest: expected kind forest, got %s", fst.Kind)
 	}
-	if ge.Owner != "rt-core-01" {
-		t.Errorf("router port: expected owner rt-core-01, got %s", ge.Owner)
+	if fst.Owner != "area-aga" {
+		t.Errorf("survey forest: expected owner area-aga, got %s", fst.Owner)
 	}
 
-	// Auto-generated belongs_to relations for nested ports
+	// Auto-generated belongs_to relations for nested children
 	belongsTo := g.RelationsByType(core.RelationType("belongs_to"))
 	if len(belongsTo) < 3 {
 		t.Errorf("expected at least 3 auto-generated belongs_to relations, got %d", len(belongsTo))
 	}
 }
 
-func TestParseSwitchPortCountPropertyOnly(t *testing.T) {
+func TestParseAreaPopulationPropertyOnly(t *testing.T) {
 	yaml := `
 objects:
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
+  - id: area-nagaoka
+    kind: area
+    name: Nagaoka City
     spec:
-      port_count: 48
+      population: 275000
 `
 
 	parser := NewParser()
@@ -2699,31 +2662,31 @@ objects:
 		t.Fatalf("failed to parse: %v", err)
 	}
 
-	sw, ok := g.GetEntity("sw-core-01")
+	area, ok := g.GetEntity("area-nagaoka")
 	if !ok {
-		t.Fatal("entity sw-core-01 not found")
+		t.Fatal("entity area-nagaoka not found")
 	}
-	portCount, ok := sw.GetProperty("port_count")
-	if !ok || portCount != 48 {
-		t.Errorf("expected port_count 48, got %v", portCount)
+	population, ok := area.GetProperty("population")
+	if !ok || population != 275000 {
+		t.Errorf("expected population 275000, got %v", population)
 	}
 }
 
-func TestParseRouterInterfacesCountRejected(t *testing.T) {
-	// The `interfaces` key is a nest key for router; an integer count must no
-	// longer be accepted (previously broken `interfaces: 36` property).
+func TestParseAreaSpotsCountRejected(t *testing.T) {
+	// The `tourism_spots` key is a nest key for area; an integer count must no
+	// longer be accepted (previously broken `tourism_spots: 12` property).
 	yaml := `
 objects:
-  - id: rt-core-01
-    kind: router
-    name: Core Router 01
+  - id: area-01
+    kind: area
+    name: Area 01
     spec:
-      interfaces: 36
+      tourism_spots: 12
 `
 
 	parser := NewParser()
 	if _, err := parser.Parse([]byte(yaml)); err == nil {
-		t.Error("expected error when router declares interfaces as an integer count")
+		t.Error("expected error when area declares tourism_spots as an integer count")
 	}
 }
 
@@ -2744,76 +2707,79 @@ func TestParseDirCrossFileReferences(t *testing.T) {
 	// fileA defines entities that are referenced from the other files.
 	writeTestFile("fileA.yaml", `
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: area-sado
+    kind: area
+    name: Sado Island
 
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: spx-ibis
+    kind: species
+    name: Crested Ibis
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado
     spec:
-      networks:
-        - id: net-mgmt
-          name: Management
-          interfaces:
-            - id: eth0
-              name: eth0
+      scientific_name: Nipponia nippon
+      populations:
+        - id: pop-wild
+          name: Wild Population
+          spec:
+            count: 190
 
-  - id: net-storage
-    kind: network
-    name: Storage Network
+  - id: wb-lake-kamo
+    kind: water_body
+    name: Lake Kamo
     spec:
-      cidr: 192.168.10.0/24
+      water_type: lake
+      max_depth_m: 7
 `)
 
 	// fileB references entities from fileA (owner, relation participant,
 	// path-based participant, and @-prefixed property reference).
 	writeTestFile("fileB.yaml", `
 objects:
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  - id: fst-beech
+    kind: forest
+    name: Beech Forest
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado
     spec:
-      height_units: 42
+      forest_type: beech
+      area_ha: 120
 
-  - id: vlan-100
-    kind: vlan
-    name: VLAN 100
+  - id: spx-crucian-carp
+    kind: species
+    name: Crucian Carp
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado
     spec:
-      vlan_id: 100
-      associated_network: "@net-storage"
+      category: fish
+      spawning_ground: "@wb-lake-kamo"
 
-  - id: rel-hosts
-    type: hosts
+  - id: rel-inhabits
+    type: inhabits
     participants:
-      source: srv-proxmox-01
-      target: vlan-100
+      source: pop-wild
+      target: wb-lake-kamo
 
-  - id: rel-connects
-    type: connects
+  - id: rel-near
+    type: near
     participants:
-      - srv-proxmox-01/net-mgmt/eth0
-      - sw-core-01/port1
+      - area-sado/spx-ibis/pop-wild
+      - fst-mixed/grnd-01
 `)
 
 	// fileC lives in a nested subdirectory to exercise recursive walking.
 	writeTestFile("nested/fileC.yaml", `
 objects:
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
+  - id: fst-mixed
+    kind: forest
+    name: Mixed Forest
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-sado
     spec:
-      interfaces:
-        - id: port1
-          name: port1
+      forest_type: mixed
+      grounds:
+        - id: grnd-01
+          name: Valley Floor
 `)
 
 	p := NewParser()
@@ -2823,7 +2789,7 @@ objects:
 	}
 
 	// All entities from all files are merged into a single graph.
-	expectedEntities := []string{"region-ap-northeast-1", "srv-proxmox-01", "net-mgmt", "eth0", "net-storage", "rack-a01", "vlan-100", "sw-core-01", "port1"}
+	expectedEntities := []string{"area-sado", "spx-ibis", "pop-wild", "wb-lake-kamo", "fst-beech", "spx-crucian-carp", "fst-mixed", "grnd-01"}
 	for _, id := range expectedEntities {
 		if _, ok := g.GetEntity(id); !ok {
 			t.Errorf("expected merged entity %s, not found", id)
@@ -2832,37 +2798,37 @@ objects:
 
 	// Explicit cross-file relations are present (nesting may also generate
 	// auto-relations, so verify by ID rather than exact count).
-	if _, ok := g.GetRelation("rel-hosts"); !ok {
-		t.Error("expected merged relation rel-hosts, not found")
+	if _, ok := g.GetRelation("rel-inhabits"); !ok {
+		t.Error("expected merged relation rel-inhabits, not found")
 	}
-	if _, ok := g.GetRelation("rel-connects"); !ok {
-		t.Error("expected merged relation rel-connects, not found")
+	if _, ok := g.GetRelation("rel-near"); !ok {
+		t.Error("expected merged relation rel-near, not found")
 	}
 
 	// Cross-file ownership resolves.
-	rack, ok := g.GetEntity("rack-a01")
+	forest, ok := g.GetEntity("fst-beech")
 	if !ok {
-		t.Fatal("expected entity rack-a01")
+		t.Fatal("expected entity fst-beech")
 	}
-	if rack.Owner != "region-ap-northeast-1" {
-		t.Errorf("expected rack-a01 owner region-ap-northeast-1 (defined in fileA), got %s", rack.Owner)
+	if forest.Owner != "area-sado" {
+		t.Errorf("expected fst-beech owner area-sado (defined in fileA), got %s", forest.Owner)
 	}
 
 	// Cross-file @-prefixed property reference resolves.
-	vlan, ok := g.GetEntity("vlan-100")
+	species, ok := g.GetEntity("spx-crucian-carp")
 	if !ok {
-		t.Fatal("expected entity vlan-100")
+		t.Fatal("expected entity spx-crucian-carp")
 	}
-	v, ok := vlan.GetProperty("associated_network")
+	v, ok := species.GetProperty("spawning_ground")
 	if !ok {
-		t.Fatal("expected property associated_network")
+		t.Fatal("expected property spawning_ground")
 	}
 	ref, ok := v.(core.ReferenceValue)
 	if !ok {
 		t.Fatalf("expected ReferenceValue, got %T", v)
 	}
-	if ref.RefTargetID() != "net-storage" {
-		t.Errorf("expected reference target net-storage (defined in fileA), got %s", ref.RefTargetID())
+	if ref.RefTargetID() != "wb-lake-kamo" {
+		t.Errorf("expected reference target wb-lake-kamo (defined in fileA), got %s", ref.RefTargetID())
 	}
 
 	// All references resolve across the merged graph, including path references
@@ -2871,8 +2837,8 @@ objects:
 		t.Errorf("expected no reference errors, got %v", errs)
 	}
 
-	e, ok := g.ResolvePathEntity("srv-proxmox-01/net-mgmt/eth0")
-	if !ok || e.ID != "eth0" {
-		t.Errorf("expected path reference to resolve to eth0, got %v (ok=%v)", e, ok)
+	e, ok := g.ResolvePathEntity("area-sado/spx-ibis/pop-wild")
+	if !ok || e.ID != "pop-wild" {
+		t.Errorf("expected path reference to resolve to pop-wild, got %v (ok=%v)", e, ok)
 	}
 }

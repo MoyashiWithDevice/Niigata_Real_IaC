@@ -3,7 +3,7 @@ package renderer
 import (
 	"testing"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 func entitiesForTree() []*core.Entity {

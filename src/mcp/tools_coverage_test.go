@@ -7,8 +7,8 @@ import (
 
 	"github.com/mark3labs/mcp-go/mcp"
 
-	"IACForge/src/core"
-	_ "IACForge/src/extension/builtin/aws"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	
 )
 
 // mockClientSession implements the subset of ClientSession needed to drive the
@@ -58,8 +58,8 @@ func TestEntityToolErrorPaths(t *testing.T) {
 
 	// add_entity with invalid JSON payloads.
 	for _, arg := range []map[string]interface{}{
-		{"id": "e1", "kind": "aws.ec2", "name": "E", "labels_json": "{bad"},
-		{"id": "e1", "kind": "aws.ec2", "name": "E", "properties_json": "{bad"},
+		{"id": "e1", "kind": "species", "name": "E", "labels_json": "{bad"},
+		{"id": "e1", "kind": "species", "name": "E", "properties_json": "{bad"},
 	} {
 		res := callTool(t, s, "add_entity", arg)
 		if !res.IsError {
@@ -147,7 +147,7 @@ func TestQueryToolErrorPaths(t *testing.T) {
 
 	// Limit and offset are accepted on an empty graph.
 	res = callTool(t, s, "query_entities", map[string]interface{}{
-		"kind": "aws.ec2", "limit": 10, "offset": 0,
+		"kind": "species", "limit": 10, "offset": 0,
 	})
 	if res.IsError {
 		t.Fatalf("expected success with limit/offset, got: %+v", res)
@@ -172,7 +172,7 @@ func TestParseConditionsErrors(t *testing.T) {
 func TestRenderGraphFormats(t *testing.T) {
 	sm := NewSessionManager()
 	s := NewMCPServer(sm)
-	_ = seedAWSGraph(t, sm, s)
+	_ = seedNiigataGraph(t, sm, s)
 
 	// Mermaid output.
 	res := callTool(t, s, "render_graph", map[string]interface{}{"format": "mermaid"})
@@ -209,7 +209,7 @@ func TestRenderGraphFormats(t *testing.T) {
 
 	// Kind filter + group_by.
 	res = callTool(t, s, "render_graph", map[string]interface{}{
-		"kinds": []interface{}{"aws.ec2", "aws.vpc"}, "group_by": "status",
+		"kinds": []interface{}{"species", "water_body"}, "group_by": "status",
 	})
 	if res.IsError {
 		t.Fatalf("render with kinds/group_by failed: %+v", res)
@@ -247,12 +247,12 @@ func TestWhoReferencesPropertyValues(t *testing.T) {
 	sd := sm.GetOrCreate("default")
 
 	// Build a small graph with various property reference shapes.
-	org := core.NewEntity("org-01", "aws.organization", "Org")
+	org := core.NewEntity("org-01", "area", "Org")
 	if err := sd.Graph.AddEntity(org); err != nil {
 		t.Fatalf("AddEntity org-01: %v", err)
 	}
 
-	ec2 := core.NewEntity("ec2-01", "aws.ec2", "Web")
+	ec2 := core.NewEntity("ec2-01", "species", "Web")
 	ec2.SetOwner("org-01")
 	ec2.Properties = map[string]interface{}{
 		"subnet": "@subnet-01", // string reference form
@@ -262,7 +262,7 @@ func TestWhoReferencesPropertyValues(t *testing.T) {
 	}
 
 	// Nested slice reference.
-	lb := core.NewEntity("lb-01", "aws.load_balancer", "LB")
+	lb := core.NewEntity("lb-01", "tourism_spot", "LB")
 	lb.SetOwner("org-01")
 	lb.Properties = map[string]interface{}{
 		"listeners": []interface{}{"@listener-01", "plain"},

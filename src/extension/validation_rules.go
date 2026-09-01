@@ -3,7 +3,7 @@ package extension
 import (
 	"fmt"
 
-	"IACForge/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
 )
 
 // ValidationRulesExtensionPoint manages validation rule extensions.

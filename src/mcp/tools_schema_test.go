@@ -27,7 +27,7 @@ func TestListEntityKinds(t *testing.T) {
 	}
 
 	text := toolResultText(t, res)
-	for _, want := range []string{`"kind": "server"`, `"kind": "network"`, `"nest_keys"`} {
+	for _, want := range []string{`"kind": "area"`, `"kind": "species"`, `"nest_keys"`} {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in list_entity_kinds output:\n%s", want, text)
 		}
@@ -41,7 +41,7 @@ func TestGetEntityKind(t *testing.T) {
 	req := mcp.CallToolRequest{
 		Params: mcp.CallToolParams{
 			Name:      "get_entity_kind",
-			Arguments: map[string]interface{}{"kind": "server"},
+			Arguments: map[string]interface{}{"kind": "area"},
 		},
 	}
 	res, err := s.GetTool("get_entity_kind").Handler(context.Background(), req)
@@ -53,7 +53,7 @@ func TestGetEntityKind(t *testing.T) {
 	}
 
 	text := toolResultText(t, res)
-	for _, want := range []string{`"kind": "server"`, `"properties"`, `"nesting_defs"`, `"networks"`} {
+	for _, want := range []string{`"kind": "area"`, `"properties"`, `"nesting_defs"`, `"species"`} {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in get_entity_kind output:\n%s", want, text)
 		}
@@ -94,7 +94,7 @@ func TestListRelationTypes(t *testing.T) {
 	}
 
 	text := toolResultText(t, res)
-	for _, want := range []string{`"type": "connects"`, `"direction": "symmetric"`, `"type": "hosts"`} {
+	for _, want := range []string{`"type": "near"`, `"direction": "symmetric"`, `"type": "inhabits"`} {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in list_relation_types output:\n%s", want, text)
 		}
@@ -120,7 +120,7 @@ func TestGetSchema(t *testing.T) {
 	}
 
 	text := toolResultText(t, res)
-	for _, want := range []string{"entity_kinds:", "relation_types:", "server:", "connects:"} {
+	for _, want := range []string{"entity_kinds:", "relation_types:", "area:", "inhabits:"} {
 		if !strings.Contains(text, want) {
 			t.Errorf("expected %q in get_schema YAML output:\n%s", want, text)
 		}

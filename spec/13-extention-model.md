@@ -54,11 +54,11 @@ Example:
 
 network.switch
 
-proxmox.vm
+sado.ferry
 
-kubernetes.pod
+ecotour.tour
 
-aws.vpc
+nagaoka.fireworks
 
 ---
 

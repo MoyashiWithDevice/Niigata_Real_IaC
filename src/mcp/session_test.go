@@ -3,7 +3,7 @@ package mcp
 import (
 	"testing"
 
-	"IACForge/src/extension"
+	"github.com/bababa/Niigata_Real_IaC/src/extension"
 )
 
 func TestSessionExtensionManager(t *testing.T) {
@@ -19,8 +19,8 @@ func TestSessionExtensionManager(t *testing.T) {
 	if sd.Schema == nil {
 		t.Fatal("expected non-nil schema in session data")
 	}
-	if !sd.Schema.HasEntityKind("server") {
-		t.Error("expected core kind 'server' in session schema")
+	if !sd.Schema.HasEntityKind("area") {
+		t.Error("expected core kind 'area' in session schema")
 	}
 	if sd.Validation == nil {
 		t.Fatal("expected non-nil validation engine in session data")
@@ -40,7 +40,7 @@ func TestSessionExtensionManager(t *testing.T) {
 }
 
 func TestSessionGetOrCreateFallsBackOnInvalidExtensionDir(t *testing.T) {
-	t.Setenv("IACFORGE_EXTENSIONS", t.TempDir()+"/missing-plugins")
+	t.Setenv("NIIGATA_EXTENSIONS", t.TempDir()+"/missing-plugins")
 
 	sm := NewSessionManager()
 	sd := sm.GetOrCreate("fallback-session")
@@ -48,11 +48,11 @@ func TestSessionGetOrCreateFallsBackOnInvalidExtensionDir(t *testing.T) {
 	if sd == nil {
 		t.Fatal("expected non-nil session data when extension directory is invalid")
 	}
-	if !sd.Schema.HasEntityKind("server") {
-		t.Error("expected core kind 'server' in fallback session schema")
+	if !sd.Schema.HasEntityKind("species") {
+		t.Error("expected core kind 'species' in fallback session schema")
 	}
-	if !sd.Schema.HasEntityKind("aws.ec2") {
-		t.Error("expected built-in aws.ec2 kind in fallback session schema")
+	if sd.Schema.HasEntityKind("aws.ec2") {
+		t.Error("expected aws.ec2 kind to be absent from fallback session schema")
 	}
 	if !sd.Extensions.IsLoaded() {
 		t.Error("expected fallback extension manager to be loaded")

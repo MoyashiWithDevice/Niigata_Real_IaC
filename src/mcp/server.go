@@ -3,14 +3,12 @@ package mcp
 import (
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
-
-	_ "IACForge/src/extension/builtin/aws"
 )
 
-// NewMCPServer creates and configures a new MCP server with all IACForge tools.
+// NewMCPServer creates and configures a new MCP server with all Niigata model tools.
 func NewMCPServer(sm *SessionManager) *server.MCPServer {
 	s := server.NewMCPServer(
-		"IACForge",
+		"Niigata Real Model",
 		"0.1.0",
 		server.WithToolCapabilities(false),
 	)

@@ -39,12 +39,20 @@ When a per-kind definition exists for the same nest key, the per-kind definition
 
 | Nest Key | Child Kind | Auto-Relation |
 |----------|------------|---------------|
-| interfaces | interface | belongs_to (child) |
-| servers | server | belongs_to (child) |
-| switches | switch | belongs_to (child) |
-| routers | router | belongs_to (child) |
-| firewalls | firewall | belongs_to (child) |
-| networks | network | belongs_to (child) |
+| grounds | ground | belongs_to (child) |
+| terrains | terrain | belongs_to (child) |
+| water_bodies | water_body | belongs_to (child) |
+| forests | forest | belongs_to (child) |
+| tourism_spots | tourism_spot | belongs_to (child) |
+| species | species | belongs_to (child) |
+| populations | population | belongs_to (child) |
+| hot_springs | hot_spring | belongs_to (child) |
+| events | event | belongs_to (child) |
+| cultural_assets | cultural_asset | belongs_to (child) |
+
+コア Schema では、これらのネストは個々の Entity Kind 定義（per-kind）として登録されている。
+
+例えば `populations` は `species` 配下でのみネスト可能である。
 
 ---
 
@@ -68,7 +76,7 @@ The Core Schema defines the following property types.
 
 | Type | Description | Examples |
 |------|-------------|----------|
-| string | Text value | "hello", "10.0.1.10" |
+| string | Text value | "hello", "Nipponia nippon" |
 | integer | Whole number | 42, 1000, -1 |
 | number | Floating point | 3.14, 1024.5 |
 | boolean | True/false | true, false |
@@ -79,7 +87,7 @@ The Core Schema defines the following property types.
 |------|-------------|----------|
 | list[Type] | Ordered collection | ["web", "db"], [1, 2, 3] |
 | map[Type] | Key-value pairs | {env: "prod", tier: "1"} |
-| reference | Reference to another Object | "srv-01", "/region01/rack01/server01" |
+| reference | Reference to another Object | "@area-sado-city", "/area-niigata/forest-myoko/species-toki" |
 
 ### Enumerated Types
 
@@ -147,27 +155,17 @@ A definition includes:
 
 | Kind | Description |
 |------|-------------|
-| region | Physical location |
-| rack | Physical rack enclosure |
-| server | Physical or virtual compute host |
-| interface | Network interface |
-| cable | Physical cable |
-| power_distribution | Power distribution unit (PDU) |
-| network | Logical network |
-| vlan | VLAN definition |
-| switch | Network switch |
-| router | Network router |
-| firewall | Network firewall |
-| acl | Access Control List |
-| acl_rule | Individual ACL rule |
-| vm | Virtual machine |
-| container | Containerized workload |
-| application | Software application |
-| open_port | Listening network port |
-| storage | Storage system |
-| volume | Logical storage volume |
-| cluster | Logical compute grouping |
-| availability_zone | Logical availability zone |
+| area | Geographic area (city, town, district, island) |
+| ground | Ground or soil condition at a site |
+| terrain | Landform (mountain, plain, coast, valley) |
+| water_body | River, lake, sea area, pond, or marsh |
+| forest | Forest or wooded area |
+| species | Animal or plant species |
+| population | Population record of a species from a survey |
+| tourism_spot | Tourist attraction |
+| hot_spring | Hot spring source or bath facility |
+| cultural_asset | Historic site or cultural property |
+| event | Festival or recurring local event |
 
 ### Property Type Definitions
 
@@ -203,6 +201,8 @@ properties:
         description: "CPU architecture"
 ```
 
+**注意:** コア Schema（Niigata Nature and Tourism Resource Schema）は構造化リストを使用しない。すべての kind 固有プロパティはプリミティブ型である。上記は `list[object]` 型の一般的な例としてのみ示す。
+
 ### Constraint Types
 
 | Constraint | Applicable Types | Description |
@@ -232,17 +232,12 @@ A definition includes:
 
 | Type | Direction | Description |
 |------|-----------|-------------|
-| connects | symmetric | Physical connection |
-| hosts | directed | Execution hosting |
-| depends_on | directed | Dependency |
-| belongs_to | directed | Logical membership |
-| replicates_to | directed | Data replication |
-| backs_up | directed | Backup relationship |
-| monitors | directed | Monitoring |
-| managed_by | directed | Management |
-| mounted_on | directed | Storage mounting |
-| applies_to | directed | ACL application |
-| listens_on | directed | Port listening |
+| located_in | directed | Entity is located within an area or terrain |
+| inhabits | directed | Species lives in a habitat |
+| near | symmetric | Two resources are geographically close |
+| depends_on | directed | Directional dependency (e.g. hot spring on its source) |
+| belongs_to | directed | Logical membership or association |
+| flows_into | directed | River or water flow destination |
 
 ### Direction Enum
 
@@ -287,13 +282,12 @@ The Core Schema does not define specific profiles.
 - name: my-profile
   description: Custom validation profile
   required_kinds:
-    - region
-    - rack
-    - server
+    - area
+    - species
   required_properties:
-    region: ["name"]
-    rack: ["name"]
-    server: ["name", "platform"]
+    area: ["name"]
+    species: ["name"]
+    population: ["name", "count"]
 ```
 
 ---
@@ -379,72 +373,64 @@ Schemas follow semantic versioning.
 schema:
   schema_version: "1.0.0"
   spec_version: "1.0"
-  description: "Core Infrastructure Schema"
+  description: "Niigata Nature and Tourism Resource Schema"
 
 entity_kinds:
-  server:
-    description: "Physical or virtual compute host"
+  species:
+    description: "Animal or plant species living in the area"
     properties:
-      - name: platform
+      - name: scientific_name
         type: string
         required: false
-        description: "Virtualization platform"
-      - name: cpu
-        type: list
+        description: "Scientific (Latin) name"
+      - name: category
+        type: string
         required: false
-        description: "CPU configurations"
-        properties:
-          - name: cores
-            type: integer
-            required: false
-            constraints:
-              min: 1
-              max: 1024
-            description: "Number of CPU cores"
-          - name: architecture
-            type: string
-            required: false
-            description: "CPU architecture (x86_64, arm64)"
-      - name: memory
-        type: list
+        constraints:
+          enum:
+            - mammal
+            - bird
+            - reptile
+            - amphibian
+            - fish
+            - insect
+            - plant
+            - other
+        description: "Biological category"
+      - name: red_list_status
+        type: string
         required: false
-        description: "Memory modules"
-        properties:
-          - name: size_gb
-            type: number
-            required: true
-            description: "Memory module size in GB"
-          - name: speed
-            type: integer
-            required: false
-            description: "Memory speed in MHz"
-          - name: type
-            type: string
-            required: false
-            description: "Memory type (ddr4, ddr5, lpddr4, lpddr5)"
-      - name: storage
-        type: list
-        required: false
-        description: "Local storage devices"
-        properties:
-          - name: size_gb
-            type: number
-            required: false
-            description: "Storage size in GB"
-          - name: type
-            type: string
-            required: false
-            description: "Storage type (ssd, hdd, nvme)"
+        constraints:
+          enum:
+            - extinct
+            - extinct_in_wild
+            - critically_endangered
+            - endangered
+            - vulnerable
+            - near_threatened
+            - least_concern
+            - data_deficient
+        description: "Red List conservation status"
+    nesting:
+      populations:
+        child_kind: population
+        auto_relation_type: belongs_to
+        auto_relation_source: child
 
 relation_types:
-  connects:
-    direction: symmetric
-    description: "Physical connection"
+  inhabits:
+    direction: directed
+    description: "Species lives in a habitat"
     participants:
       source_kinds:
-        - interface
+        - species
+        - population
       target_kinds:
-        - interface
+        - ground
+        - terrain
+        - water_body
+        - forest
+        - area
       min_participants: 2
       max_participants: 2
 

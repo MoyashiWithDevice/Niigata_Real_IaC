@@ -3,8 +3,8 @@ package view
 import (
 	"fmt"
 
-	"IACForge/src/condition"
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/condition"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // Engine applies a View to a Graph and produces a ViewResult.

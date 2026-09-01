@@ -106,7 +106,7 @@ Implementations MAY provide:
 - Hierarchical layout
 - Force-directed layout
 - Orthogonal layout
-- Rack layout
+- Geographic map layout
 - Timeline layout
 
 ---

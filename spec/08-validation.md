@@ -39,8 +39,8 @@ Examples include:
 - Core
 - Homelab
 - Enterprise
-- Proxmox
-- Kubernetes
+- Nature Survey
+- Tourism Promotion
 
 A Graph may satisfy multiple Profiles simultaneously.
 

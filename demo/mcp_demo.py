@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP stdio demo driver for IACForge.
+"""MCP stdio demo driver for Niigata Real Model.
 
 Speaks JSON-RPC 2.0 over the MCP stdio transport sequentially (one request
 at a time) so that the session state persists between tool calls.
@@ -9,7 +9,7 @@ import os
 import subprocess
 import sys
 
-BIN = sys.argv[1] if len(sys.argv) > 1 else "./iacforge"
+BIN = sys.argv[1] if len(sys.argv) > 1 else "./niigata"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 proc = subprocess.Popen(
@@ -56,7 +56,7 @@ def banner(title):
 call("initialize", {
     "protocolVersion": "2024-11-05",
     "capabilities": {},
-    "clientInfo": {"name": "iacforge-demo", "version": "0.1.0"},
+    "clientInfo": {"name": "niigata-demo", "version": "0.1.0"},
 })
 call("notifications/initialized", notify=True)
 print("MCP session initialized")
@@ -69,41 +69,41 @@ for i in range(0, len(tools), 6):
     print("  " + ", ".join(tools[i:i + 6]))
 
 # --- load a model ----------------------------------------------------------
-banner('load_yaml demo/core/model.yaml')
-print(tool("load_yaml", {"path": "demo/core/model.yaml"}))
+banner('load_yaml demo/niigata/model.yaml')
+print(tool("load_yaml", {"path": "demo/niigata/model.yaml"}))
 
 banner("graph_summary")
 print(tool("graph_summary"))
 
 # --- mutate the graph ------------------------------------------------------
-banner("add_entity vm-cache-01 (owner: srv-proxmox-02)")
+banner("add_entity species-sado-usagi (owner: sado-island)")
 print(tool("add_entity", {
-    "id": "vm-cache-01", "kind": "vm", "name": "Cache VM 01",
-    "owner": "srv-proxmox-02", "status": "active",
+    "id": "species-sado-usagi", "kind": "species", "name": "Sado Rabbit",
+    "owner": "sado-island", "status": "active",
 }))
 
-banner("add_entity app-redis (owner: vm-cache-01, properties via JSON)")
+banner("add_entity toki-census-2026 (owner: species-toki, properties via JSON)")
 print(tool("add_entity", {
-    "id": "app-redis", "kind": "application", "name": "Redis",
-    "owner": "vm-cache-01", "status": "active",
-    "properties_json": '{"port": 6379, "protocol": "tcp", "version": "7.2"}',
+    "id": "toki-census-2026", "kind": "population", "name": "Toki Census 2026",
+    "owner": "species-toki", "status": "active",
+    "properties_json": '{"count": 780, "survey_date": "2026-03-14", "survey_method": "visual_count"}',
 }))
 
-banner("add_relation app-api depends_on app-redis")
+banner("add_relation spot-shukunegi near coast-otoline")
 print(tool("add_relation", {
-    "id": "rel-api-dep-redis", "type": "depends_on",
-    "source": "app-api", "target": "app-redis",
+    "id": "rel-shukunegi-near-coast-2", "type": "near",
+    "source": "spot-shukunegi", "target": "coast-otoline",
 }))
 
-banner("query_entities kind=vm")
-out = tool("query_entities", {"kind": "vm"})
+banner("query_entities kind=population")
+out = tool("query_entities", {"kind": "population"})
 print("\n".join(out.splitlines()[:20]))
 n = len(out.splitlines())
 if n > 20:
     print(f"... ({n - 20} more lines)")
 
-banner("who_references app-api")
-print(tool("who_references", {"id": "app-api"}))
+banner("who_references species-toki")
+print(tool("who_references", {"id": "species-toki"}))
 
 # --- validate & render -----------------------------------------------------
 banner("validate_graph")
@@ -112,8 +112,8 @@ print(f"passed={d['passed']} "
       f"(rules: {d['summary']['total_rules']}, findings: {d['summary']['total_findings']}, "
       f"errors: {d['summary']['errors']})")
 
-banner("render_graph format=mermaid kinds=[vm,application]")
-print(tool("render_graph", {"format": "mermaid", "kinds": ["vm", "application"]}))
+banner("render_graph format=mermaid kinds=[species,population]")
+print(tool("render_graph", {"format": "mermaid", "kinds": ["species", "population"]}))
 
 proc.stdin.close()
 proc.terminate()

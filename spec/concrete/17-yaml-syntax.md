@@ -50,55 +50,39 @@ The `attributes` sub-key contains optional properties common to all entities.
 
 ### Spec Section
 
-The `spec` sub-key contains kind-specific properties (platform, cpu, memory, etc.).
+The `spec` sub-key contains kind-specific properties (soil_type, elevation_m, count, etc.).
 
 ### Basic Entity
 
 ```yaml
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  - id: area-niigata-city
+    kind: area
+    name: 新潟市
 ```
 
 ### Entity with All Properties
 
 ```yaml
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: onsen-tsukioka
+    kind: hot_spring
+    name: 月岡温泉
     attributes:
-      description: "Primary Proxmox server"
+      description: "硫黄泉の温泉地"
       status: active
       tags:
-        - production
-        - compute
+        - tourism
+        - onsen
       labels:
-        region: ap-northeast-1
-        environment: production
+        area: niigata-city
+        season: all
       extensions:
-        vendor: dell
-        model: r740xd
+        operator: tsukioka-onsen-kyodo
     spec:
-      platform: proxmox
-      cpu:
-        - cores: 16
-          architecture: x86_64
-        - cores: 16
-          architecture: x86_64
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 500
-          type: ssd
-        - size_gb: 500
-          type: ssd
+      spring_quality: sulfur
+      temperature_c: 78.0
+      source_count: 1
 ```
 
 ---
@@ -107,7 +91,7 @@ objects:
 
 Child entities can be defined inline within their parent entity's definition,
 instead of as separate top-level objects. This provides a more concise and
-hierarchical representation of the infrastructure.
+hierarchical representation of the model.
 
 ### Nesting Rules
 
@@ -117,24 +101,19 @@ A nesting rule with `any` as the parent kind means the child can be nested under
 
 | Parent Kind | Nest Key | Child Kind |
 |-------------|----------|------------|
-| any | interfaces | interface |
-| any | servers | server |
-| any | switches | switch |
-| any | routers | router |
-| any | firewalls | firewall |
-| any | networks | network |
-| region | racks | rack |
-| region | clusters | cluster |
-| region | availability_zones | availability_zone |
-| server | vms | vm |
-| switch | ports | interface |
-| router | ports | interface |
-| firewall | acls | acl |
-| vm | applications | application |
-| application | open_ports | open_port |
-| acl | acl_rules | acl_rule |
-| interface | vlans | vlan |
-| interface | cables | cable |
+| area | grounds | ground |
+| area | terrains | terrain |
+| area | water_bodies | water_body |
+| area | forests | forest |
+| area | tourism_spots | tourism_spot |
+| area | species | species |
+| area | cultural_assets | cultural_asset |
+| terrain | grounds | ground |
+| forest | grounds | ground |
+| species | populations | population |
+| tourism_spot | hot_springs | hot_spring |
+| tourism_spot | events | event |
+| hot_spring | events | event |
 
 ### Syntax
 
@@ -144,34 +123,33 @@ definition level.
 
 ```yaml
 objects:
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: area-sado-city
+    kind: area
+    name: 佐渡市
     spec:
-      cpu:
-        - cores: 16
-          architecture: x86_64
-      networks:
-        - id: net-private
-          name: private
+      forests:
+        - id: forest-sado-cedar
+          name: 佐渡スギ林
           spec:
-            cidr: 172.31.0.0/24
-            interfaces:
-              - id: eth1
+            grounds:
+              - id: ground-forest-sado
+                name: 林内地盤
                 spec:
-                  ip_address: 172.31.0.15
-                  type: ethernet
-      vms:
-        - id: vm-web-01
-          name: Web Server 01
+                  soil_type: volcanic_ash
+                  elevation_m: 320
+      species:
+        - id: species-japanese-crested-ibis
+          name: トキ
           spec:
-            cpu:
-              - cores: 4
-                architecture: x86_64
-            memory:
-              - size_gb: 8
-                speed: 3200
-                type: ddr4
+            scientific_name: Nipponia nippon
+            category: bird
+            red_list_status: endangered
+            populations:
+              - id: pop-toki-sado-2025
+                name: 個体群調査 2025
+                spec:
+                  count: 190
+                  survey_method: visual_count
 ```
 
 ### Optional Fields in Nested Definitions
@@ -183,38 +161,16 @@ objects:
 | name | optional | Defaults to ID if omitted |
 | spec | optional | Kind-specific properties |
 
-### Switch and Router Ports
+### Species Populations
 
-Switch and router ports are declared under the `ports` nest key.
+Populations are declared under the `populations` nest key of a `species`.
 
-Each port is an `interface` entity and is referenced using path notation:
-
-```yaml
-objects:
-  - id: sw-core-01
-    kind: switch
-    name: Core Switch 01
-    spec:
-      port_count: 24
-      ports:
-        - id: port1
-          name: Uplink
-          spec:
-            type: ethernet
-            speed_mbps: 10000
-            mode: trunk
-        - id: port2
-          name: Access
-          spec:
-            type: ethernet
-            speed_mbps: 1000
-            mode: access
-```
+Each population entity is referenced using path notation:
 
 ```yaml
 participants:
-  - srv-proxmox-01/eno1
-  - sw-core-01/port1
+  source: pop-toki-sado-2025
+  target: forest-sado-cedar
 ```
 
 ### Scoped IDs
@@ -225,7 +181,7 @@ parent's path notation:
 
 ```yaml
 participants:
-  source: srv-proxmox-01/net-private/eth0
+  source: species-japanese-crested-ibis/pop-toki-sado-2025
 ```
 
 Scoped entities cannot be referenced from outside their parent scope
@@ -242,23 +198,23 @@ Entities with explicit IDs can be referenced by their ID:
 
 ```yaml
 participants:
-  source: eth1
-  target: sw-core-01/port1
+  source: pop-toki-sado-2025
+  target: area-sado-city
 ```
 
 Or by path notation:
 
 ```yaml
 participants:
-  source: srv-proxmox-01/net-private/eth1
-  target: sw-core-01/port1
+  source: area-sado-city/forest-sado-cedar/pop-toki-sado-2025
+  target: area-sado-city
 ```
 
 Scoped entities (without explicit IDs) must use path notation:
 
 ```yaml
 participants:
-  source: srv-proxmox-01/net-private/eth0
+  source: species-japanese-crested-ibis/pop-toki-sado-2025
 ```
 
 ### Mixed Definitions
@@ -268,22 +224,21 @@ Flat and nested definitions can be mixed in the same file:
 ```yaml
 objects:
   # Flat definition
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
+  - id: terrain-mt-yahiko
+    kind: terrain
+    name: 弥彦山
     attributes:
-      owner: region-ap-northeast-1
+      owner: area-nishikanbara
 
   # Nested definition
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  - id: spot-yahiko-shrine
+    kind: tourism_spot
+    name: 弥彦神社
     spec:
-      networks:
-        - id: net-private
+      hot_springs:
+        - id: onsen-yahiko
           spec:
-            interfaces:
-              - id: eth1
+            spring_quality: simple
 ```
 
 ---
@@ -304,22 +259,22 @@ A Relation is defined with the following structure.
 
 #### List Format (Symmetric Relations)
 
-For symmetric relations like `connects`:
+For symmetric relations like `near`:
 
 ```yaml
 participants:
-  - srv-01/eno1
-  - sw-01/port1
+  - onsen-tsukioka
+  - spot-yahiko-shrine
 ```
 
 #### Map Format (Directed Relations)
 
-For directed relations like `hosts`, `depends_on`:
+For directed relations like `located_in`, `depends_on`:
 
 ```yaml
 participants:
-  source: region-ap-northeast-1
-  target: rack-a01
+  source: spot-yahiko-shrine
+  target: area-nishikanbara
 ```
 
 ### Attributes Section
@@ -336,27 +291,26 @@ The `attributes` sub-key contains optional properties common to all relations.
 
 ### Spec Section
 
-The `spec` sub-key contains relation-type-specific properties (connection_type, bandwidth_mbps, etc.).
+The `spec` sub-key contains relation-type-specific properties (distance_km, walking_minutes, etc.).
 
 ### Relation with All Properties
 
 ```yaml
 objects:
-  - id: rel-connects-srv-sw
-    type: connects
+  - id: rel-near-onsen-spot
+    type: near
     attributes:
-      description: "Physical connection between server and switch"
+      description: "温泉と神社の近接関係"
       status: active
       tags:
-        - networking
+        - tourism
       labels:
-        speed: 10g
+        route: walking
     spec:
-      connection_type: physical
-      bandwidth_mbps: 10000
+      walking_minutes: 15
     participants:
-      - srv-proxmox-01/eno1
-      - sw-core-01/port1
+      - onsen-tsukioka
+      - spot-yahiko-shrine
 ```
 
 ---
@@ -368,8 +322,8 @@ References use Entity identifiers.
 ### Simple Reference
 
 ```yaml
-source: srv-proxmox-01
-target: vm-web-01
+source: spot-yahiko-shrine
+target: onsen-tsukioka
 ```
 
 ### Qualified Reference
@@ -377,18 +331,18 @@ target: vm-web-01
 For unambiguous references:
 
 ```yaml
-source: /region-ap-northeast-1/rack-a01/srv-proxmox-01
-target: vm-web-01
+source: /area-nishikanbara/terrain-mt-yahiko/spot-yahiko-shrine
+target: onsen-tsukioka
 ```
 
-### Interface Reference
+### Nested Entity Reference
 
-Interfaces are referenced with path notation:
+Nested entities are referenced with path notation:
 
 ```yaml
 participants:
-  - srv-proxmox-01/eno1
-  - sw-core-01/port24
+  - species-japanese-crested-ibis/pop-toki-sado-2025
+  - forest-sado-cedar
 ```
 
 ### Property Reference
@@ -397,8 +351,8 @@ Properties that reference other Objects use the `@` prefix to distinguish refere
 
 ```yaml
 spec:
-  associated_network: "@net-mgmt"
-  dns_servers: ["@dns-1", "@dns-2"]
+  nearest_spot: "@spot-yahiko-shrine"
+  related_events: ["@event-yahiko-fireworks"]
 ```
 
 The `@` prefix indicates that the value is a reference to another Entity's ID.
@@ -406,292 +360,159 @@ At runtime, the parser converts `@`-prefixed strings to typed reference values.
 When serializing back to YAML, the `@` prefix is automatically restored.
 
 Reference properties are validated to ensure the referenced Entity exists in the graph.
-A property value of `"@net-mgmt"` references the Entity with ID `net-mgmt`.
-Path notation is also supported: `"@/region01/rack01/server01"`.
+A property value of `"@spot-yahiko-shrine"` references the Entity with ID `spot-yahiko-shrine`.
+Path notation is also supported: `"@/area-nishikanbara/terrain-mt-yahiko/spot-yahiko-shrine"`.
 
 ---
 
 ## Complete Example
 
-### Infrastructure Model
+### Niigata Resource Model
 
 ```yaml
 objects:
-  # Regions
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
+  # 地域
+  - id: area-niigata-city
+    kind: area
+    name: 新潟市
     attributes:
       status: active
       labels:
-        region: ap-northeast-1
-
-  # Racks
-  - id: rack-a01
-    kind: rack
-    name: Rack A01
-    attributes:
-      owner: region-ap-northeast-1
-      status: active
-      labels:
-        row: A
+        area_type: city
     spec:
-      height_units: 42
+      area_type: city
+      population: 800000
+      latitude: 37.9161
+      longitude: 139.0364
+      timezone: Asia/Tokyo
 
-  # Servers
-  - id: srv-proxmox-01
-    kind: server
-    name: Proxmox Node 01
+  # 水域
+  - id: waterbody-shinano-river
+    kind: water_body
+    name: 信濃川
     attributes:
-      owner: rack-a01
+      owner: area-niigata-city
       status: active
     spec:
-      platform: proxmox
-      cpu:
-        - cores: 16
-          architecture: x86_64
-        - cores: 16
-          architecture: x86_64
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 500
-          type: ssd
-        - size_gb: 500
-          type: ssd
+      water_type: river
+      length_km: 367
+      catchment_area_km2: 11900
 
-  - id: srv-proxmox-02
-    kind: server
-    name: Proxmox Node 02
+  - id: waterbody-sea-of-japan
+    kind: water_body
+    name: 日本海
     attributes:
-      owner: rack-a01
+      owner: area-niigata-city
       status: active
     spec:
-      platform: proxmox
-      cpu:
-        - cores: 16
-          architecture: x86_64
-        - cores: 16
-          architecture: x86_64
-      memory:
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-        - size_gb: 64
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 500
-          type: ssd
-        - size_gb: 500
-          type: ssd
+      water_type: sea
+      max_depth_m: 3796
 
-  # Network with Interfaces
-  - id: mgmt-network-01
-    kind: network
-    name: Management Network
+  # 観光スポット（温泉をネスト）
+  - id: spot-yahiko-shrine
+    kind: tourism_spot
+    name: 弥彦神社
+    attributes:
+      status: active
     spec:
-      cidr: 10.0.0.0/24
-      gateway: 10.0.0.1
-      network_type: management
-      interfaces:
-        - id: eno1
+      spot_type: shrine_temple
+      description: 越後一宮。弥彦山の麓に鎮座する。
+      annual_visitors: 2000000
+      hot_springs:
+        - id: onsen-yahiko
+          name: 弥彦温泉
           spec:
-            type: ethernet
-            speed_mbps: 10000
-            mac_address: "aa:bb:cc:dd:ee:f0"
-            ip_address: 10.0.1.10
-        - id: eno2
+            spring_quality: simple
+            temperature_c: 42.0
+            source_count: 1
+
+  # 種と個体群調査
+  - id: species-japanese-crested-ibis
+    kind: species
+    name: トキ
+    attributes:
+      owner: area-niigata-city
+      status: active
+    spec:
+      scientific_name: Nipponia nippon
+      category: bird
+      red_list_status: endangered
+      populations:
+        - id: pop-toki-2025
+          name: トキ個体群調査 2025
           spec:
-            type: ethernet
-            speed_mbps: 10000
-            mac_address: "aa:bb:cc:dd:ee:f1"
+            count: 190
+            survey_date: "2025-11-15"
+            survey_method: visual_count
 
-  # VMs
-  - id: vm-web-01
-    kind: vm
-    name: Web Server 01
+  # 文化財
+  - id: cultural-asset-sado-gold-mine
+    kind: cultural_asset
+    name: 佐渡金山
     attributes:
-      owner: srv-proxmox-01
+      owner: area-niigata-city
       status: active
     spec:
-      cpu:
-        - cores: 4
-          architecture: x86_64
-      memory:
-        - size_gb: 8
-          speed: 3200
-          type: ddr4
-      storage:
-        - size_gb: 100
-          type: ssd
-      os: ubuntu
-      os_version: "22.04"
+      asset_type: archaeological
+      designated_level: unesco
+      designated_date: "2024-07-26"
 
-  # Applications
-  - id: app-web-server
-    kind: application
-    name: Nginx Web Server
+  # イベント（温泉配下）
+  - id: onsen-yahiko-matsuri
+    kind: event
+    name: 弥彦温泉まつり
     attributes:
-      owner: vm-web-01
-      status: active
+      owner: spot-yahiko-shrine
+      status: planned
     spec:
-      version: "1.24.0"
-      port: 443
-      protocol: https
+      season: autumn
+      held_month: 10
+      visitor_count: 20000
 
-  # Open Ports
-  - id: port-443-nginx
-    kind: open_port
-    name: Nginx HTTPS
-    attributes:
-      owner: app-web-server
+  # 近接関係（near・対称）
+  - id: rel-near-onsen-spot
+    type: near
     spec:
-      port: 443
-      protocol: tcp
-      state: listening
-      address: 0.0.0.0
-      process: nginx
-
-  - id: port-5432-postgres
-    kind: open_port
-    name: PostgreSQL
-    attributes:
-      owner: vm-web-01
-    spec:
-      port: 5432
-      protocol: tcp
-      state: listening
-      address: 10.0.2.10
-      process: postgres
-
-  # ACLs
-  - id: acl-web-ingress
-    kind: acl
-    name: Web Server Ingress ACL
-    attributes:
-      owner: vm-web-01
-      status: active
-    spec:
-      direction: inbound
-      default_action: deny
-
-  # ACL Rules
-  - id: acl-rule-allow-https
-    kind: acl_rule
-    name: Allow HTTPS
-    attributes:
-      owner: acl-web-ingress
-    spec:
-      action: allow
-      protocol: tcp
-      source_address: 0.0.0.0/0
-      destination_port: "443"
-      enabled: true
-
-  - id: acl-rule-allow-ssh
-    kind: acl_rule
-    name: Allow SSH from Management
-    attributes:
-      owner: acl-web-ingress
-    spec:
-      action: allow
-      protocol: tcp
-      source_address: 10.0.0.0/24
-      destination_port: "22"
-      enabled: true
-
-  # Cluster
-  - id: cluster-prod-01
-    kind: cluster
-    name: Production Cluster 01
-    attributes:
-      status: active
-    spec:
-      cluster_type: hyperconverged
-      ha_enabled: true
-
-  # Cables
-  - id: cable-001
-    kind: cable
-    name: Patch Cable SRV01-SW01
-    spec:
-      cable_type: cat6a
-      length_meters: 3.0
-
-  # Connection Relations (connects)
-  - id: rel-connects-srv-sw
-    type: connects
-    spec:
-      connection_type: physical
-      bandwidth_mbps: 10000
+      walking_minutes: 15
     participants:
-      - mgmt-network-01/eno1
-      - mgmt-network-01/eno2
+      - onsen-yahiko
+      - spot-yahiko-shrine
 
-  # Hosting Relations (hosts)
-  - id: rel-hosts-server-vm
-    type: hosts
+  - id: rel-near-culture-water
+    type: near
     participants:
-      source: srv-proxmox-01
-      target: vm-web-01
+      - cultural-asset-sado-gold-mine
+      - waterbody-sea-of-japan
 
-  - id: rel-hosts-vm-app
-    type: hosts
+  # 位置関係（located_in・有向）
+  - id: rel-locatedin-spot-area
+    type: located_in
     participants:
-      source: vm-web-01
-      target: app-web-server
+      source: spot-yahiko-shrine
+      target: area-niigata-city
 
-  # Membership Relations (belongs_to)
-  - id: rel-belongsto-vm-cluster
+  # 生息関係（inhabits・有向）
+  - id: rel-inhabits-toki-river
+    type: inhabits
+    participants:
+      source: pop-toki-2025
+      target: waterbody-shinano-river
+    spec:
+      habitat_note: 稲田での採餌が観察される。
+
+  # 所属関係（belongs_to）
+  - id: rel-belongsto-population-species
     type: belongs_to
     participants:
-      source: vm-web-01
-      target: cluster-prod-01
+      source: pop-toki-2025
+      target: species-japanese-crested-ibis
 
-  - id: rel-belongsto-intf-network
-    type: belongs_to
+  # 流路関係（flows_into・有向）
+  - id: rel-flows-shinano-sea
+    type: flows_into
     participants:
-      source: mgmt-network-01/eno1
-      target: mgmt-network-01
-
-  # ACL Application Relations (applies_to)
-  - id: rel-applies-web-acl
-    type: applies_to
-    participants:
-      source: acl-web-ingress
-      target: mgmt-network-01/eno1
-
-  # Open Port Relations (belongs_to)
-  - id: rel-belongsto-port-nginx
-    type: belongs_to
-    participants:
-      source: port-443-nginx
-      target: app-web-server
-
-  - id: rel-belongsto-port-postgres
-    type: belongs_to
-    participants:
-      source: port-5432-postgres
-      target: vm-web-01
-
-  # Port Listening Relations (listens_on)
-  - id: rel-listens-nginx
-    type: listens_on
-    participants:
-      source: port-443-nginx
-      target: mgmt-network-01/eno1
-
-  - id: rel-listens-postgres
-    type: listens_on
-    participants:
-      source: port-5432-postgres
-      target: mgmt-network-01/eno1
+      source: waterbody-shinano-river
+      target: waterbody-sea-of-japan
 ```
 
 ---
@@ -715,7 +536,7 @@ objects:
 ### Reference Validation
 
 - References MUST point to existing Objects
-- Interface references use path notation (entity/interface)
+- Nested entity references use path notation (entity/child)
 - Unknown references are validation errors
 
 ### Identifier Rules
@@ -732,21 +553,21 @@ objects:
 
 | Pattern | Example |
 |---------|---------|
-| kebab-case | `srv-proxmox-01` |
-| snake_case | `mgmt_network_01` |
-| camelCase | `mgmtNetwork01` |
+| kebab-case | `spot-yahiko-shrine` |
+| snake_case | `niigata_city` |
+| camelCase | `niigataCity` |
 
 ### Kind Naming
 
 - Use lowercase
 - Use singular form
-- Examples: `server`, `vm`, `interface`
+- Examples: `area`, `species`, `tourism_spot`
 
 ### Relation Type Naming
 
 - Use snake_case
 - Use verbs or verb phrases
-- Examples: `connects`, `hosts`, `depends_on`
+- Examples: `located_in`, `inhabits`, `depends_on`
 
 ---
 
@@ -755,12 +576,12 @@ objects:
 Comments are preserved during round-trip conversion.
 
 ```yaml
-# Region information
+# 地域情報
 objects:
-  - id: region-ap-northeast-1
-    kind: region
-    name: Tokyo Datacenter 1
-    # Primary location
+  - id: area-niigata-city
+    kind: area
+    name: 新潟市
+    # 県庁所在地
     attributes:
       status: active
 ```

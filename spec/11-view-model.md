@@ -26,16 +26,16 @@ Different Views expose different aspects of the same Graph.
 
 Examples include:
 
-- Physical Infrastructure
-- Logical Infrastructure
-- Network Topology
-- Storage Topology
-- Virtualization
-- Security Zones
-- Service Dependencies
+- Natural Resources
+- Tourism Resources
+- Habitat Topology
+- Water System Topology
+- Cultural Assets
+- Protected Areas
+- Event Dependencies
 - Inventory
-- Rack Layout
-- Application Dependency
+- Area Map Layout
+- Tourism Spot Dependency
 - Documentation
 
 ---
@@ -116,10 +116,10 @@ Objects:
 
 1. If the participant itself is visible, it is its own anchor.
 2. Otherwise every visible Object inside its ownership subtree becomes an
-   anchor (a hidden node maps to the applications it hosts; a hidden cluster
-   maps to all applications beneath it).
+   anchor (a hidden hot spring maps to the tourism spot owning it; a hidden
+   species maps to all populations beneath it).
 3. If neither applies, the nearest visible ancestor is used (e.g. a hidden
-   port maps to the application owning it).
+   population maps to the species owning it).
 
 The two sides of a Relation are then collapsed so that one Relation yields at
 most one derived edge:
@@ -150,11 +150,11 @@ A View MAY organize Objects into logical groups.
 
 Examples include:
 
-- Rack
-- VLAN
-- Cluster
-- Availability Zone
-- Application Stack
+- Area
+- Terrain Zone
+- Forest Type
+- Season
+- Tourism Route
 
 Grouping does not alter ownership.
 
@@ -168,9 +168,9 @@ Views MAY attach annotations.
 
 Examples include:
 
-- Calculated utilization
-- Interface speed
-- Host counts
+- Calculated visitor density
+- Elevation range
+- Survey counts
 - Warning indicators
 
 Annotations are ephemeral.
@@ -185,11 +185,11 @@ Views MAY specify their intended audience.
 
 Examples include:
 
-- Network Engineers
-- Infrastructure Engineers
-- Security Engineers
-- Developers
-- Operators
+- Conservation Officers
+- Tourism Planners
+- Municipal Officials
+- Researchers
+- Guides
 - Management
 
 Audience information is descriptive only.

@@ -100,8 +100,8 @@ Examples:
 
 - Homelab
 - Enterprise
-- Proxmox
-- Kubernetes
+- Nature Survey
+- Tourism Promotion
 
 Profiles specialize the Core Schema.
 

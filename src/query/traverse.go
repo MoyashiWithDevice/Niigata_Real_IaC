@@ -3,7 +3,7 @@ package query
 import (
 	"fmt"
 
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // applyTraverse applies a traverse clause to results.

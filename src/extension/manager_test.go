@@ -6,11 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"IACForge/src/core"
-	"IACForge/src/renderer"
-	"IACForge/src/schema"
-	"IACForge/src/validation"
-	"IACForge/src/view"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/renderer"
+	"github.com/bababa/Niigata_Real_IaC/src/schema"
+	"github.com/bababa/Niigata_Real_IaC/src/validation"
+	"github.com/bababa/Niigata_Real_IaC/src/view"
 )
 
 func newTestExtension(id, namespace string, deps []string) *Extension {
@@ -138,7 +138,7 @@ func TestRegisterCoreEntityKindConflict(t *testing.T) {
 		},
 		EntityKinds: []EntityKindContribution{
 			{
-				Kind: core.EntityKind("server"), // core kind
+				Kind: core.EntityKind("species"), // core kind
 				Definition: &schema.EntityKindDefinition{
 					Description: "Conflicts with core",
 				},
@@ -162,7 +162,7 @@ func TestRegisterCoreRelationTypeConflict(t *testing.T) {
 		},
 		RelationTypes: []RelationTypeContribution{
 			{
-				Type: core.RelationType("connects"), // core type
+				Type: core.RelationType("inhabits"), // core type
 				Definition: &schema.RelationTypeDefinition{
 					Direction: schema.DirectionDirected,
 				},
@@ -359,16 +359,16 @@ func TestEntityKindsExtensionPointRegister(t *testing.T) {
 
 func TestEntityKindsExtensionPointConflict(t *testing.T) {
 	s := schema.NewSchema("1.0", "1.0")
-	s.AddEntityKind("server", &schema.EntityKindDefinition{Description: "Core server"})
+	s.AddEntityKind("species", &schema.EntityKindDefinition{Description: "Core species"})
 	ep := NewEntityKindsExtensionPoint(s)
 
 	ext := &Extension{
 		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		EntityKinds: []EntityKindContribution{
 			{
-				Kind: "server", // conflicts with existing
+				Kind: "species", // conflicts with existing
 				Definition: &schema.EntityKindDefinition{
-					Description: "Conflicts with server",
+					Description: "Conflicts with species",
 				},
 			},
 		},
@@ -479,15 +479,15 @@ func TestRelationTypesExtensionPointAugment(t *testing.T) {
 	ep := NewRelationTypesExtensionPoint(s)
 
 	ext := &Extension{
-		Manifest: &Manifest{ID: "aws-ext", Namespace: "aws"},
+		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RelationTypes: []RelationTypeContribution{
 			{
 				Type:    "belongs_to",
 				Augment: true,
 				Definition: &schema.RelationTypeDefinition{
 					Participants: &schema.ParticipantConstraints{
-						SourceKinds: []core.EntityKind{"aws.subnet"},
-						TargetKinds: []core.EntityKind{"aws.vpc", "vm"},
+						SourceKinds: []core.EntityKind{"test.subnet"},
+						TargetKinds: []core.EntityKind{"test.zone", "vm"},
 					},
 				},
 			},
@@ -504,15 +504,15 @@ func TestRelationTypesExtensionPointAugment(t *testing.T) {
 	}
 
 	// Source kinds must include the existing core kinds plus the augmented kind.
-	if !containsKind(def.Participants.SourceKinds, "aws.subnet") {
-		t.Errorf("belongs_to source kinds should include aws.subnet, got %v", def.Participants.SourceKinds)
+	if !containsKind(def.Participants.SourceKinds, "test.subnet") {
+		t.Errorf("belongs_to source kinds should include test.subnet, got %v", def.Participants.SourceKinds)
 	}
 	if !containsKind(def.Participants.SourceKinds, "vm") {
 		t.Errorf("belongs_to source kinds should retain existing vm, got %v", def.Participants.SourceKinds)
 	}
 	// Target kinds must include the augmented kinds without duplicates.
-	if !containsKind(def.Participants.TargetKinds, "aws.vpc") {
-		t.Errorf("belongs_to target kinds should include aws.vpc, got %v", def.Participants.TargetKinds)
+	if !containsKind(def.Participants.TargetKinds, "test.zone") {
+		t.Errorf("belongs_to target kinds should include test.zone, got %v", def.Participants.TargetKinds)
 	}
 	if countKind(def.Participants.TargetKinds, "vm") != 1 {
 		t.Errorf("belongs_to target kinds should contain vm exactly once, got %v", def.Participants.TargetKinds)
@@ -520,7 +520,7 @@ func TestRelationTypesExtensionPointAugment(t *testing.T) {
 
 	// The augmenting extension should be tracked for the type.
 	extID, ok := ep.GetExtensionForType("belongs_to")
-	if !ok || extID != "aws-ext" {
+	if !ok || extID != "test-ext" {
 		t.Errorf("expected extension 'aws-ext' for belongs_to, got %q", extID)
 	}
 }
@@ -551,10 +551,10 @@ func TestAugmentCoreTypeViaManager(t *testing.T) {
 
 	ext := &Extension{
 		Manifest: &Manifest{
-			ID:              "aws-ext",
-			Name:            "AWS Extension",
+			ID:              "test-ext",
+			Name:            "Test Extension",
 			Version:         "1.0.0",
-			Namespace:       "aws",
+			Namespace:       "test",
 			ExtensionPoints: []string{string(ExtensionPointRelationTypes)},
 		},
 		RelationTypes: []RelationTypeContribution{
@@ -563,8 +563,8 @@ func TestAugmentCoreTypeViaManager(t *testing.T) {
 				Augment: true,
 				Definition: &schema.RelationTypeDefinition{
 					Participants: &schema.ParticipantConstraints{
-						SourceKinds: []core.EntityKind{"aws.subnet"},
-						TargetKinds: []core.EntityKind{"aws.vpc"},
+						SourceKinds: []core.EntityKind{"test.subnet"},
+						TargetKinds: []core.EntityKind{"test.zone"},
 					},
 				},
 			},
@@ -579,11 +579,11 @@ func TestAugmentCoreTypeViaManager(t *testing.T) {
 	if !ok {
 		t.Fatal("belongs_to should exist in core schema")
 	}
-	if !containsKind(def.Participants.SourceKinds, "aws.subnet") {
-		t.Errorf("belongs_to source kinds should include aws.subnet, got %v", def.Participants.SourceKinds)
+	if !containsKind(def.Participants.SourceKinds, "test.subnet") {
+		t.Errorf("belongs_to source kinds should include test.subnet, got %v", def.Participants.SourceKinds)
 	}
-	if !containsKind(def.Participants.TargetKinds, "aws.vpc") {
-		t.Errorf("belongs_to target kinds should include aws.vpc, got %v", def.Participants.TargetKinds)
+	if !containsKind(def.Participants.TargetKinds, "test.zone") {
+		t.Errorf("belongs_to target kinds should include test.zone, got %v", def.Participants.TargetKinds)
 	}
 }
 
@@ -618,7 +618,7 @@ func TestRelationTypesExtensionPointAugmentDirectionConflict(t *testing.T) {
 	ep := NewRelationTypesExtensionPoint(s)
 
 	ext := &Extension{
-		Manifest: &Manifest{ID: "aws-ext", Namespace: "aws"},
+		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RelationTypes: []RelationTypeContribution{
 			{
 				Type:    "belongs_to",
@@ -626,7 +626,7 @@ func TestRelationTypesExtensionPointAugmentDirectionConflict(t *testing.T) {
 				Definition: &schema.RelationTypeDefinition{
 					Direction: schema.DirectionSymmetric,
 					Participants: &schema.ParticipantConstraints{
-						SourceKinds: []core.EntityKind{"aws.subnet"},
+						SourceKinds: []core.EntityKind{"test.subnet"},
 					},
 				},
 			},
@@ -654,14 +654,14 @@ func TestRelationTypesExtensionPointAugmentPropertiesRejected(t *testing.T) {
 	ep := NewRelationTypesExtensionPoint(s)
 
 	ext := &Extension{
-		Manifest: &Manifest{ID: "aws-ext", Namespace: "aws"},
+		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RelationTypes: []RelationTypeContribution{
 			{
 				Type:    "belongs_to",
 				Augment: true,
 				Definition: &schema.RelationTypeDefinition{
 					Participants: &schema.ParticipantConstraints{
-						SourceKinds: []core.EntityKind{"aws.subnet"},
+						SourceKinds: []core.EntityKind{"test.subnet"},
 					},
 					Properties: []schema.PropertyDefinition{
 						{Name: "scope", Type: schema.PropertyTypeString},
@@ -690,14 +690,14 @@ func TestRelationTypesExtensionPointAugmentMinMaxConflict(t *testing.T) {
 	ep := NewRelationTypesExtensionPoint(s)
 
 	ext := &Extension{
-		Manifest: &Manifest{ID: "aws-ext", Namespace: "aws"},
+		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RelationTypes: []RelationTypeContribution{
 			{
 				Type:    "belongs_to",
 				Augment: true,
 				Definition: &schema.RelationTypeDefinition{
 					Participants: &schema.ParticipantConstraints{
-						SourceKinds:     []core.EntityKind{"aws.subnet"},
+						SourceKinds:     []core.EntityKind{"test.subnet"},
 						MaxParticipants: 4,
 					},
 				},
@@ -723,15 +723,15 @@ func TestRelationTypesExtensionPointAugmentDoesNotMutateOriginal(t *testing.T) {
 	ep := NewRelationTypesExtensionPoint(s)
 
 	ext := &Extension{
-		Manifest: &Manifest{ID: "aws-ext", Namespace: "aws"},
+		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RelationTypes: []RelationTypeContribution{
 			{
 				Type:    "belongs_to",
 				Augment: true,
 				Definition: &schema.RelationTypeDefinition{
 					Participants: &schema.ParticipantConstraints{
-						SourceKinds: []core.EntityKind{"aws.subnet"},
-						TargetKinds: []core.EntityKind{"aws.vpc"},
+						SourceKinds: []core.EntityKind{"test.subnet"},
+						TargetKinds: []core.EntityKind{"test.zone"},
 					},
 				},
 			},
@@ -746,10 +746,10 @@ func TestRelationTypesExtensionPointAugmentDoesNotMutateOriginal(t *testing.T) {
 	if len(original.Participants.SourceKinds) != 2 {
 		t.Errorf("original source kinds should be unchanged, got %v", original.Participants.SourceKinds)
 	}
-	if containsKind(original.Participants.SourceKinds, "aws.subnet") {
+	if containsKind(original.Participants.SourceKinds, "test.subnet") {
 		t.Error("original source kinds should not contain augmented kind")
 	}
-	if containsKind(original.Participants.TargetKinds, "aws.vpc") {
+	if containsKind(original.Participants.TargetKinds, "test.zone") {
 		t.Error("original target kinds should not contain augmented kind")
 	}
 
@@ -761,8 +761,8 @@ func TestRelationTypesExtensionPointAugmentDoesNotMutateOriginal(t *testing.T) {
 	if def == original {
 		t.Error("stored definition should be a copy, not the original pointer")
 	}
-	if !containsKind(def.Participants.SourceKinds, "aws.subnet") {
-		t.Errorf("stored source kinds should include aws.subnet, got %v", def.Participants.SourceKinds)
+	if !containsKind(def.Participants.SourceKinds, "test.subnet") {
+		t.Errorf("stored source kinds should include test.subnet, got %v", def.Participants.SourceKinds)
 	}
 }
 
@@ -865,8 +865,8 @@ func TestRootKindsExtensionPointRegister(t *testing.T) {
 	ext := &Extension{
 		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RootKinds: []core.EntityKind{
-			"aws.organization",
-			"aws.account",
+			"prefecture.root",
+			"city.root",
 		},
 	}
 
@@ -874,14 +874,14 @@ func TestRootKindsExtensionPointRegister(t *testing.T) {
 		t.Fatalf("Register failed: %v", err)
 	}
 
-	if !vEngine.IsAllowedRootKind("aws.organization") {
+	if !vEngine.IsAllowedRootKind("prefecture.root") {
 		t.Error("aws.organization was not granted root authority")
 	}
-	if !vEngine.IsAllowedRootKind("aws.account") {
+	if !vEngine.IsAllowedRootKind("city.root") {
 		t.Error("aws.account was not granted root authority")
 	}
-	if vEngine.IsAllowedRootKind("aws.vpc") {
-		t.Error("aws.vpc must not be granted root authority")
+	if vEngine.IsAllowedRootKind("test.zone") {
+		t.Error("test.zone must not be granted root authority")
 	}
 
 	kinds := ep.GetRootKindsByExtension("test-ext")
@@ -889,7 +889,7 @@ func TestRootKindsExtensionPointRegister(t *testing.T) {
 		t.Errorf("expected 2 root kinds for test-ext, got %v", kinds)
 	}
 
-	extID, ok := ep.GetExtensionForRootKind("aws.organization")
+	extID, ok := ep.GetExtensionForRootKind("prefecture.root")
 	if !ok || extID != "test-ext" {
 		t.Errorf("expected test-ext for aws.organization, got %q (%v)", extID, ok)
 	}
@@ -903,8 +903,8 @@ func TestRootKindsExtensionPointDuplicate(t *testing.T) {
 	ext := &Extension{
 		Manifest: &Manifest{ID: "test-ext", Namespace: "test"},
 		RootKinds: []core.EntityKind{
-			"aws.organization",
-			"aws.organization",
+			"prefecture.root",
+			"prefecture.root",
 		},
 	}
 
@@ -1117,7 +1117,7 @@ func TestIntegrationGraphIntegrity(t *testing.T) {
 	}
 
 	// Core kinds should still be in the schema
-	coreKinds := []core.EntityKind{"server", "vm", "network", "firewall"}
+	coreKinds := []core.EntityKind{"area", "species", "water_body", "tourism_spot"}
 	for _, k := range coreKinds {
 		if !s.HasEntityKind(k) {
 			t.Errorf("core kind %q should still be in schema", k)

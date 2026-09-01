@@ -3,8 +3,8 @@ package query
 import (
 	"fmt"
 
-	"IACForge/src/condition"
-	"IACForge/src/core"
+	"github.com/bababa/Niigata_Real_IaC/src/condition"
+	"github.com/bababa/Niigata_Real_IaC/src/core"
 )
 
 // applyProject applies a project clause to results.

@@ -24,11 +24,11 @@ Projections simplify, enrich, or reorganize a Graph without changing its meaning
 
 Typical uses include:
 
-- Physical topology
-- Logical topology
-- Network topology
-- Rack layout
-- Service dependency
+- Nature topology
+- Tourism topology
+- Habitat topology
+- Area map layout
+- Event dependency
 - Inventory
 - Documentation
 - Validation preparation
@@ -97,10 +97,10 @@ Derived Objects MUST NOT be written back to the canonical Graph.
 
 Examples include:
 
-- Rack summary
-- VLAN summary
-- Cluster node group
-- Service dependency group
+- Area summary
+- Species summary
+- Season event group
+- Habitat dependency group
 
 ---
 
@@ -134,11 +134,11 @@ Graph
 
 ↓
 
-Physical Projection
+Nature Projection
 
 ↓
 
-Network Projection
+Habitat Projection
 
 ↓
 
